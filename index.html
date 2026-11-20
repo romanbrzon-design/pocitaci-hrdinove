@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Počítací hrdinové</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ec; --card:#ffffff; --ink:#2b2340; --muted:#7a7090;
+  --pri:#6c4cf5; --pri2:#8f78ff; --ok:#1fae6b; --bad:#ec5050; --gold:#f5b400;
+  --line:#efe6d6; --soft:#f4efff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,"Segoe UI",system-ui,sans-serif;font-weight:700}
+button{font-family:inherit;font-weight:800;cursor:pointer;border:0}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px 60px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.top h1{font-size:24px;margin:0;font-weight:900;flex:1}
+.pill{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-size:16px;display:inline-flex;align-items:center;gap:6px}
+.btn{background:var(--pri);color:#fff;border-radius:16px;padding:14px 22px;font-size:18px;box-shadow:0 4px 0 #4a2fc4;transition:transform .05s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #4a2fc4}
+.btn.sec{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn.ok{background:var(--ok);box-shadow:0 4px 0 #13804d}
+.btn.gold{background:var(--gold);color:#3a2a00;box-shadow:0 4px 0 #b88700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.small{padding:8px 14px;font-size:15px;border-radius:12px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.profile{cursor:pointer;text-align:center;transition:transform .1s}
+.profile:hover{transform:translateY(-3px)}
+.profile h2{margin:6px 0 2px;font-size:24px}
+.profile .sub{color:var(--muted);font-size:15px}
+.status{margin-top:10px;font-size:16px}
+.status.done{color:var(--ok)}
+.hero svg{width:100%;max-width:240px;height:auto;display:block;margin:0 auto}
+.bar{height:14px;background:#f0eadf;border-radius:99px;overflow:hidden}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2));border-radius:99px;transition:width .4s}
+.bar.gold > i{background:linear-gradient(90deg,#f5b400,#ffd84d)}
+.muted{color:var(--muted)}
+.center{text-align:center}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+/* practice */
+.prob{font-size:clamp(38px,9vw,64px);font-weight:900;text-align:center;margin:18px 0 8px;letter-spacing:1px;line-height:1.25}
+.prob.word{font-size:clamp(20px,4.5vw,28px);font-weight:800;line-height:1.4;text-align:left}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.6em;line-height:1;margin:0 4px}
+.frac span:first-child{border-bottom:3px solid currentColor;padding:0 4px}
+.ansrow{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}
+.ans{font-family:inherit;font-weight:900;font-size:40px;width:190px;text-align:center;border:3px solid var(--line);border-radius:18px;padding:8px;background:#fff;color:var(--ink);outline:none}
+.ans.sm{width:110px}
+.ans:focus{border-color:var(--pri)}
+.ans.active{border-color:var(--pri);box-shadow:0 0 0 4px #e6e0ff}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:340px;margin:14px auto 0}
+.pad button{font-size:28px;padding:14px 0;border-radius:16px;background:#fff;border:2px solid var(--line);box-shadow:0 4px 0 var(--line);color:var(--ink)}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.pad .go{background:var(--ok);color:#fff;border-color:var(--ok);box-shadow:0 4px 0 #13804d}
+.cmpbtns{display:flex;justify-content:center;gap:14px;margin-top:10px}
+.cmpbtns button{font-size:44px;width:96px;height:96px;border-radius:22px;background:#fff;border:3px solid var(--line);box-shadow:0 4px 0 var(--line);color:var(--ink)}
+.dots{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin:6px 0 4px}
+.dots i{width:14px;height:14px;border-radius:50%;background:#ece4d6;display:block}
+.dots i.c{background:var(--ok)} .dots i.h{background:#9ad7b6} .dots i.w{background:var(--bad)} .dots i.cur{outline:3px solid var(--pri);outline-offset:1px}
+.fb{min-height:40px;text-align:center;font-size:22px;margin-top:10px}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pop{animation:pop .4s}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+/* shop */
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:14px}
+.slot{background:#fff;border:2px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.slot h4{margin:0;font-size:16px}
+.tiers{display:flex;gap:4px}
+.tiers i{flex:1;height:8px;border-radius:9px;background:#eee4d4}
+.tiers i.on{background:var(--gold)}
+.slot .nm{font-size:15px}
+.slot .price{font-size:14px;color:var(--muted)}
+.slot.maxed{background:#fffbea;border-color:#f5dc8a}
+/* parent */
+.field{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.field label{font-size:14px;color:var(--muted)}
+.field input[type=text],.field input[type=password],.field input[type=number],.field select,.field textarea{font-family:inherit;font-weight:700;font-size:16px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+.chk{display:flex;align-items:center;gap:8px;font-size:15px;padding:4px 0}
+.chk input{width:20px;height:20px}
+.tabs{display:flex;gap:8px;margin:6px 0 10px;flex-wrap:wrap}
+.tabs button{padding:8px 14px;border-radius:12px;background:#fff;border:2px solid var(--line);font-size:15px;color:var(--ink)}
+.tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+table.hist{width:100%;border-collapse:collapse;font-size:15px}
+table.hist td,table.hist th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.reward{background:linear-gradient(135deg,#fff3c4,#ffe08a);border:3px solid #f5c842;border-radius:22px;padding:20px;text-align:center}
+.reward h2{margin:4px 0;font-size:28px}
+.modal{position:fixed;inset:0;background:rgba(30,20,50,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal .card{max-width:420px;width:100%}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-size:16px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.conf{position:fixed;top:-20px;font-size:28px;z-index:70;pointer-events:none;animation:fall 2.2s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.syncnote{font-size:13px;color:var(--muted);text-align:center;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="config.js"></script>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ Utility ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => { const s = String(Math.abs(n)); const r = s.replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (n<0?'−':'') + r; };
+function todayKey(d = new Date()){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dayDiff(a,b){ return Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00'))/864e5); }
+function hashStr(s){ let h=2166136261; for(const c of s){ h^=c.charCodeAt(0); h=Math.imul(h,16777619);} return h>>>0; }
+function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let R = Math.random;
+const ri = (a,b) => a + Math.floor(R()*(b-a+1));
+const pick = arr => arr[Math.floor(R()*arr.length)];
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200); }
+function confetti(n=40){ const em=['🎉','⭐','✨','🏆','💎','🎈']; for(let i=0;i<n;i++){ const s=document.createElement('div'); s.className='conf'; s.textContent=pick(em); s.style.left=Math.random()*100+'vw'; s.style.animationDelay=(Math.random()*0.8)+'s'; document.body.appendChild(s); setTimeout(()=>s.remove(),3200);} }
+
+/* ============ Problem generators ============ */
+const frac = (a,b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+const NAMES = [['Tonda',0],['Ema',1],['Kuba',0],['Bára',1],['Matěj',0],['Anička',1],['Vojta',0],['Klárka',1]];
+
+const CATS = {
+  // ---- 2. třída ----
+  add20:   {grade:2, label:'Sčítání a odčítání do 20 (s přechodem)', gen(){
+    const a=ri(3,9), b=ri(11-a,9), c=a+b;
+    return R()<.5 ? {q:`${a} + ${b}`, a:c} : {q:`${c} − ${a}`, a:b};
+  }},
+  addsub100: {grade:2, label:'Sčítání a odčítání do 100', gen(){
+    const k=ri(0,4);
+    if(k===0){ const a=ri(12,89), b=ri(2,9); if(a+b<=100) return {q:`${a} + ${b}`, a:a+b}; return {q:`${a} − ${b}`, a:a-b}; }
+    if(k===1){ const a=ri(21,95), b=ri(2,9); return {q:`${a} − ${b}`, a:a-b}; }
+    if(k===2){ const a=ri(11,69), b=ri(1,3)*10; return R()<.5?{q:`${a} + ${b}`, a:a+b}:{q:`${a+b} − ${b}`, a:a}; }
+    if(k===3){ const a=ri(11,59), b=ri(11,99-a); return {q:`${a} + ${b}`, a:a+b}; }
+    const a=ri(40,99), b=ri(11,a-10); return {q:`${a} − ${b}`, a:a-b};
+  }},
+  mul2: {grade:2, label:'Malá násobilka 2, 3, 4, 5, 10 a dělení', gen(){
+    const m=pick([2,3,4,5,10,2,3,4,5]), n=ri(1,10);
+    return R()<.65 ? (R()<.5?{q:`${m} · ${n}`, a:m*n}:{q:`${n} · ${m}`, a:m*n}) : {q:`${m*n} : ${m}`, a:n};
+  }},
+  missing: {grade:2, label:'Doplň chybějící číslo', gen(){
+    const k=ri(0,2);
+    if(k===0){ const a=ri(3,9), b=ri(11-a,9); return {q:`<u>&nbsp;?&nbsp;</u> + ${b} = ${a+b}`, a:a}; }
+    if(k===1){ const a=ri(20,80), b=ri(3,19); return {q:`${a} + <u>&nbsp;?&nbsp;</u> = ${a+b}`, a:b}; }
+    const a=ri(30,90), b=ri(3,25); return {q:`${a} − <u>&nbsp;?&nbsp;</u> = ${a-b}`, a:b};
+  }},
+  compare: {grade:2, label:'Porovnávání (<, >, =)', gen(){
+    const k=ri(0,2); let l,r,lv,rv;
+    if(k===0){ lv=ri(10,99); rv=R()<.15?lv:ri(10,99); l=lv; r=rv; }
+    else if(k===1){ const a=ri(3,9), b=ri(3,9); lv=a+b; rv=R()<.3?lv:ri(lv-3,lv+3); l=`${a} + ${b}`; r=rv; }
+    else { const a=ri(20,60), b=ri(5,30); lv=a+b; const c=ri(20,60); const d=lv-c; if(d>0&&d<40&&R()<.4){rv=lv; r=`${c} + ${d}`;} else {rv=ri(lv-8,lv+8); r=rv;} l=`${a} + ${b}`; }
+    return {q:`${l} &nbsp;◯&nbsp; ${r}`, type:'cmp', a: lv<rv?'<':lv>rv?'>':'='};
+  }},
+  word2: {grade:2, label:'Slovní úlohy (jednoduché)', word:true, gen(){
+    const [n,f]=pick(NAMES), k=ri(0,3), x=f?'a':'';
+    if(k===0){ const a=ri(12,40), b=ri(5,20); return {q:`${n} měl${x} ${a} kuliček a dostal${x} dalších ${b}. Kolik kuliček má teď?`, a:a+b}; }
+    if(k===1){ const a=ri(25,60), b=ri(6,20); return {q:`V autobuse sedělo ${a} lidí. Na zastávce ${b} vystoupilo. Kolik lidí zůstalo v autobuse?`, a:a-b}; }
+    if(k===2){ const m=pick([2,3,4,5]), n2=ri(2,8); return {q:`Na stole je ${n2} talířů a na každém leží ${m} jablka. Kolik jablek je dohromady?`.replace(' jablka',m===5?' jablek':' jablka'), a:m*n2}; }
+    const m=pick([2,3,4,5]), n2=ri(2,8); return {q:`${m*n2} bonbónů rozdělíme spravedlivě mezi ${m} děti. Kolik bonbónů dostane každé dítě?`, a:n2};
+  }},
+  // ---- 4. třída ----
+  mulall: {grade:4, label:'Celá násobilka a dělení', gen(){
+    const m=ri(3,10), n=ri(2,10);
+    return R()<.55 ? {q:`${m} · ${n}`, a:m*n} : {q:`${m*n} : ${n}`, a:m};
+  }},
+  rem: {grade:4, label:'Dělení se zbytkem', gen(){
+    const d=ri(3,9), q=ri(2,9), r=ri(1,d-1);
+    return {q:`${d*q+r} : ${d}`, type:'rem', a:[q,r]};
+  }},
+  big: {grade:4, label:'Sčítání a odčítání do 10 000 (zpaměti)', gen(){
+    const k=ri(0,3);
+    if(k===0){ const a=ri(12,75)*100, b=ri(3,24)*100; return {q:`${fmt(a)} + ${fmt(b)}`, a:a+b}; }
+    if(k===1){ const a=ri(30,99)*100, b=ri(3,29)*100; return {q:`${fmt(a)} − ${fmt(b)}`, a:a-b}; }
+    if(k===2){ const a=ri(1000,8999), b=ri(1,9)*(R()<.5?10:100); return R()<.5?{q:`${fmt(a)} + ${fmt(b)}`, a:a+b}:{q:`${fmt(a+b)} − ${fmt(b)}`, a:a}; }
+    const a=ri(120,890), b=ri(110,600); return {q:`${a} + ${b}`, a:a+b};
+  }},
+  mulext: {grade:4, label:'Násobení mimo obor násobilky', gen(){
+    const k=ri(0,2);
+    if(k===0){ const a=ri(2,9)*10, b=ri(2,9); return {q:`${a} · ${b}`, a:a*b}; }
+    if(k===1){ const a=ri(2,9)*100, b=ri(2,9); return {q:`${a} · ${b}`, a:a*b}; }
+    const a=ri(12,29), b=ri(2,5); return {q:`${a} · ${b}`, a:a*b};
+  }},
+  divext: {grade:4, label:'Dělení mimo obor násobilky', gen(){
+    const k=ri(0,1);
+    if(k===0){ const d=ri(2,9), q=ri(2,9)*10; return {q:`${fmt(d*q)} : ${d}`, a:q}; }
+    const d=ri(2,4), q=ri(12,24); return {q:`${d*q} : ${d}`, a:q};
+  }},
+  order: {grade:4, label:'Pořadí početních výkonů, závorky', gen(){
+    const k=ri(0,3), a=ri(2,9), b=ri(2,9), c=ri(2,9);
+    if(k===0) return {q:`${a+10} + ${b} · ${c}`, a:a+10+b*c};
+    if(k===1) return {q:`(${a} + ${b}) · ${c}`, a:(a+b)*c};
+    if(k===2) return {q:`${b*c+a} − ${b} · ${c}`, a:a};
+    return {q:`${a*c} : ${c} + ${b}`, a:a+b};
+  }},
+  fractions: {grade:4, label:'Zlomky – část z celku', gen(){
+    const den=pick([2,3,4,5,10]), k=ri(2,9);
+    const num = (R()<.3 && den>2) ? ri(2,den-1) : 1;
+    return {q:`${frac(num,den)} z ${den*k}`, a:num*k};
+  }},
+  round: {grade:4, label:'Zaokrouhlování', gen(){
+    const n=ri(1012,9988), t=pick([10,100,1000]);
+    const nm={10:'desítky',100:'stovky',1000:'tisíce'}[t];
+    let r = Math.round(n/t)*t;
+    return {q:`Zaokrouhli ${fmt(n)} na ${nm}`, a:r, small:true};
+  }},
+  word4: {grade:4, label:'Slovní úlohy (dvoukrokové)', word:true, gen(){
+    const [n,f]=pick(NAMES), k=ri(0,3);
+    if(k===0){ const p=ri(3,9), c=ri(12,25), m=p*c+ri(5,60); return {q:`${n} má ${m} Kč. Koupí ${p} sešitů po ${c} Kč. Kolik korun ${f?'jí':'mu'} zbude?`, a:m-p*c}; }
+    if(k===1){ const b=ri(8,15), extra=ri(3,15); return {q:`Ve třídě je ${b} lavic a v každé sedí 2 žáci. Na výlet jede ještě ${extra} žáků z jiné třídy. Kolik žáků jede na výlet?`, a:b*2+extra}; }
+    if(k===2){ const box=ri(3,8), per=ri(6,9), eaten=ri(2,box*per-5); return {q:`V ${box} krabicích je po ${per} kouscích čokolády. Děti snědly ${eaten} kousků. Kolik kousků zbylo?`, a:box*per-eaten}; }
+    const km=ri(12,45), days=ri(3,7); return {q:`Cyklista ujede každý den ${km} km. Kolik kilometrů ujede za ${days} dní?`, a:km*days};
+  }},
+};
+const DEFAULT_CATS = {2:['add20','addsub100','mul2','missing','compare','word2'], 4:['mulall','rem','big','mulext','divext','order','fractions','round','word4']};
+
+function genDaily(profile, dateKey, count=20){
+  R = mulberry(hashStr(profile.id + '|' + dateKey + '|' + (profile.cats||[]).join(',')));
+  let cats = (profile.cats && profile.cats.length) ? profile.cats.filter(c=>CATS[c]) : DEFAULT_CATS[profile.grade]||DEFAULT_CATS[2];
+  if(!cats.length) cats = DEFAULT_CATS[2];
+  // balanced deck: round-robin over shuffled categories, word problems max 3
+  const out=[], seen=new Set(); let guard=0, wordCount=0;
+  let order=[];
+  while(out.length<count && guard++<500){
+    if(!order.length){ order=cats.slice(); for(let i=order.length-1;i>0;i--){const j=Math.floor(R()*(i+1)); [order[i],order[j]]=[order[j],order[i]];} }
+    const c=order.pop(), cat=CATS[c];
+    if(cat.word && wordCount>=3) continue;
+    const p=cat.gen(); p.cat=c; p.type=p.type||'num'; if(cat.word) p.word=true;
+    if(seen.has(p.q)) continue; seen.add(p.q);
+    if(cat.word) wordCount++;
+    out.push(p);
+  }
+  R = Math.random;
+  return out;
+}
+
+/* ============ Character / shop ============ */
+const SLOTS = [
+  {id:'head',  name:'Hlava',     items:['Čepice s bambulí','Rytířská helma','Zlatá koruna']},
+  {id:'weapon',name:'Zbraň',     items:['Dřevěný meč','Ocelový meč','Zářící zlatý meč']},
+  {id:'shield',name:'Štít',      items:['Dřevěný štít','Železný štít','Štít s hvězdou']},
+  {id:'armor', name:'Brnění',    items:['Kožená vesta','Kroužková zbroj','Zlaté brnění']},
+  {id:'cape',  name:'Plášť',     items:['Krátký plášť','Hrdinský plášť','Královský plášť']},
+  {id:'boots', name:'Boty',      items:['Kožené boty','Rytířské boty','Okřídlené boty']},
+  {id:'pet',   name:'Kamarád',   items:['Kuřátko','Pejsek','Dráček']},
+];
+const TIER_COST=[60,150,300];
+const LEN_MULT={short:0.5, mid:1, long:1.6};
+const TOTAL_ITEMS = SLOTS.length*3;
+function cost(st,tier){ return Math.round(TIER_COST[tier]*(LEN_MULT[st.settings.length]||1)/5)*5; }
+function totalCost(st){ let s=0; for(let t=0;t<3;t++) s+=cost(st,t)*SLOTS.length; return s; }
+function itemsOwned(p){ return SLOTS.reduce((s,sl)=>s+(p.gear[sl.id]||0),0); }
+
+const TUNICS = ['#4f7cff','#ff7a45','#21b37a','#c04cf5','#e8435a','#1fb5c9'];
+
+function heroSVG(p, size){
+  const g=p.gear||{}, tunic=p.color||'#4f7cff';
+  const H=g.head||0, W=g.weapon||0, S=g.shield||0, A=g.armor||0, C=g.cape||0, B=g.boots||0, P=g.pet||0;
+  let s=`<svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Postavička">`;
+  s+=`<defs><radialGradient id="glow${p.id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff6b0" stop-opacity="0"/></radialGradient></defs>`;
+  if(itemsOwned(p)===TOTAL_ITEMS) s+=`<circle cx="105" cy="130" r="115" fill="url(#glow${p.id})"/>`;
+  s+=`<ellipse cx="105" cy="236" rx="70" ry="9" fill="#000" opacity=".08"/>`;
+  // cape (behind)
+  if(C){ const col=['','#c0392b','#8e1b2b','#5b2a86'][C]; const len=[0,170,205,222][C];
+    s+=`<path d="M72 100 Q105 92 138 100 L${150+C*4} ${len} Q105 ${len+10} ${60-C*4} ${len} Z" fill="${col}"/>`;
+    if(C===3) s+=`<path d="M${60-12} 218 Q105 232 ${150+12} 218" stroke="#f5d76e" stroke-width="5" fill="none"/>`; }
+  // legs
+  s+=`<rect x="84" y="162" width="15" height="52" rx="6" fill="#3d3a55"/><rect x="111" y="162" width="15" height="52" rx="6" fill="#3d3a55"/>`;
+  // boots
+  const bootCol=['#7a5230','#8a5a2b','#2e2e3a','#e2b100'][B];
+  s+=`<path d="M80 ${B?200:208} h22 v20 h-28 q0-8 6-8z" fill="${bootCol}"/><path d="M108 ${B?200:208} h22 v12 q8 0 8 8 h-30z" fill="${bootCol}"/>`;
+  if(B===3){ s+=`<path d="M78 204 q-14-6-18 4 q8-1 18 2z M132 204 q14-6 18 4 q-8-1-18 2z" fill="#fff" stroke="#ddd"/>`; }
+  // body / tunic
+  s+=`<path d="M74 100 Q105 90 136 100 L134 168 Q105 174 76 168 Z" fill="${tunic}"/>`;
+  s+=`<rect x="76" y="150" width="58" height="8" fill="#5a3b1f" opacity=".85"/><rect x="100" y="149" width="10" height="10" rx="2" fill="#e8c34a"/>`;
+  // armor
+  if(A===1){ s+=`<path d="M80 104 Q105 97 130 104 L128 148 L82 148 Z" fill="#a0693a"/><path d="M105 102 V148" stroke="#6e4422" stroke-width="3"/><circle cx="98" cy="118" r="2" fill="#e8c34a"/><circle cx="98" cy="132" r="2" fill="#e8c34a"/>`; }
+  if(A===2){ s+=`<path d="M78 102 Q105 94 132 102 L131 150 L79 150 Z" fill="#9aa3b5"/>`;
+    for(let y=106;y<148;y+=7) for(let x=82;x<130;x+=7) s+=`<circle cx="${x+(y%14?3:0)}" cy="${y}" r="2.6" fill="none" stroke="#6c7488" stroke-width="1.2"/>`; }
+  if(A===3){ s+=`<path d="M77 101 Q105 92 133 101 L131 150 L79 150 Z" fill="#f2c230" stroke="#b88a00" stroke-width="2"/><path d="M88 110 Q105 104 122 110 L120 140 Q105 146 90 140 Z" fill="#ffd95a" stroke="#c99a10" stroke-width="2"/><path d="M105 115 l4 9 h9 l-7 6 3 9 -9-6 -9 6 3-9 -7-6 h9z" fill="#fff4b8"/>`; }
+  // arms
+  s+=`<rect x="58" y="104" width="16" height="48" rx="8" fill="${A===3?'#f2c230':A===2?'#9aa3b5':tunic}"/><rect x="136" y="104" width="16" height="48" rx="8" fill="${A===3?'#f2c230':A===2?'#9aa3b5':tunic}"/>`;
+  // weapon (right hand, viewer's right)
+  if(W===1){ s+=`<rect x="141" y="62" width="7" height="88" rx="3" fill="#a87443"/><rect x="134" y="132" width="21" height="6" rx="3" fill="#7a5230"/>`; }
+  if(W===2){ s+=`<path d="M141 132 L141 54 L144.5 44 L148 54 L148 132 Z" fill="#dfe6ef" stroke="#8a95a8" stroke-width="1.5"/><rect x="131" y="130" width="27" height="7" rx="3" fill="#5a3b1f"/><rect x="141" y="137" width="7" height="16" fill="#3d2a17"/>`; }
+  if(W===3){ s+=`<circle cx="145" cy="80" r="34" fill="url(#glow${p.id})"/><path d="M140.5 132 L140.5 46 L144.5 32 L148.5 46 L148.5 132 Z" fill="#ffe066" stroke="#d4a106" stroke-width="1.8"/><path d="M128 128 h33 l-4 9 h-25z" fill="#d4a106"/><circle cx="144.5" cy="132" r="4" fill="#e84393"/><rect x="141" y="137" width="7" height="16" fill="#8e5a12"/>`; }
+  // hands
+  s+=`<circle cx="66" cy="153" r="8" fill="#f6c9a0"/><circle cx="144" cy="153" r="8" fill="#f6c9a0"/>`;
+  // shield (left)
+  if(S===1){ s+=`<circle cx="58" cy="136" r="24" fill="#b27a45" stroke="#7a5230" stroke-width="4"/><path d="M40 128 h36 M40 144 h36" stroke="#8c5b31" stroke-width="2"/><circle cx="58" cy="136" r="5" fill="#cfd5df"/>`; }
+  if(S===2){ s+=`<path d="M34 112 h48 v24 q0 26 -24 38 q-24 -12 -24 -38 z" fill="#aab3c3" stroke="#5f6a80" stroke-width="4"/><path d="M58 114 v58 M36 130 h44" stroke="#5f6a80" stroke-width="3"/>`; }
+  if(S===3){ s+=`<path d="M32 110 h52 v26 q0 28 -26 40 q-26 -12 -26 -40 z" fill="#2f5bd3" stroke="#f2c230" stroke-width="5"/><path d="M58 122 l6 13 h14 l-11 9 4 14 -13-8 -13 8 4-14 -11-9 h14z" fill="#ffd84d"/>`; }
+  // head
+  s+=`<rect x="98" y="86" width="14" height="12" fill="#f0bd92"/>`;
+  s+=`<circle cx="105" cy="66" r="28" fill="#f6c9a0"/>`;
+  if(H!==2) s+=`<path d="M78 62 Q80 36 105 36 Q131 36 132 60 Q122 50 108 52 Q96 46 86 56 Q80 58 78 62Z" fill="#6b4226"/>`;
+  s+=`<circle cx="95" cy="68" r="3.6" fill="#2b2340"/><circle cx="115" cy="68" r="3.6" fill="#2b2340"/><circle cx="96.2" cy="66.8" r="1.2" fill="#fff"/><circle cx="116.2" cy="66.8" r="1.2" fill="#fff"/>`;
+  s+=`<circle cx="88" cy="78" r="5" fill="#ff9a9a" opacity=".5"/><circle cx="122" cy="78" r="5" fill="#ff9a9a" opacity=".5"/>`;
+  s+=`<path d="M96 80 Q105 88 114 80" stroke="#2b2340" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  if(H===1){ s+=`<path d="M77 58 Q78 30 105 30 Q132 30 133 58 Z" fill="#e8435a"/><rect x="75" y="52" width="60" height="10" rx="5" fill="#fff"/><circle cx="105" cy="26" r="8" fill="#fff"/>`; }
+  if(H===2){ s+=`<path d="M75 66 Q74 32 105 32 Q136 32 135 66 L128 66 L128 58 L82 58 L82 66Z" fill="#aab3c3" stroke="#5f6a80" stroke-width="2.5"/><path d="M105 32 V58" stroke="#5f6a80" stroke-width="2.5"/><path d="M105 30 q4-14 18-16 q-6 8-10 18z" fill="#e8435a"/>`; }
+  if(H===3){ s+=`<path d="M80 50 L84 26 L94 40 L105 20 L116 40 L126 26 L130 50 Z" fill="#f5c400" stroke="#c99a10" stroke-width="2"/><circle cx="105" cy="38" r="4" fill="#e84393"/><circle cx="90" cy="44" r="3" fill="#2fb5ff"/><circle cx="120" cy="44" r="3" fill="#2fb5ff"/>`; }
+  // pet
+  if(P===1){ s+=`<g transform="translate(192 210)"><ellipse cx="0" cy="8" rx="15" ry="13" fill="#ffd84d"/><circle cx="0" cy="-8" r="10" fill="#ffd84d"/><circle cx="3" cy="-9" r="2" fill="#2b2340"/><path d="M9 -7 l7 2 -7 2z" fill="#ff8c1a"/><path d="M-3 -18 q3-6 6 0" stroke="#ffb700" stroke-width="2" fill="none"/></g>`; }
+  if(P===2){ s+=`<g transform="translate(190 206)"><ellipse cx="0" cy="12" rx="22" ry="13" fill="#c98b4f"/><circle cx="16" cy="-4" r="13" fill="#c98b4f"/><ellipse cx="8" cy="-12" rx="6" ry="10" fill="#8a5a2b" transform="rotate(-25 8 -12)"/><circle cx="20" cy="-6" r="2.2" fill="#2b2340"/><circle cx="28" cy="-1" r="3" fill="#2b2340"/><path d="M-22 6 q-10 -10 -4 -16" stroke="#c98b4f" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="-14" y="20" width="6" height="8" rx="2" fill="#a8703c"/><rect x="8" y="20" width="6" height="8" rx="2" fill="#a8703c"/></g>`; }
+  if(P===3){ s+=`<g transform="translate(188 196)"><path d="M-6 0 q-26 -24 -14 -36 q6 14 18 18z" fill="#7be0a8" stroke="#2c9c62" stroke-width="2"/><ellipse cx="0" cy="18" rx="22" ry="17" fill="#3cc47c"/><ellipse cx="2" cy="22" rx="12" ry="10" fill="#bff2d2"/><circle cx="18" cy="-2" r="14" fill="#3cc47c"/><path d="M12 -14 l-2 -10 6 7z M22 -15 l2 -10 3 9z" fill="#ffd84d"/><circle cx="22" cy="-4" r="2.6" fill="#2b2340"/><path d="M30 2 q8 -2 10 -8 q2 8 -6 10z" fill="#ff8c1a" opacity=".9"/><path d="M-20 26 q-16 4 -18 -8" stroke="#3cc47c" stroke-width="6" fill="none" stroke-linecap="round"/></g>`; }
+  s+=`</svg>`;
+  return s;
+}
+
+/* ============ State & persistence ============ */
+const LS_KEY='pocitani-hrdinove-v1';
+function newProfile(id, name, grade, color){
+  return {id, name, grade, color, cats:DEFAULT_CATS[grade].slice(), points:0, gear:{}, season:1, rewardClaimed:false, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0};
+}
+function defaultState(){
+  return {v:1, savedAt:0,
+    settings:{pin:'1234', reward:'Výlet do zoo nebo nová hra – podle výběru', length:'mid', perDay:20},
+    profiles:[ newProfile('p2','Druháček',2,'#ff7a45'), newProfile('p4','Čtvrťák',4,'#4f7cff') ]};
+}
+let S = loadLocal() || defaultState();
+function loadLocal(){ try{ const t=localStorage.getItem(LS_KEY); if(t) return JSON.parse(t); }catch(e){} return null; }
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+
+const BACKEND = (window.BACKEND_URL||'').trim();
+const HAS_GAS = !!BACKEND;
+async function gas(fn, arg){
+  if(fn==='loadAll'){ const r=await fetch(BACKEND+'?t='+Date.now()); if(!r.ok) throw new Error(r.status); return r.json(); }
+  const body = fn==='saveItems' ? {action:'save', items:arg} : {action:'log', result:arg};
+  const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(r.status); return r.json();
+}
+let writing=false, pendingWrite=false, saveTimer=null, syncState=HAS_GAS?'loading':'local';
+const lastSent={};
+function save(){
+  S.savedAt=Date.now();
+  saveLocal();
+  if(!HAS_GAS) return;
+  clearTimeout(saveTimer); saveTimer=setTimeout(flush, 700);
+}
+async function flush(){
+  if(!HAS_GAS) return;
+  if(writing){ pendingWrite=true; return; }
+  writing=true;
+  try{
+    const items={};
+    const sj=JSON.stringify(S.settings); if(lastSent.settings!==sj) items.settings=sj;
+    for(const p of S.profiles){ const j=JSON.stringify(p); if(lastSent[p.id]!==j) items[p.id]=j; }
+    if(Object.keys(items).length){ await gas('saveItems', items); Object.assign(lastSent, items); }
+    syncState='cloud';
+  }catch(e){ syncState='offline'; setTimeout(flush, 8000); }
+  writing=false;
+  if(pendingWrite){ pendingWrite=false; flush(); }
+  updateSyncNote();
+}
+async function pull(rerender){
+  if(!HAS_GAS || writing) return;
+  try{
+    const r = await gas('loadAll');
+    if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; }
+    for(const [id,j] of Object.entries((r&&r.profiles)||{})){
+      const o=JSON.parse(j); const i=S.profiles.findIndex(p=>p.id===id);
+      if(i>=0) S.profiles[i]=o; else S.profiles.push(o);
+      lastSent[id]=j;
+    }
+    saveLocal(); syncState='cloud';
+    if(!r || !r.settings) flush();
+    if(rerender) render();
+  }catch(e){ syncState='offline'; }
+  updateSyncNote();
+}
+function logResult(p, h){
+  if(!HAS_GAS) return;
+  gas('logResult', {date:todayKey(), name:p.name, grade:p.grade, c:h.c, n:h.n, pts:h.pts,
+    wrong:(h.wrongCats||[]).map(c=>CATS[c]?CATS[c].label:c).join(', ')}).catch(()=>{});
+}
+// refresh while someone (parent) watches the overview
+setInterval(()=>{ if(view.name==='home' || (view.name==='parent' && parentOk && parentTab==='history')) pull(true); }, 30000);
+function updateSyncNote(){ const el=$('#syncnote'); if(!el) return;
+  el.textContent = syncState==='cloud' ? '☁️ Uloženo online – výsledky vidí rodič odkudkoliv.' :
+                   syncState==='loading' ? '⏳ Načítám postup…' :
+                   syncState==='offline' ? '⚠️ Nepodařilo se spojit s úložištěm – zkusím to znovu.' :
+                   '💾 Postup se ukládá v tomto prohlížeči.'; }
+
+/* ============ Day logic ============ */
+function prof(id){ return S.profiles.find(p=>p.id===id); }
+function ensureToday(p){
+  const k=todayKey();
+  if(!p.today || p.today.date!==k){
+    p.today = {date:k, idx:0, tries:0, res:[], problems:genDaily(p,k,S.settings.perDay||20), done:false, pts:0};
+    save();
+  }
+  return p.today;
+}
+function streakAlive(p){ return p.lastDone && dayDiff(p.lastDone, todayKey())<=1; }
+
+/* ============ Views ============ */
+let view={name:'home'};
+function go(v){ view=v; render(); window.scrollTo(0,0); }
+
+function render(){
+  const app=$('#app');
+  if(view.name==='home') app.innerHTML=homeView();
+  else if(view.name==='play') app.innerHTML=playView();
+  else if(view.name==='hero') app.innerHTML=heroView();
+  else if(view.name==='summary') app.innerHTML=summaryView();
+  else if(view.name==='parent') app.innerHTML=parentView();
+  bind();
+  updateSyncNote();
+}
+
+function homeView(){
+  const cards = S.profiles.map(p=>{
+    const t = (p.today && p.today.date===todayKey()) ? p.today : null;
+    const done = t && t.done;
+    const prog = t ? t.idx : 0;
+    const status = done ? `✅ Dnešní úkol splněn (+${t.pts} bodů)` : prog ? `▶️ Rozpracováno: ${prog}/${S.settings.perDay} příkladů` : `🎯 Čeká 20 nových příkladů`;
+    const owned=itemsOwned(p);
+    return `<div class="card profile" data-open="${p.id}">
+      <div class="hero">${heroSVG(p)}</div>
+      <h2>${esc(p.name)}</h2>
+      <div class="sub">${p.grade}. třída · ⭐ ${p.points} bodů · 🔥 ${streakAlive(p)?p.streak:0} dní v řadě</div>
+      <div style="margin:10px 4px 0" class="bar gold"><i style="width:${owned/TOTAL_ITEMS*100}%"></i></div>
+      <div class="sub" style="margin-top:4px">Vylepšení ${owned}/${TOTAL_ITEMS}</div>
+      <div class="status ${done?'done':''}">${status}</div>
+    </div>`;}).join('');
+  return `<div class="top"><h1>🧮 Počítací hrdinové</h1><button class="btn sec small" data-act="parent">👨‍👩‍👦 Rodič</button></div>
+    <p class="muted" style="margin-top:0">Kdo jde dnes počítat? Klikni na svého hrdinu.</p>
+    <div class="grid2">${cards}</div>
+    <div class="syncnote" id="syncnote"></div>`;
+}
+
+function heroView(){
+  const p=prof(view.pid); const t=ensureToday(p);
+  const owned=itemsOwned(p), maxed = owned===TOTAL_ITEMS;
+  const slots = SLOTS.map(sl=>{
+    const tier=p.gear[sl.id]||0;
+    const tiers=[0,1,2].map(i=>`<i class="${i<tier?'on':''}"></i>`).join('');
+    if(tier>=3) return `<div class="slot maxed"><h4>${sl.name}</h4><div class="tiers">${tiers}</div><div class="nm">✨ ${sl.items[2]}</div><div class="price">Maximum!</div></div>`;
+    const c=cost(S,tier); const can=p.points>=c;
+    return `<div class="slot"><h4>${sl.name}</h4><div class="tiers">${tiers}</div>
+      <div class="nm">${tier?`Má: ${sl.items[tier-1]}<br>`:''}Další: <b>${sl.items[tier]}</b></div>
+      <button class="btn small ${can?'gold':'sec'}" data-buy="${sl.id}" ${can?'':'disabled'}>⭐ ${c}</button></div>`;
+  }).join('');
+  const reward = maxed ? `<div class="reward" style="margin-top:16px"><div style="font-size:40px">🏆</div><h2>Hrdina je na maximu!</h2>
+      <p style="font-size:18px">Zasloužená odměna: <b>${esc(S.settings.reward)}</b></p>
+      <p class="muted">${p.rewardClaimed?'Odměna byla předána. Rodič může spustit novou výpravu.':'Ukaž to mamce nebo taťkovi!'}</p></div>` : '';
+  const playLabel = t.done ? '✅ Dnes hotovo – procvičit znovu (bez bodů)' : t.idx ? `▶️ Pokračovat (${t.idx}/${t.problems.length})` : '🚀 Začít dnešních 20 příkladů';
+  return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>${esc(p.name)}</h1><span class="pill">⭐ ${p.points}</span></div>
+    <div class="grid2">
+      <div class="card hero center">${heroSVG(p)}
+        <div style="margin:10px 0 4px" class="bar gold"><i style="width:${owned/TOTAL_ITEMS*100}%"></i></div>
+        <div class="muted">Vylepšení ${owned} z ${TOTAL_ITEMS} · výprava č. ${p.season}</div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
+        <button class="btn ${t.done?'sec':''}" data-act="play" style="font-size:20px;padding:18px">${playLabel}</button>
+        <div class="muted" style="font-size:15px">Za každý správný příklad ⭐ 5 bodů (na druhý pokus 2). Za splnění celého dne +20, za všech 20 správně +30 navíc, za 3 a více dní v řadě +10.</div>
+        <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${(streakAlive(p)?p.streak:0)===1?'den':'dní'} v řadě</div>
+        <div class="muted" style="font-size:15px">🎁 Až bude hrdina celý vylepšený: <b>${esc(S.settings.reward)}</b></div>
+      </div>
+    </div>
+    ${reward}
+    <h3 style="margin:22px 0 0">🛒 Obchod s vylepšeními</h3>
+    <div class="shop">${slots}</div>`;
+}
+
+function probHTML(pr){
+  return `<div class="prob ${pr.word?'word':''}">${pr.q}${pr.word||pr.small||pr.type==='cmp'?'':' = '}</div>`;
+}
+function playView(){
+  const p=prof(view.pid); const t=view.practice ? view.practice : ensureToday(p);
+  const pr=t.problems[t.idx];
+  const dots=t.problems.map((_,i)=>{ const r=t.res[i]; const cl = r===undefined ? (i===t.idx?'cur':'') : r===2?'c':r===1?'h':'w'; return `<i class="${cl}"></i>`; }).join('');
+  let input='';
+  if(pr.type==='num') input=`<div class="ansrow">${pr.word||pr.small?'<span style="font-size:24px">Výsledek:</span>':''}<input class="ans active" id="a1" inputmode="numeric" autocomplete="off" maxlength="6"></div>`;
+  if(pr.type==='rem') input=`<div class="ansrow"><input class="ans sm active" id="a1" inputmode="numeric" autocomplete="off" maxlength="4"><span style="font-size:28px">zbytek</span><input class="ans sm" id="a2" inputmode="numeric" autocomplete="off" maxlength="3"></div>`;
+  const pad = pr.type==='cmp' ? `<div class="cmpbtns"><button data-cmp="<">&lt;</button><button data-cmp="=">=</button><button data-cmp=">">&gt;</button></div>` :
+    `<div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="del">⌫</button><button data-k="0">0</button><button data-k="ok" class="go">✓</button></div>`;
+  return `<div class="top"><button class="btn sec small" data-act="back">← ${esc(p.name)}</button><h1 class="center">${view.practice?'Procvičování':'Příklad '+(t.idx+1)+' z '+t.problems.length}</h1><span class="pill">⭐ ${view.practice?'–':p.points}</span></div>
+    <div class="dots">${dots}</div>
+    <div class="card" id="pcard">
+      ${probHTML(pr)}
+      ${input}
+      <div class="fb" id="fb">${t.tries?'Zkus to ještě jednou 🙂':''}</div>
+      ${pad}
+    </div>`;
+}
+
+function summaryView(){
+  const p=prof(view.pid); const s=view.sum;
+  return `<div class="top"><h1>${s.practice?'Procvičování hotovo':'Dnešní úkol splněn!'}</h1></div>
+    <div class="card center">
+      <div style="font-size:64px">${s.correct===s.total?'🏆':s.correct>=s.total*0.75?'🌟':'💪'}</div>
+      <h2 style="margin:6px 0">${s.correct} z ${s.total} správně</h2>
+      ${s.practice?'<p class="muted">Procvičování navíc se do bodů nepočítá.</p>':`
+      <p style="font-size:20px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 20${s.perfect?'<br>Všechno správně: ⭐ 30':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 10`:''}</p>
+      <h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`}
+      ${s.wrong.length?`<div style="text-align:left;margin:14px auto;max-width:420px"><b>Na tyhle si dej pozor:</b><ul>${s.wrong.map(w=>`<li>${w}</li>`).join('')}</ul></div>`:''}
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-act="hero">🛒 Vylepšit hrdinu</button><button class="btn sec" data-act="home">Domů</button></div>
+    </div>`;
+}
+
+/* ---- parent ---- */
+let parentOk=false, parentTab='settings';
+function parentView(){
+  if(!parentOk) return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Rodičovská sekce</h1></div>
+    <div class="card" style="max-width:380px;margin:0 auto"><div class="field"><label>Zadej PIN</label><input type="password" id="pin" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+    <button class="btn" data-act="pinok">Vstoupit</button><p class="muted" style="font-size:14px">Výchozí PIN je 1234 – po přihlášení si ho změňte.</p></div>`;
+  const tabs=[['settings','Nastavení'],...S.profiles.map(p=>['p:'+p.id,p.name]),['history','Historie'],['backup','Záloha']];
+  let body='';
+  if(parentTab==='settings'){
+    body=`<div class="field"><label>Odměna, když hrdina dosáhne maxima</label><input type="text" id="s-reward" value="${esc(S.settings.reward)}"></div>
+      <div class="field"><label>Délka výpravy (jak dlouho trvá vylepšit hrdinu na maximum)</label><select id="s-len">
+        <option value="short" ${S.settings.length==='short'?'selected':''}>Krátká – cca 2 týdny poctivého počítání</option>
+        <option value="mid" ${S.settings.length==='mid'?'selected':''}>Střední – cca 3–4 týdny</option>
+        <option value="long" ${S.settings.length==='long'?'selected':''}>Dlouhá – cca 6 týdnů</option></select></div>
+      <div class="muted" style="font-size:14px">Celkem potřeba ⭐ ${totalCost(S)} bodů. Za den se dá získat až ~150 bodů.</div>
+      <div class="field"><label>Počet příkladů denně</label><input type="number" id="s-per" min="5" max="40" value="${S.settings.perDay||20}"></div>
+      <div class="field"><label>Nový PIN (nech prázdné = beze změny)</label><input type="text" id="s-pin" inputmode="numeric" maxlength="8"></div>
+      <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
+  } else if(parentTab.startsWith('p:')){
+    const p=prof(parentTab.slice(2));
+    const cats=Object.entries(CATS).map(([k,c])=>`<label class="chk"><input type="checkbox" data-cat="${k}" ${p.cats.includes(k)?'checked':''}> ${c.label} <span class="muted" style="font-size:13px">(${c.grade}. tř.)</span></label>`).join('');
+    body=`<div class="grid2"><div>
+      <div class="field"><label>Jméno</label><input type="text" id="p-name" value="${esc(p.name)}"></div>
+      <div class="field"><label>Ročník</label><select id="p-grade"><option value="2" ${p.grade==2?'selected':''}>2. třída</option><option value="4" ${p.grade==4?'selected':''}>4. třída</option></select></div>
+      <div class="field"><label>Barva oblečku</label><div class="row">${TUNICS.map(c=>`<button data-color="${c}" style="width:36px;height:36px;border-radius:50%;background:${c};border:${p.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
+      <div class="field"><label>Typy příkladů (změna se projeví od zítřka, nebo hned po „Vygenerovat dnešek znovu“)</label>${cats}</div>
+      <div class="row"><button class="btn ok small" data-act="saveprofile">Uložit</button><button class="btn sec small" data-act="defcats">Výchozí pro ročník</button><button class="btn sec small" data-act="regen">Vygenerovat dnešek znovu</button></div>
+    </div><div>
+      <div class="card center" style="padding:10px">${heroSVG(p)}<div>⭐ ${p.points} bodů · vylepšení ${itemsOwned(p)}/${TOTAL_ITEMS}</div></div>
+      <div class="field"><label>Přidat / ubrat body ručně (např. bonus za úkol)</label><div class="row"><input type="number" id="p-bonus" value="20" style="width:110px"><button class="btn small" data-act="bonus">Připsat</button></div></div>
+      <div class="row" style="margin-top:8px">
+        ${itemsOwned(p)===TOTAL_ITEMS && !p.rewardClaimed ? `<button class="btn gold small" data-act="claimed">🎁 Odměna předána</button>`:''}
+        <button class="btn sec small" data-act="newseason">🔄 Nová výprava (vynulovat hrdinu)</button>
+      </div>
+      <p class="muted" style="font-size:13px">Nová výprava vynuluje vybavení a body, historie zůstane.</p>
+    </div></div>`;
+  } else if(parentTab==='history'){
+    body = S.profiles.map(p=>{
+      const keys=Object.keys(p.history).sort().reverse().slice(0,21);
+      const rows=keys.map(k=>{const h=p.history[k]; return `<tr><td>${k.split('-').reverse().join('. ')}</td><td>${h.c}/${h.n}</td><td>+${h.pts}</td><td class="muted" style="font-size:13px">${(h.wrongCats||[]).map(c=>CATS[c]?CATS[c].label:c).join(', ')}</td></tr>`;}).join('');
+      return `<h3>${esc(p.name)} <span class="muted" style="font-size:15px">· správně celkem ${p.totalCorrect}</span></h3>${rows?`<table class="hist"><tr><th>Den</th><th>Správně</th><th>Body</th><th>Kde chyboval</th></tr>${rows}</table>`:'<p class="muted">Zatím žádné dokončené dny.</p>'}`;}).join('');
+  } else if(parentTab==='backup'){
+    body=`<p>Postup se ukládá automaticky. Kdybyste ho chtěli ručně přenést, zkopírujte si tento kód a jinde ho vložte.</p>
+      <textarea id="bk" style="width:100%;height:120px;font-family:monospace;font-size:12px;border:2px solid var(--line);border-radius:12px;padding:8px">${esc(btoa(unescape(encodeURIComponent(JSON.stringify(S)))))}</textarea>
+      <div class="row"><button class="btn small" data-act="copybk">Kopírovat</button><button class="btn sec small" data-act="importbk">Načíst vložený kód</button></div>`;
+  }
+  return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Rodičovská sekce</h1></div>
+    <div class="tabs">${tabs.map(([k,l])=>`<button class="${parentTab===k?'on':''}" data-tab="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="card">${body}</div>`;
+}
+
+/* ============ Interaction ============ */
+let modalCb=null;
+function confirmBox(text, cb){
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<div class="card center"><p style="font-size:18px">${text}</p><div class="row" style="justify-content:center"><button class="btn" id="mok">Ano</button><button class="btn sec" id="mno">Zrušit</button></div></div>`;
+  document.body.appendChild(m);
+  m.querySelector('#mok').onclick=()=>{m.remove(); cb();};
+  m.querySelector('#mno').onclick=()=>m.remove();
+}
+
+function bind(){
+  document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>go({name:'hero',pid:el.dataset.open}));
+  document.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>act(el.dataset.act));
+  document.querySelectorAll('[data-buy]').forEach(el=>el.onclick=()=>buy(el.dataset.buy));
+  document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{parentTab=el.dataset.tab; render();});
+  document.querySelectorAll('[data-color]').forEach(el=>el.onclick=()=>{ const p=prof(parentTab.slice(2)); p.color=el.dataset.color; save(); render(); });
+  if(view.name==='play'){
+    document.querySelectorAll('[data-k]').forEach(el=>el.onclick=()=>key(el.dataset.k));
+    document.querySelectorAll('[data-cmp]').forEach(el=>el.onclick=()=>answer(el.dataset.cmp));
+    document.querySelectorAll('.ans').forEach(el=>{
+      el.onfocus=()=>{ document.querySelectorAll('.ans').forEach(x=>x.classList.remove('active')); el.classList.add('active'); };
+      el.oninput=()=>{ el.value=el.value.replace(/[^\d]/g,''); };
+      el.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); key('ok'); } };
+    });
+    const a1=$('#a1'); if(a1 && matchMedia('(pointer:fine)').matches) a1.focus();
+  }
+  if(view.name==='parent' && !parentOk){ const pin=$('#pin'); if(pin){ pin.focus(); pin.onkeydown=e=>{ if(e.key==='Enter') act('pinok'); }; } }
+}
+
+function activeInput(){ return document.querySelector('.ans.active') || $('#a1'); }
+function key(k){
+  const pr=curProblem(); if(!pr) return;
+  if(k==='ok'){
+    if(pr.type==='rem'){ const a=$('#a1').value, b=$('#a2').value; if(a===''||b===''){ (a===''?$('#a1'):$('#a2')).focus(); return;} answer([+a,+b]); }
+    else { const v=$('#a1').value; if(v==='') return; answer(+v); }
+    return;
+  }
+  const inp=activeInput(); if(!inp) return;
+  if(k==='del') inp.value=inp.value.slice(0,-1);
+  else if(inp.value.length < (+inp.maxLength||6)) inp.value+=k;
+  if(pr.type==='rem' && inp.id==='a1' && k!=='del' && false){}
+}
+function curT(){ const p=prof(view.pid); return view.practice || p.today; }
+function curProblem(){ const t=curT(); return t && t.problems[t.idx]; }
+
+let busy=false;
+function answer(val){
+  if(busy) return;
+  const p=prof(view.pid), t=curT(), pr=t.problems[t.idx];
+  const correct = pr.type==='rem' ? (val[0]===pr.a[0] && val[1]===pr.a[1]) : val===pr.a;
+  const fb=$('#fb'), card=$('#pcard');
+  const shown = pr.type==='rem' ? `${pr.a[0]} zbytek ${pr.a[1]}` : pr.type==='cmp' ? pr.a : fmt(pr.a);
+  if(correct){
+    const r = t.tries ? 1 : 2; t.res[t.idx]=r;
+    const gain = view.practice ? 0 : (r===2?5:2);
+    if(!view.practice){ p.points+=gain; t.pts+=gain; p.totalCorrect++; }
+    fb.className='fb ok'; fb.textContent = pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:'');
+    card.classList.add('pop'); next(t, 650);
+  } else if(!t.tries){
+    t.tries=1; fb.className='fb bad'; fb.textContent='Ještě jednou – zkus to znovu 🙂';
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    document.querySelectorAll('.ans').forEach(i=>i.value=''); const a1=$('#a1'); if(a1){ a1.classList.add('active'); if(matchMedia('(pointer:fine)').matches) a1.focus(); }
+    if(!view.practice) save();
+  } else {
+    t.res[t.idx]=0; fb.className='fb bad'; fb.innerHTML=`Správně je <b>${shown}</b>. Příště to dáš!`;
+    (t.wrong = t.wrong||[]).push({q:pr.q, a:shown, cat:pr.cat});
+    next(t, 2200);
+  }
+}
+function next(t, delay){
+  busy=true;
+  if(!view.practice) save();
+  setTimeout(()=>{
+    busy=false; t.idx++; t.tries=0;
+    if(t.idx>=t.problems.length) finish(t); else { if(!view.practice) save(); render(); }
+  }, delay);
+}
+function finish(t){
+  const p=prof(view.pid);
+  const correct=t.res.filter(r=>r>0).length, total=t.problems.length;
+  const wrong=(t.wrong||[]).map(w=>`${w.q.replace(/<u>.*?<\/u>/,'?')} → ${w.a}`);
+  if(view.practice){ view={name:'summary',pid:p.id,sum:{practice:true,correct,total,wrong}}; render(); return; }
+  const base=t.pts; let bonus=20; const perfect = t.res.every(r=>r===2);
+  if(perfect) bonus+=30;
+  const k=todayKey();
+  if(p.lastDone && dayDiff(p.lastDone,k)===1) p.streak++; else if(p.lastDone!==k) p.streak=1;
+  p.lastDone=k;
+  const streakBonus = p.streak>=3; if(streakBonus) bonus+=10;
+  p.points+=bonus; t.pts+=bonus; t.done=true;
+  p.history[k]={c:correct,n:total,pts:t.pts,wrongCats:[...new Set((t.wrong||[]).map(w=>w.cat))]};
+  // keep history bounded
+  const hk=Object.keys(p.history).sort(); while(hk.length>90) delete p.history[hk.shift()];
+  save(); logResult(p, p.history[k]); confetti(perfect?60:30);
+  view={name:'summary',pid:p.id,sum:{correct,total,base,pts:t.pts,perfect,streakBonus,wrong}};
+  render();
+}
+
+function buy(slot){
+  const p=prof(view.pid); const tier=p.gear[slot]||0; if(tier>=3) return;
+  const c=cost(S,tier); if(p.points<c) return;
+  p.points-=c; p.gear[slot]=tier+1; save();
+  const sl=SLOTS.find(s=>s.id===slot);
+  if(itemsOwned(p)===TOTAL_ITEMS){ confetti(80); toast('🏆 Hrdina je na maximu! Řekni rodičům o odměnu!'); }
+  else toast(`Nové vybavení: ${sl.items[tier]}! ✨`);
+  render();
+}
+
+function act(a){
+  if(a==='home') go({name:'home'});
+  else if(a==='parent'){ parentOk=false; go({name:'parent'}); }
+  else if(a==='hero') go({name:'hero',pid:view.pid});
+  else if(a==='back') go({name:'hero',pid:view.pid});
+  else if(a==='play'){
+    const p=prof(view.pid); const t=ensureToday(p);
+    if(t.done){ const pr={date:'x',idx:0,tries:0,res:[],problems:genDaily(p,todayKey()+'-extra-'+Date.now(),10),pts:0}; go({name:'play',pid:p.id,practice:pr}); }
+    else go({name:'play',pid:p.id});
+  }
+  else if(a==='pinok'){ const v=$('#pin').value; if(v===String(S.settings.pin)){ parentOk=true; render(); } else { toast('Špatný PIN'); $('#pin').value=''; } }
+  else if(a==='savesettings'){
+    S.settings.reward=$('#s-reward').value.trim()||S.settings.reward;
+    S.settings.length=$('#s-len').value;
+    S.settings.perDay=Math.max(5,Math.min(40,parseInt($('#s-per').value)||20));
+    const np=$('#s-pin').value.trim(); if(np) S.settings.pin=np;
+    save(); toast('Uloženo ✓'); render();
+  }
+  else if(a==='saveprofile' || a==='defcats' || a==='regen'){
+    const p=prof(parentTab.slice(2));
+    p.name=$('#p-name').value.trim()||p.name;
+    const g=+$('#p-grade').value;
+    if(a==='defcats' || g!==p.grade){ p.grade=g; p.cats=DEFAULT_CATS[g].slice(); }
+    else { p.cats=[...document.querySelectorAll('[data-cat]')].filter(x=>x.checked).map(x=>x.dataset.cat); if(!p.cats.length) p.cats=DEFAULT_CATS[p.grade].slice(); }
+    if(a==='regen'){
+      if(p.today && p.today.date===todayKey() && p.today.done){ toast('Dnešek už je hotový – změna platí od zítřka.'); }
+      else if(p.today && p.today.date===todayKey() && p.today.idx>0){ toast('Dnešek je rozpracovaný – změna platí od zítřka.'); }
+      else { p.today=null; ensureToday(p); toast('Dnešní příklady vygenerovány znovu ✓'); }
+    } else toast('Uloženo ✓');
+    save(); render();
+  }
+  else if(a==='bonus'){ const p=prof(parentTab.slice(2)); const v=parseInt($('#p-bonus').value)||0; p.points=Math.max(0,p.points+v); save(); toast(`${v>=0?'Připsáno':'Odečteno'} ${Math.abs(v)} bodů`); render(); }
+  else if(a==='claimed'){ const p=prof(parentTab.slice(2)); p.rewardClaimed=true; save(); render(); }
+  else if(a==='newseason'){ const p=prof(parentTab.slice(2)); confirmBox(`Opravdu začít novou výpravu pro ${esc(p.name)}? Vybavení a body se vynulují.`, ()=>{ p.gear={}; p.points=0; p.season++; p.rewardClaimed=false; save(); render(); toast('Nová výprava začíná! 🚀'); }); }
+  else if(a==='copybk'){ const v=$('#bk').value; try{ navigator.clipboard.writeText(v).then(()=>toast('Zkopírováno ✓'),()=>{ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); }); }catch(e){ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); } }
+  else if(a==='importbk'){ try{ const o=JSON.parse(decodeURIComponent(escape(atob($('#bk').value.trim())))); if(!o.profiles) throw 0; confirmBox('Načíst zálohu? Současný postup se přepíše.', ()=>{ S=o; save(); toast('Záloha načtena ✓'); render(); }); }catch(e){ toast('Kód se nepodařilo načíst'); } }
+}
+
+render();
+pull(true);
+</script>
+</body>
+</html>
