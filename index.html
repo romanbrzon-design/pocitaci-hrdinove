@@ -748,7 +748,8 @@ function heroView(){
   const p=prof(view.pid); if(!p) return homeView();
   const t=ensureToday(p);
   const next = p.beaten<10 ? MONSTERS[p.beaten] : null;
-  const playLabel = t.done ? '✅ Dnes hotovo – procvičit znovu' : t.idx ? `▶️ Pokračovat (${t.idx}/${t.problems.length})` : `🚀 Dnešních ${t.problems.length} příkladů`;
+  const xs = p.extraSet && p.extraSet.date===todayKey() && p.extraSet.idx>0 ? p.extraSet : null;
+  const playLabel = t.done ? (xs ? `▶️ Pokračovat v sadě navíc (${xs.idx}/${xs.problems.length})` : `➕ Dnes splněno – počítat dál (${S.settings.perDay||10} příkladů)`) : t.idx ? `▶️ Pokračovat (${t.idx}/${t.problems.length})` : `🚀 Dnešních ${t.problems.length} příkladů`;
   const gear = SLOTS.map(sl=>{
     const eqT=(p.eq||{})[sl.id]||0, own=(p.owned||{})[sl.id]||0;
     const chips = own ? `<div class="chips">${sl.items.slice(0,own).map((it,i)=>`<button class="chip ${eqT===i+1?'on':''} ${p.newItem===sl.id+':'+(i+1)?'new':''}" data-eq="${sl.id}:${i+1}" title="${itemStatText(it)}">${eqT===i+1?'✓ ':''}${it[0]}</button>`).join('')}</div>` : `<div class="sub">Batoh je prázdný.</div>`;
@@ -769,9 +770,9 @@ function heroView(){
     <div class="grid2">
       <div class="card hero">${heroSVG(p,{glow:p.beaten>=10})}${statsHTML(p)}</div>
       <div class="card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
-        <button class="btn ${t.done?'sec':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>
+        <button class="btn ${t.done?'ok':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>
         <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`⚔️ Výprava – další: ${next.name}`:'🗺️ Výprava (drak poražen)'}</button>
-        <div class="sub">Za správný příklad ⭐ 10 bodů (napodruhé 4). Splněný den +30 a <b>truhla</b> s překvapením, všechno správně +30 a <b>zlatá truhla</b>, série 3+ dny +10. Za body si kupuj výbavu – a nezapomeň si ji <b>nasadit</b>!</div>
+        <div class="sub">Za správný příklad ⭐ 10 bodů (napodruhé 4). Splněný den +30 a <b>truhla</b> s překvapením, všechno správně +30 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +15, za všechno správně truhla). Za body si kupuj výbavu – a nezapomeň si ji <b>nasadit</b>!</div>
         <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} v řadě</div>
         <div class="sub">🎁 Za poražení draka: <b>${esc(rewardOf(p))}</b></div>
       </div>
@@ -795,23 +796,23 @@ function playView(){
   const p=prof(view.pid); const t=view.practice ? view.practice : ensureToday(p);
   const pr=t.problems[t.idx];
   const dots=t.problems.map((_,i)=>{ const r=t.res[i]; const cl = r===undefined ? (i===t.idx?'cur':'') : r===2?'c':r===1?'h':'w'; return `<i class="${cl}"></i>`; }).join('');
-  return `<div class="top"><button class="btn sec small" data-act="back">← ${esc(p.name)}</button><h1 class="center">${view.practice?'Procvičování':'Příklad '+(t.idx+1)+' z '+t.problems.length}</h1><span class="pill">⭐ ${view.practice?'–':p.points}</span></div>
+  return `<div class="top"><button class="btn sec small" data-act="back">← ${esc(p.name)}</button><h1 class="center">${view.practice?'Sada navíc · ':''}Příklad ${t.idx+1} z ${t.problems.length}</h1><span class="pill">⭐ ${p.points}</span></div>
     <div class="dots">${dots}</div>
     <div class="card" id="pcard">${probHTML(pr)}${inputHTML(pr).replace('<div class="pad">','<div class="fb" id="fb">'+(t.tries?'Zkus to ještě jednou 🙂':'')+'</div><div class="pad">').replace('<div class="cmpbtns">','<div class="fb" id="fb">'+(t.tries?'Zkus to ještě jednou 🙂':'')+'</div><div class="cmpbtns">')}</div>`;
 }
 function summaryView(){
   const p=prof(view.pid); const s=view.sum;
-  return `<div class="top"><h1>${s.practice?'Procvičování hotovo':'Dnešní úkol splněn!'}</h1></div>
+  return `<div class="top"><h1>${s.practice?'Sada navíc hotová!':'Dnešní úkol splněn!'}</h1></div>
     <div class="card center">
       <div style="font-size:64px">${s.correct===s.total?'🏆':s.correct>=s.total*0.75?'🌟':'💪'}</div>
       <h2 style="margin:6px 0">${s.correct} z ${s.total} správně</h2>
-      ${s.practice?'<p class="muted">Procvičování navíc dává jen zkušenosti, body ne.</p>':`
+      ${s.practice?`<p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Dokončení sady: ⭐ 15${s.perfect?'<br>Všechno správně: 🎁 truhla':''}</p><h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`:`
       <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 30${s.perfect?'<br>Všechno správně: ⭐ 30':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 10`:''}</p>
       <h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`}
-      ${!s.practice&&p.chests&&p.chests.length?`<div style="max-width:170px;margin:6px auto" class="${'pop'}">${chestSVG(p.chests[0])}</div><button class="btn gold" data-chest="1" style="font-size:20px">🎁 Otevřít ${p.chests[0]==='gold'?'zlatou ':''}truhlu!</button>`:''}
+      ${p.chests&&p.chests.length?`<div style="max-width:170px;margin:6px auto" class="${'pop'}">${chestSVG(p.chests[0])}</div><button class="btn gold" data-chest="1" style="font-size:20px">🎁 Otevřít ${p.chests[0]==='gold'?'zlatou ':''}truhlu!</button>`:''}
       ${s.lvlUp?`<p style="font-size:20px">🎉 Nová úroveň ${level(p)}! Máš víc síly a životů.</p>`:''}
       ${s.wrong.length?`<div style="text-align:left;margin:14px auto;max-width:420px"><b>Na tyhle si dej pozor:</b><ul>${s.wrong.map(w=>`<li>${w}</li>`).join('')}</ul></div>`:''}
-      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-act="hero">🎒 Výbava a obchod</button><button class="btn red" data-act="map">⚔️ Na výpravu</button></div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-act="play">➕ Dalších ${S.settings.perDay||10} příkladů</button><button class="btn gold" data-act="hero">🎒 Výbava a obchod</button><button class="btn red" data-act="map">⚔️ Na výpravu</button></div>
     </div>`;
 }
 
@@ -1056,16 +1057,16 @@ function answer(val){
   const card=$('#pcard');
   if(isCorrect(pr,val)){
     const r = t.tries ? 1 : 2; t.res[t.idx]=r;
-    const gain = view.practice ? 0 : (r===2?10:4);
+    const gain = r===2?10:4;
     p.xp=(p.xp||0)+1;
-    if(!view.practice){ p.points+=gain; t.pts+=gain; p.totalCorrect++; }
+    p.points+=gain; t.pts+=gain; p.totalCorrect++;
     setFb('ok', pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:''));
     card.classList.add('pop'); next(t, 650);
   } else if(!t.tries){
     t.tries=1; setFb('bad','Ještě jednou – zkus to znovu 🙂');
     card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
     document.querySelectorAll('.ans').forEach(i=>i.value=''); const a1=$('#a1'); if(a1){ document.querySelectorAll('.ans').forEach(x=>x.classList.remove('active')); a1.classList.add('active'); if(matchMedia('(pointer:fine)').matches) a1.focus(); }
-    if(!view.practice) save();
+    save();
   } else {
     t.res[t.idx]=0; setFb('bad', `Správně je <b>${shownAnswer(pr)}</b>. Příště to dáš!`);
     (t.wrong = t.wrong||[]).push({q:pr.q, a:shownAnswer(pr), cat:pr.cat});
@@ -1082,7 +1083,17 @@ function finish(t){
   const correct=t.res.filter(r=>r>0).length, total=t.problems.length;
   const wrong=(t.wrong||[]).map(w=>`${w.q.replace(/<u>.*?<\/u>/,'?').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ')} → ${w.a}`);
   const lvlBefore = view.lvlStart||0;
-  if(view.practice){ save(); view={name:'summary',pid:p.id,sum:{practice:true,correct,total,wrong,lvlUp:level(p)>lvlBefore}}; render(); return; }
+  if(view.practice){
+    const base=t.pts, perfect=t.res.every(r=>r===2);
+    p.points+=15; t.pts+=15;
+    if(perfect){ p.chests=p.chests||[]; p.chests.push('wood'); }
+    const k=todayKey(); p.history=p.history||{};
+    const h=p.history[k]||{c:0,n:0,pts:0,wrongCats:[]};
+    h.c+=correct; h.n+=total; h.pts+=t.pts; h.extra=(h.extra||0)+1; h.wrongCats=[...new Set([...(h.wrongCats||[]),...(t.wrong||[]).map(w=>w.cat)])];
+    p.history[k]=h; p.extraSet=null; save();
+    logResult(p, {c:correct, n:total, pts:t.pts, wrongCats:[...new Set((t.wrong||[]).map(w=>w.cat))]});
+    confetti(perfect?40:20);
+    view={name:'summary',pid:p.id,sum:{practice:true,correct,total,wrong,base,pts:t.pts,perfect,lvlUp:level(p)>lvlBefore}}; render(); return; }
   const base=t.pts; let bonus=30; const perfect=t.res.every(r=>r===2);
   if(perfect) bonus+=30;
   const k=todayKey();
@@ -1180,7 +1191,7 @@ function act(a){
   case 'flee': confirmBox('Opravdu utéct z boje? Obluda zůstane neporažená.', ()=>go({name:'map',pid:view.pid,sel:view.b.mi})); break;
   case 'play': {
     const t=ensureToday(p);
-    if(t.done){ const pr={date:'x',idx:0,tries:0,res:[],problems:genDaily(p,todayKey()+'-extra-'+Date.now(),10),pts:0}; go({name:'play',pid:p.id,practice:pr,lvlStart:level(p)}); }
+    if(t.done){ if(!p.extraSet || p.extraSet.date!==todayKey()){ p.extraSet={date:todayKey(),idx:0,tries:0,res:[],problems:genDaily(p,todayKey()+'-extra-'+Date.now(),S.settings.perDay||10),pts:0,wrong:[]}; save(); } go({name:'play',pid:p.id,practice:p.extraSet,lvlStart:level(p)}); }
     else go({name:'play',pid:p.id,lvlStart:level(p)});
     break; }
   // test tools
