@@ -278,6 +278,35 @@ const CATS = {
     const km=ri(12,45), days=ri(3,7); return {q:`Cyklista ujede každý den ${km} km. Kolik kilometrů ujede za ${days} dní?`, a:km*days};
   }},
 };
+
+/* Lehčí varianty (výchozí obtížnost) */
+let EASY = true;
+const EASY_GEN = {
+  addsub100(){ const k=ri(0,2);
+    if(k===0){ const a=ri(11,89), b=ri(2,9); const u=a%10; if(u+b<10) return {q:`${a} + ${b}`, a:a+b}; const s=Math.min(b,u||b); return {q:`${a} − ${s}`, a:a-s}; }
+    if(k===1){ const a=ri(1,8)*10, b=ri(1,9)*10; return a+b<=100 ? {q:`${a} + ${b}`, a:a+b} : {q:`${Math.max(a,b)} − ${Math.min(a,b)}`, a:Math.max(a,b)-Math.min(a,b)}; }
+    const a=ri(11,69), b=ri(1,3)*10; return R()<.5?{q:`${a} + ${b}`, a:a+b}:{q:`${a+b} − ${b}`, a:a}; },
+  mul2(){ const m=pick([2,3,4,5,10,2,5,10]), n=ri(1,10); return R()<.75 ? {q:`${m} · ${n}`, a:m*n} : {q:`${m*n} : ${m}`, a:n}; },
+  missing(){ const a=ri(2,9), b=ri(2,9); return R()<.5 ? {q:`<u>&nbsp;?&nbsp;</u> + ${b} = ${a+b}`, a:a} : {q:`${a+b} − <u>&nbsp;?&nbsp;</u> = ${a}`, a:b}; },
+  compare(){ const lv=ri(10,99), rv=R()<.15?lv:ri(10,99); return {q:`${lv} &nbsp;◯&nbsp; ${rv}`, type:'cmp', a: lv<rv?'<':lv>rv?'>':'='}; },
+  word2(){ const [n,f]=pick(NAMES), x=f?'a':'', k=ri(0,2);
+    if(k===0){ const a=ri(5,20), b=ri(2,9); return {q:`${n} měl${x} ${a} kuliček a dostal${x} ještě ${b}. Kolik kuliček má teď?`, a:a+b}; }
+    if(k===1){ const a=ri(12,30), b=ri(2,9); return {q:`V autobuse sedělo ${a} lidí. ${b} vystoupilo. Kolik lidí zůstalo v autobuse?`, a:a-b}; }
+    const m=pick([2,5,10]), n2=ri(2,4); return {q:`${n} má ${n2} krabičky a v každé je ${m} ${m===2?'pastelky':'pastelek'}. Kolik pastelek má dohromady?`, a:m*n2}; },
+  mulall(){ const m=ri(2,9), n=ri(2,9); return R()<.7 ? {q:`${m} · ${n}`, a:m*n} : {q:`${m*n} : ${n}`, a:m}; },
+  rem(){ const d=ri(2,5), q=ri(2,9), r=ri(1,d-1); return {q:`${d*q+r} : ${d}`, type:'rem', a:[q,r]}; },
+  big(){ const a=ri(5,60)*100, b=ri(1,20)*100; return R()<.5 ? {q:`${fmt(a)} + ${fmt(b)}`, a:a+b} : {q:`${fmt(a+b)} − ${fmt(b)}`, a:a}; },
+  mulext(){ const a=ri(2,9)*10, b=ri(2,5); return {q:`${a} · ${b}`, a:a*b}; },
+  divext(){ const d=ri(2,5), q=ri(2,9)*10; return {q:`${d*q} : ${d}`, a:q}; },
+  order(){ const a=ri(1,9), b=ri(2,5), c=ri(2,5); return R()<.5 ? {q:`${a} + ${b} · ${c}`, a:a+b*c} : {q:`(${a} + ${b}) · ${c}`, a:(a+b)*c}; },
+  fractions(){ const den=pick([2,3,4,5,10]), k=ri(2,6); return {q:`${frac(1,den)} z ${den*k}`, a:k}; },
+  round(){ const n=ri(101,999), t=pick([10,100]); return {q:`Zaokrouhli ${n} na ${t===10?'desítky':'stovky'}`, a:Math.round(n/t)*t, small:true}; },
+  word4(){ const [n,f]=pick(NAMES), k=ri(0,2);
+    if(k===0){ const p=ri(2,4), c=ri(2,9)*5, m=p*c+ri(1,9)*5; return {q:`${n} má ${m} Kč. Koupí ${p} sešity po ${c} Kč. Kolik korun ${f?'jí':'mu'} zbude?`, a:m-p*c}; }
+    if(k===1){ const box=ri(3,6), per=ri(4,8); return {q:`V ${box} krabicích je po ${per} kouscích čokolády. Kolik kousků je dohromady?`, a:box*per}; }
+    const km=ri(2,9)*10, days=ri(2,4); return {q:`Cyklista ujede každý den ${km} km. Kolik kilometrů ujede za ${days} dny?`, a:km*days}; },
+};
+function genOne(c){ const g = (EASY && EASY_GEN[c]) ? EASY_GEN[c] : CATS[c].gen; return g.call(CATS[c]); }
 const DEFAULT_CATS = {1:['add10','add20nb','missing10','compare20','word1'],
   2:['add20','addsub100','mul2','missing','compare','word2'],
   3:['addsub100','mulall','missing','compare','divext','word2'],
@@ -286,11 +315,13 @@ const DEFAULT_CATS = {1:['add10','add20nb','missing10','compare20','word1'],
 function catsOf(p){ let c=(p.cats&&p.cats.length)?p.cats.filter(x=>CATS[x]):(DEFAULT_CATS[p.grade]||DEFAULT_CATS[2]); return c.length?c:DEFAULT_CATS[2]; }
 function battleProblem(p){
   R=Math.random; let cats=catsOf(p).filter(c=>!CATS[c].word); if(!cats.length) cats=['add20'];
-  const c=pick(cats), pr=CATS[c].gen(); pr.cat=c; pr.type=pr.type||'num'; return pr;
+  EASY = p.diff!=='normal';
+  const c=pick(cats), pr=genOne(c); pr.cat=c; pr.type=pr.type||'num'; return pr;
 }
 
 function genDaily(profile, dateKey, count=20){
-  R = mulberry(hashStr(profile.id + '|' + dateKey + '|' + (profile.cats||[]).join(',')));
+  EASY = profile.diff!=='normal';
+  R = mulberry(hashStr(profile.id + '|' + dateKey + '|' + (profile.cats||[]).join(',') + (EASY?'e':'')));
   let cats = catsOf(profile);
   // balanced deck: round-robin over shuffled categories, word problems max 3
   const out=[], seen=new Set(); let guard=0, wordCount=0;
@@ -299,7 +330,7 @@ function genDaily(profile, dateKey, count=20){
     if(!order.length){ order=cats.slice(); for(let i=order.length-1;i>0;i--){const j=Math.floor(R()*(i+1)); [order[i],order[j]]=[order[j],order[i]];} }
     const c=order.pop(), cat=CATS[c];
     if(cat.word && wordCount>=3) continue;
-    const p=cat.gen(); p.cat=c; p.type=p.type||'num'; if(cat.word) p.word=true;
+    const p=genOne(c); p.cat=c; p.type=p.type||'num'; if(cat.word) p.word=true;
     if(seen.has(p.q)) continue; seen.add(p.q);
     if(cat.word) wordCount++;
     out.push(p);
@@ -332,14 +363,14 @@ const MONSTERS = [
   {name:'Temný rytíř',   hp:89,  atk:60, def:23, gold:280, where:'Černý hrad',          tip:'Zlatý štít, zlatá koruna a královský plášť'},
   {name:'Drak',          hp:113, atk:67, def:28, gold:0,   where:'Dračí sopka',         tip:'Dračí čepel a zlaté brnění'},
 ];
-const LEN_MULT = {short:0.4, mid:0.6, long:0.9};
-const XP_PER_LEVEL = {short:30, mid:40, long:55};
+const LEN_MULT = {short:0.3, mid:0.5, long:0.8};
+const XP_PER_LEVEL = {short:15, mid:20, long:30};
 const MAX_LEVEL = 20;
-function mult(){ return LEN_MULT[S.settings.length]||0.6; }
+function mult(){ return LEN_MULT[S.settings.length]||0.5; }
 function price(slot,tier){ return Math.max(5, Math.round(SLOTMAP[slot].items[tier-1][4]*mult()/5)*5); }
 function bounty(mi){ return Math.round(MONSTERS[mi].gold*mult()/5)*5; }
-function level(p){ return Math.min(MAX_LEVEL, 1+Math.floor((p.xp||0)/(XP_PER_LEVEL[S.settings.length]||40))); }
-function xpInfo(p){ const per=XP_PER_LEVEL[S.settings.length]||40, L=level(p); if(L>=MAX_LEVEL) return {L, cur:per, per, max:true}; return {L, cur:(p.xp||0)-(L-1)*per, per}; }
+function level(p){ return Math.min(MAX_LEVEL, 1+Math.floor((p.xp||0)/(XP_PER_LEVEL[S.settings.length]||20))); }
+function xpInfo(p){ const per=XP_PER_LEVEL[S.settings.length]||20, L=level(p); if(L>=MAX_LEVEL) return {L, cur:per, per, max:true}; return {L, cur:(p.xp||0)-(L-1)*per, per}; }
 function stats(p){
   const L=level(p); let atk=1+Math.floor((L-1)/2), def=0, hp=20+3*(L-1);
   for(const sl of SLOTS){ const t=(p.eq||{})[sl.id]||0; if(t){ const it=sl.items[t-1]; atk+=it[1]; def+=it[2]; hp+=it[3]; } }
@@ -523,17 +554,42 @@ function monsterSVG(i){
   }
   return W('');
 }
+
+/* ============ Chests ============ */
+function chestSVG(kind, open){
+  const gold=kind==='gold', body=gold?'#f2c230':'#9a5b2c', band=gold?'#b88a00':'#5e3517', lock=gold?'#e84393':'#e8c34a';
+  const lid = open ? `<path d="M30 70 L170 70 L160 30 Q100 10 40 30Z" fill="${body}" stroke="${band}" stroke-width="4" transform="rotate(-18 30 70)"/>` :
+    `<path d="M30 80 Q30 40 100 40 Q170 40 170 80Z" fill="${body}" stroke="${band}" stroke-width="4"/><path d="M60 46 V80 M140 46 V80" stroke="${band}" stroke-width="8"/>`;
+  return `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">${open?`<circle cx="100" cy="80" r="70" fill="#fff3a0" opacity=".7"/><path d="M100 10 l6 30 M60 25 l14 26 M140 25 l-14 26 M30 55 l26 14 M170 55 l-26 14" stroke="#ffd84d" stroke-width="5" stroke-linecap="round"/>`:''}<ellipse cx="100" cy="168" rx="80" ry="8" fill="#000" opacity=".1"/><rect x="30" y="78" width="140" height="84" rx="8" fill="${body}" stroke="${band}" stroke-width="4"/><path d="M60 78 V162 M140 78 V162" stroke="${band}" stroke-width="8"/>${open?'':`<rect x="88" y="70" width="24" height="28" rx="4" fill="${lock}" stroke="${band}" stroke-width="3"/><circle cx="100" cy="84" r="4" fill="${band}"/>`}${lid}</svg>`;
+}
+function openChestFor(p){
+  if(!p.chests || !p.chests.length) return null;
+  const kind=p.chests.shift();
+  p.owned=p.owned||{};
+  const cands = SLOTS.filter(sl=>(p.owned[sl.id]||0) < sl.items.length);
+  const itemChance = kind==='gold' ? 1 : 0.6;
+  if(cands.length && Math.random()<itemChance){
+    // cheapest next item out of 3 random slots – drops stay useful for the current stage
+    const pool=cands.slice(), sample=[];
+    for(let i=0;i<3&&pool.length;i++) sample.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+    sample.sort((a,b)=>a.items[p.owned[a.id]||0][4]-b.items[p.owned[b.id]||0][4]);
+    const sl=sample[0], t=(p.owned[sl.id]||0)+1; p.owned[sl.id]=t; p.newItem=sl.id+':'+t;
+    return {kind, item:sl.items[t-1], slot:sl.name};
+  }
+  const pts=(kind==='gold'?60:20)+Math.floor(Math.random()*5)*10;
+  p.points+=pts; return {kind, points:pts};
+}
 /* ============ State ============ */
 const LS_KEY='pocitani-hrdinove-v1';
 function newId(){ return 'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function newProfile(o={}){
   const grade=o.grade||2;
   return Object.assign({id:newId(), name:'Hrdina', grade, gender:'m', color:'#4f7cff', cats:DEFAULT_CATS[grade].slice(), pin:'', reward:'',
-    points:0, xp:0, owned:{}, eq:{}, beaten:0, rewardClaimed:false, season:1, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0, created:Date.now()}, o);
+    points:0, xp:0, owned:{}, eq:{}, beaten:0, chests:[], rewardClaimed:false, season:1, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0, created:Date.now()}, o);
 }
 function defaultState(){
   return {v:2, savedAt:0,
-    settings:{pin:'1234', reward:'Výlet do zoo nebo nová hra – podle výběru', length:'mid', perDay:20},
+    settings:{pin:'1234', reward:'Výlet do zoo nebo nová hra – podle výběru', length:'mid', perDay:10, ver:3},
     profiles:[ newProfile({id:'p2',name:'Druháček',grade:2,color:'#ff7a45',created:1}), newProfile({id:'p4',name:'Čtvrťák',grade:4,color:'#4f7cff',created:2}) ]};
 }
 function migrate(p){
@@ -543,10 +599,12 @@ function migrate(p){
   if(p.pin===undefined) p.pin='';
   if(p.reward===undefined) p.reward='';
   if(!p.created) p.created=1;
+  if(!p.chests) p.chests=[];
   return p;
 }
+function migrateSettings(){ if(!S.settings.ver || S.settings.ver<3){ S.settings.perDay=10; S.settings.ver=3; } }
 let S = lsGet(LS_KEY) || defaultState();
-S.profiles.forEach(migrate);
+S.profiles.forEach(migrate); migrateSettings();
 function saveLocal(){ lsSet(LS_KEY, S); if(TEST) lsSet('ph-test', TEST); }
 let TEST = lsGet('ph-test');
 let unlocked = new Set(lsGet('ph-unlocked')||[]);
@@ -590,7 +648,7 @@ async function pull(rerender){
   if(!HAS_GAS || writing) return;
   try{
     const r = await gas('loadAll');
-    if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; }
+    if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; const before=S.settings.ver; migrateSettings(); if(before!==S.settings.ver) setTimeout(flush,100); }
     for(const [id,j] of Object.entries((r&&r.profiles)||{})){
       const o=migrate(JSON.parse(j)); const i=S.profiles.findIndex(p=>p.id===id);
       if(i>=0) S.profiles[i]=o; else S.profiles.push(o);
@@ -702,17 +760,18 @@ function heroView(){
       <div class="eqd">Na sobě: <b>${eqT?sl.items[eqT-1][0]:'nic'}</b></div>${chips}${buy}</div>`;
   }).join('');
   const testTools = isTest(p) ? `<div class="card" style="margin-top:14px"><b>🧪 Testovací nástroje</b><div class="row" style="margin-top:8px">
-      <button class="btn small" data-act="t-pts">+500 ⭐</button><button class="btn small" data-act="t-lvl">+1 úroveň</button><button class="btn small" data-act="t-unlock">Odemknout všechny obludy</button><button class="btn small" data-act="t-all">Koupit a nasadit vše</button><button class="btn small sec" data-act="t-reset">Začít znovu</button></div></div>` : '';
+      <button class="btn small" data-act="t-pts">+500 ⭐</button><button class="btn small" data-act="t-lvl">+1 úroveň</button><button class="btn small" data-act="t-unlock">Odemknout všechny obludy</button><button class="btn small" data-act="t-all">Koupit a nasadit vše</button><button class="btn small" data-act="t-chest">+1 truhla</button><button class="btn small sec" data-act="t-reset">Začít znovu</button></div></div>` : '';
   const dragon = p.beaten>=10 ? `<div class="reward" style="margin-top:16px"><div style="font-size:44px">🐉🏆</div><h2>${G(p,'Porazil','Porazila')} jsi draka!</h2>
       <p style="font-size:18px">Odměna: <b>${esc(rewardOf(p))}</b></p><p class="muted">${p.rewardClaimed?'Odměna byla předána. 🎉':'Ukaž to rodičům!'}</p></div>` : '';
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>${esc(p.name)}</h1><span class="pill">⭐ ${p.points}</span></div>
     ${testBanner(p)}
+    ${p.chests&&p.chests.length?`<div class="card row" style="margin-bottom:14px;background:#fff8dc;border-color:#f5d76e"><div style="width:70px">${chestSVG(p.chests[0])}</div><div style="flex:1;font-size:18px">Máš ${p.chests.length} ${plural(p.chests.length,'truhlu','truhly','truhel')} k otevření!</div><button class="btn gold" data-chest="1">🎁 Otevřít</button></div>`:''}
     <div class="grid2">
       <div class="card hero">${heroSVG(p,{glow:p.beaten>=10})}${statsHTML(p)}</div>
       <div class="card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
         <button class="btn ${t.done?'sec':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>
         <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`⚔️ Výprava – další: ${next.name}`:'🗺️ Výprava (drak poražen)'}</button>
-        <div class="sub">Za správný příklad ⭐ 5 bodů (napodruhé 2). Splněný den +20, všechno správně +30, série 3+ dny +10. Za body si kupuj výbavu – a nezapomeň si ji <b>nasadit</b>!</div>
+        <div class="sub">Za správný příklad ⭐ 10 bodů (napodruhé 4). Splněný den +30 a <b>truhla</b> s překvapením, všechno správně +30 a <b>zlatá truhla</b>, série 3+ dny +10. Za body si kupuj výbavu – a nezapomeň si ji <b>nasadit</b>!</div>
         <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} v řadě</div>
         <div class="sub">🎁 Za poražení draka: <b>${esc(rewardOf(p))}</b></div>
       </div>
@@ -747,8 +806,9 @@ function summaryView(){
       <div style="font-size:64px">${s.correct===s.total?'🏆':s.correct>=s.total*0.75?'🌟':'💪'}</div>
       <h2 style="margin:6px 0">${s.correct} z ${s.total} správně</h2>
       ${s.practice?'<p class="muted">Procvičování navíc dává jen zkušenosti, body ne.</p>':`
-      <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 20${s.perfect?'<br>Všechno správně: ⭐ 30':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 10`:''}</p>
+      <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 30${s.perfect?'<br>Všechno správně: ⭐ 30':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 10`:''}</p>
       <h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`}
+      ${!s.practice&&p.chests&&p.chests.length?`<div style="max-width:170px;margin:6px auto" class="${'pop'}">${chestSVG(p.chests[0])}</div><button class="btn gold" data-chest="1" style="font-size:20px">🎁 Otevřít ${p.chests[0]==='gold'?'zlatou ':''}truhlu!</button>`:''}
       ${s.lvlUp?`<p style="font-size:20px">🎉 Nová úroveň ${level(p)}! Máš víc síly a životů.</p>`:''}
       ${s.wrong.length?`<div style="text-align:left;margin:14px auto;max-width:420px"><b>Na tyhle si dej pozor:</b><ul>${s.wrong.map(w=>`<li>${w}</li>`).join('')}</ul></div>`:''}
       <div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-act="hero">🎒 Výbava a obchod</button><button class="btn red" data-act="map">⚔️ Na výpravu</button></div>
@@ -823,6 +883,7 @@ function battleEndView(){
         <p style="font-size:18px">Zásahů: ${e.hits} · Chyb: ${e.miss}</p>
         ${e.first&&e.gold?`<p style="font-size:20px">Odměna: ⭐ ${e.gold}</p>`:''}
         ${dragon&&e.first?`<p style="font-size:22px">🎁 Tvoje odměna od rodičů: <b>${esc(rewardOf(p))}</b></p><p>Ukaž tuhle obrazovku mamce nebo taťkovi!</p>`:''}
+        ${e.first?`<p style="font-size:18px">A k tomu truhla! 🎁</p><button class="btn gold" data-chest="1" style="margin-bottom:12px">🎁 Otevřít truhlu</button>`:''}
         ${!dragon&&e.first?`<p>Odemkla se další obluda: <b>${MONSTERS[e.mi+1].name}</b> 🔓</p>`:''}
         <div class="row" style="justify-content:center"><button class="btn" data-act="map">🗺️ Na mapu</button><button class="btn gold" data-act="hero">🎒 Výbava</button></div>
       </div>`;
@@ -845,6 +906,7 @@ function heroEditHTML(p){
     <div class="field"><label>Jméno</label><input type="text" id="p-name" value="${esc(p.name)}"></div>
     <div class="row"><div class="field" style="flex:1"><label>Ročník</label><select id="p-grade">${[1,2,3,4,5].map(g=>`<option value="${g}" ${p.grade==g?'selected':''}>${g}. třída</option>`).join('')}</select></div>
       <div class="field" style="flex:1"><label>Postava</label><select id="p-gender"><option value="m" ${p.gender!=='f'?'selected':''}>Hrdina</option><option value="f" ${p.gender==='f'?'selected':''}>Hrdinka</option></select></div></div>
+    <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální</option></select></div>
     <div class="field"><label>Barva oblečku</label><div class="row colors">${TUNICS.map(c=>`<button data-color="${c}" style="background:${c};border:${p.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
     <div class="field"><label>Tajný kód hrdiny (prázdné = bez kódu)</label><input type="text" id="p-pin" inputmode="numeric" maxlength="4" value="${esc(p.pin||'')}"></div>
     <div class="field"><label>Odměna za draka (prázdné = výchozí: „${esc(S.settings.reward)}“)</label><input type="text" id="p-reward" value="${esc(p.reward||'')}"></div>
@@ -870,9 +932,9 @@ function parentView(){
   if(parentTab==='settings'){
     body=`<div class="field"><label>Výchozí odměna za poražení draka</label><input type="text" id="s-reward" value="${esc(S.settings.reward)}"></div>
       <div class="field"><label>Délka výpravy (jak rychle se dá dojít k drakovi)</label><select id="s-len">
-        <option value="short" ${S.settings.length==='short'?'selected':''}>Krátká – zhruba 3 týdny poctivého počítání</option>
-        <option value="mid" ${S.settings.length==='mid'?'selected':''}>Střední – zhruba 5–6 týdnů</option>
-        <option value="long" ${S.settings.length==='long'?'selected':''}>Dlouhá – zhruba 2 měsíce</option></select></div>
+        <option value="short" ${S.settings.length==='short'?'selected':''}>Krátká – zhruba 2 týdny</option>
+        <option value="mid" ${S.settings.length==='mid'?'selected':''}>Střední – zhruba 3–4 týdny</option>
+        <option value="long" ${S.settings.length==='long'?'selected':''}>Dlouhá – zhruba 6 týdnů</option></select></div>
       <div class="field"><label>Počet příkladů denně</label><input type="number" id="s-per" min="5" max="40" value="${S.settings.perDay||20}"></div>
       <div class="field"><label>Nový rodičovský PIN (prázdné = beze změny)</label><input type="text" id="s-pin" inputmode="numeric" maxlength="8"></div>
       <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
@@ -916,6 +978,25 @@ function pinBox(text, cb){
   m.querySelector('#mok').onclick=ok; inp.onkeydown=e=>{ if(e.key==='Enter') ok(); };
   m.querySelector('#mno').onclick=()=>m.remove();
 }
+function showChest(){
+  const p=prof(view.pid); if(!p || !p.chests || !p.chests.length) return;
+  const kind=p.chests[0];
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<div class="card center"><div id="chbox" style="max-width:220px;margin:0 auto" class="shake">${chestSVG(kind)}</div><p id="chtxt" style="font-size:20px">Otevírám…</p><div id="chbtn"></div></div>`;
+  document.body.appendChild(m);
+  const box=m.querySelector('#chbox'); let n=0;
+  const iv=setInterval(()=>{ box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); if(++n>=2) clearInterval(iv); },380);
+  setTimeout(()=>{
+    const r=openChestFor(p); save();
+    box.innerHTML=chestSVG(kind,true);
+    m.querySelector('#chtxt').innerHTML = r.item
+      ? `<div style="font-size:26px">✨ ${r.item[0]} ✨</div><div class="muted">${r.slot} · ${itemStatText(r.item)}</div><p style="font-size:16px">Najdeš ho v batohu – klikni na něj a nasaď si ho!</p>`
+      : `<div style="font-size:30px">⭐ +${r.points} bodů</div>`;
+    m.querySelector('#chbtn').innerHTML=`<button class="btn ok">Super!</button>`;
+    m.querySelector('#chbtn button').onclick=()=>{ m.remove(); render(); };
+    confetti(r.kind==='gold'?50:25);
+  }, 1200);
+}
 function openHero(id){
   const p=prof(id); if(!p) return;
   if(p.pin && !unlocked.has(p.id)){
@@ -930,6 +1011,7 @@ function bind(){
   document.querySelectorAll('[data-buy]').forEach(el=>el.onclick=()=>buy(el.dataset.buy));
   document.querySelectorAll('[data-eq]').forEach(el=>el.onclick=()=>equip(...el.dataset.eq.split(':')));
   document.querySelectorAll('[data-sel]').forEach(el=>el.onclick=()=>{ view.sel=+el.dataset.sel; render(); window.scrollTo({top:0,behavior:'smooth'}); });
+  document.querySelectorAll('[data-chest]').forEach(el=>el.onclick=()=>showChest());
   document.querySelectorAll('[data-fight]').forEach(el=>el.onclick=()=>startBattle(+el.dataset.fight));
   document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{parentTab=el.dataset.tab; render();});
   document.querySelectorAll('[data-color]').forEach(el=>el.onclick=()=>{ const p=prof(parentHero); p.color=el.dataset.color; save(); render(); });
@@ -974,7 +1056,7 @@ function answer(val){
   const card=$('#pcard');
   if(isCorrect(pr,val)){
     const r = t.tries ? 1 : 2; t.res[t.idx]=r;
-    const gain = view.practice ? 0 : (r===2?5:2);
+    const gain = view.practice ? 0 : (r===2?10:4);
     p.xp=(p.xp||0)+1;
     if(!view.practice){ p.points+=gain; t.pts+=gain; p.totalCorrect++; }
     setFb('ok', pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:''));
@@ -1001,13 +1083,14 @@ function finish(t){
   const wrong=(t.wrong||[]).map(w=>`${w.q.replace(/<u>.*?<\/u>/,'?').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ')} → ${w.a}`);
   const lvlBefore = view.lvlStart||0;
   if(view.practice){ save(); view={name:'summary',pid:p.id,sum:{practice:true,correct,total,wrong,lvlUp:level(p)>lvlBefore}}; render(); return; }
-  const base=t.pts; let bonus=20; const perfect=t.res.every(r=>r===2);
+  const base=t.pts; let bonus=30; const perfect=t.res.every(r=>r===2);
   if(perfect) bonus+=30;
   const k=todayKey();
   if(p.lastDone && dayDiff(p.lastDone,k)===1) p.streak++; else if(p.lastDone!==k) p.streak=1;
   p.lastDone=k;
   const streakBonus=p.streak>=3; if(streakBonus) bonus+=10;
   p.points+=bonus; t.pts+=bonus; t.done=true;
+  p.chests=p.chests||[]; p.chests.push(perfect?'gold':'wood');
   p.history=p.history||{};
   p.history[k]={c:correct,n:total,pts:t.pts,wrongCats:[...new Set((t.wrong||[]).map(w=>w.cat))]};
   const hk=Object.keys(p.history).sort(); while(hk.length>90) delete p.history[hk.shift()];
@@ -1070,7 +1153,7 @@ function battleEnd(win){
   const p=prof(view.pid), b=view.b;
   const first = win && b.mi===p.beaten;
   let gold=0;
-  if(first){ p.beaten++; gold=bounty(b.mi); p.points+=gold; if(b.mi===9) p.rewardClaimed=false; }
+  if(first){ p.beaten++; gold=bounty(b.mi); p.points+=gold; if(b.mi===9) p.rewardClaimed=false; p.chests=p.chests||[]; p.chests.push(b.mi===9?'gold':'wood'); }
   save();
   if(win) confetti(b.mi===9?100:35);
   view={name:'bend', pid:p.id, e:{win, mi:b.mi, first, gold, hits:b.hits, miss:b.miss, mhp:b.mhp}};
@@ -1105,6 +1188,7 @@ function act(a){
   case 't-lvl': p.xp=(p.xp||0)+(XP_PER_LEVEL[S.settings.length]||40); save(); render(); toast(`Úroveň ${level(p)}`); break;
   case 't-unlock': p.beaten=Math.max(p.beaten,9); save(); render(); toast('Odemčeno až po draka'); break;
   case 't-all': SLOTS.forEach(sl=>{ p.owned[sl.id]=sl.items.length; p.eq[sl.id]=sl.items.length; }); p.xp=Math.max(p.xp||0,(MAX_LEVEL-1)*(XP_PER_LEVEL[S.settings.length]||40)); save(); render(); break;
+  case 't-chest': p.chests=p.chests||[]; p.chests.push(Math.random()<.3?'gold':'wood'); save(); render(); break;
   case 't-reset': confirmBox('Začít s testovacím hrdinou znovu?', ()=>{ const g=TEST.grade, s=TEST.gender; TEST=newProfile({id:'test',name:'Testovací '+(s==='f'?'hrdinka':'hrdina'),grade:g,gender:s,color:'#1fb5c9'}); saveLocal(); render(); }); break;
   case 't-new': { const g=+$('#t-grade').value, s=$('#t-gender').value; TEST=newProfile({id:'test',name:'Testovací '+(s==='f'?'hrdinka':'hrdina'),grade:g,gender:s,color:'#1fb5c9'}); saveLocal(); go({name:'hero',pid:'test'}); break; }
   case 't-open': go({name:'hero',pid:'test'}); break;
@@ -1119,7 +1203,7 @@ function act(a){
   case 'saveprofile': case 'defcats': case 'regen': {
     const h=prof(parentHero);
     h.name=$('#p-name').value.trim()||h.name;
-    h.gender=$('#p-gender').value;
+    h.gender=$('#p-gender').value; h.diff=$('#p-diff').value;
     const pin=$('#p-pin').value.trim(); if(pin && !/^\d{4}$/.test(pin)){ toast('Kód musí mít 4 číslice'); return; } h.pin=pin;
     h.reward=$('#p-reward').value.trim();
     const g=+$('#p-grade').value;
