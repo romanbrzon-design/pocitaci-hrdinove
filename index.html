@@ -722,12 +722,15 @@ DEFAULT_CATS[0] = ['colors0','shapes0','count0','more0','odd0','size0','pattern0
 
 /* ---- Předčítání otázek (pro děti, které ještě nečtou) ---- */
 let csVoice=null, enVoice=null;
-function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = vs.find(v=>/^cs/i.test(v.lang)) || null; enVoice = vs.find(v=>/^en-GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null; }catch(e){} }
+function voiceScore(v){ const n=v.name||''; return (/natural/i.test(n)?100:0)+(/online/i.test(n)?50:0)+(/google/i.test(n)?30:0)+(/vlasta|sonia|libby|maisie/i.test(n)?5:0)+(v.localService?0:2); }
+function bestVoice(vs, re){ const c=vs.filter(v=>re.test(v.lang)); c.sort((a,b)=>voiceScore(b)-voiceScore(a)); return c[0]||null; }
+function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestVoice(vs,/^cs/i); enVoice = bestVoice(vs,/^en-GB/i) || bestVoice(vs,/^en/i); }catch(e){} }
+function voiceNatural(){ return !!(csVoice && voiceScore(csVoice)>=50); }
 try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 function speak(text, lang){
   try{ if(!('speechSynthesis' in window) || !text) return; speechSynthesis.cancel();
     const en=/^en/i.test(lang||'');
-    const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.85:.92; speechSynthesis.speak(u); }catch(e){}
+    const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95); speechSynthesis.speak(u); }catch(e){}
 }
 function sayText(pr){ if(pr.type==='choice') return pr.say || String(pr.q).replace(/<[^>]+>/g,' ');
   if(pr.type==='cmp'){ const n=String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').split('◯').map(s=>s.trim()); return `Porovnej. ${n[0]} a ${n[1]}. Je to větší, menší, nebo rovno? Vyber znaménko.`; } return pr.say || String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/·/g,' krát ').replace(/:/g,' děleno ').replace(/−/g,' mínus ').replace(/\?/g,' kolik? '); }
