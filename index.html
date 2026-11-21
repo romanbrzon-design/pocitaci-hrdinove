@@ -299,6 +299,13 @@ img.ov{position:absolute;height:auto;pointer-events:none;filter:drop-shadow(0 2p
 .prestage .mon .av{height:210px;width:auto;max-width:none}
 .prestage .mon > svg{height:210px;width:auto;max-width:100%}
 
+#readtg{position:fixed;left:10px;bottom:10px;z-index:60;border:3px solid #8a5a2b;border-radius:999px;padding:8px 14px;font:800 15px Nunito,sans-serif;background:#fff7e6;color:#5a3412;box-shadow:0 3px 0 #8a5a2b;cursor:pointer}
+#readtg.on{background:linear-gradient(#ffe27a,#f6b81d)}
+.card.hasrd{position:relative}
+.card .rd{position:absolute;top:6px;right:6px;z-index:5;width:38px;height:38px;border-radius:50%;border:2px solid #b88a4a;background:#fff7e6;font-size:19px;cursor:pointer;box-shadow:0 2px 0 #b88a4a;padding:0}
+.card .rd:hover{transform:scale(1.1)}
+#app{padding-bottom:56px}
+
 </style>
 </head>
 <body>
@@ -722,7 +729,8 @@ function speak(text, lang){
     const en=/^en/i.test(lang||'');
     const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.85:.92; speechSynthesis.speak(u); }catch(e){}
 }
-function sayText(pr){ if(pr.say!==undefined && pr.type==='choice') return pr.say; return pr.say || String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/·/g,' krát ').replace(/:/g,' děleno ').replace(/−/g,' mínus ').replace(/\?/g,' kolik? '); }
+function sayText(pr){ if(pr.type==='choice') return pr.say || String(pr.q).replace(/<[^>]+>/g,' ');
+  if(pr.type==='cmp'){ const n=String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').split('◯').map(s=>s.trim()); return `Porovnej. ${n[0]} a ${n[1]}. Je to větší, menší, nebo rovno? Vyber znaménko.`; } return pr.say || String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/·/g,' krát ').replace(/:/g,' děleno ').replace(/−/g,' mínus ').replace(/\?/g,' kolik? '); }
 
 /* ============ Další předměty: angličtina, přírodověda, čeština ============ */
 const SUBJECTS = {
@@ -1766,6 +1774,30 @@ function render(){
   app.innerHTML=V();
   bind();
   updateSyncNote();
+  addReaders();
+}
+/* ---- předčítání pro děti, které ještě neumí číst ---- */
+function readOn(){ const v=lsGet('ph-read',null); if(v!==null && v!==undefined) return !!v; const p=view.pid&&prof(view.pid); return !!(p && +p.grade<=1); }
+function cleanSpeech(t){ return String(t||'').replace(/🔊/g,'').replace(/[\u{1F000}-\u{1FFFF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}]/gu,' ').replace(/[＋+]\s*(\d)/g,'plus $1').replace(/·/g,', ').replace(/\s*\n\s*/g,'. ').replace(/\s+/g,' ').trim(); }
+let _hoverT=null;
+function addReaders(){
+  let tg=document.getElementById('readtg');
+  if(!tg){ tg=document.createElement('button'); tg.id='readtg'; document.body.appendChild(tg);
+    tg.onclick=()=>{ const on=!readOn(); lsSet('ph-read',on); render(); if(on) speak('Předčítání je zapnuté. Klikni na reproduktor nebo najeď myší na tlačítko a já ti to přečtu.'); else speechSynthesis.cancel(); }; }
+  const on=readOn(); tg.className=on?'on':''; tg.innerHTML=on?'🔊 Předčítání zapnuto':'🔇 Předčítání'; tg.title='Zapnout nebo vypnout předčítání';
+  if(!on) return;
+  document.querySelectorAll('#app .card').forEach(c=>{
+    if(c.classList.contains('profile') || c.querySelector('[data-say]') || c.querySelector(':scope > .rd')) return;
+    const b=document.createElement('button'); b.className='rd'; b.type='button'; b.textContent='🔊'; b.title='Přečíst nahlas';
+    b.onclick=ev=>{ ev.stopPropagation(); ev.preventDefault(); speak(cleanSpeech(c.innerText)); };
+    c.classList.add('hasrd'); c.prepend(b);
+  });
+  const top=document.querySelector('#app .top h1');
+  document.querySelectorAll('#app .btn, #app .choice, #app .mcard, #app .chip, #app .card.profile, #app .top h1, #app .stat, #app .modebtn, #app .spbtn').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ clearTimeout(_hoverT); const pr=curProblem&&curProblem(); if(el.classList.contains('choice') && pr && pr.lang) return;
+      _hoverT=setTimeout(()=>speak(cleanSpeech(el.innerText||el.title)),500); });
+    el.addEventListener('mouseleave',()=>clearTimeout(_hoverT));
+  });
 }
 function statsHTML(p){
   const st=stats(p), xi=xpInfo(p);
@@ -1867,7 +1899,7 @@ function heroView(){
 function probHTML(pr){
   const plain=String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ');
   const hasEq=/=/.test(plain), long=!pr.word && plain.length>16;
-  const sayB = ((pr.type==='choice'&&pr.say)||pr.word) ? ` <button class="say" data-say title="Přečíst nahlas">🔊</button>` : '';
+  const sayB = ((pr.type==='choice'&&pr.say!=='')||pr.word||(readOn()&&!pr.noAuto)) ? ` <button class="say" data-say title="Přečíst nahlas">🔊</button>` : '';
   if(pr.type==='choice') return `<div class="prob mid">${pr.q}${sayB}</div>${pr.pic?`<div class="pic0">${pr.pic}</div>`:''}`;
   return `<div class="prob ${pr.word?'word':''} ${long?'mid':''}">${pr.q}${pr.word||pr.small||pr.type==='cmp'||hasEq?'':' = '}${sayB}</div>`;
 }
@@ -2132,7 +2164,7 @@ function bind(){
     document.querySelectorAll('[data-cmp]').forEach(el=>el.onclick=()=>submit(el.dataset.cmp));
     document.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>{ if(el.disabled||busy) return; lastChoice=el; submit(+el.dataset.choice); });
     document.querySelectorAll('[data-say]').forEach(el=>el.onclick=()=>{ const pr=curProblem(); if(pr) speak(sayText(pr), pr.lang); });
-    { const pr=curProblem(), pp=prof(view.pid); if(pr && pr.type==='choice' && pr.say && !pr.noAuto && (pr.lang || (pp&&+pp.grade<=1)) && pr!==lastSpoken){ lastSpoken=pr; setTimeout(()=>speak(sayText(pr), pr.lang),250); } }
+    { const pr=curProblem(), pp=prof(view.pid); if(pr && !pr.noAuto && ((pr.type==='choice' && pr.say && (pr.lang || (pp&&+pp.grade<=1))) || readOn()) && pr!==lastSpoken){ lastSpoken=pr; setTimeout(()=>speak(sayText(pr), pr.lang),250); } }
     document.querySelectorAll('.ans').forEach(el=>{
       el.onfocus=()=>{ document.querySelectorAll('.ans').forEach(x=>x.classList.remove('active')); el.classList.add('active'); };
       el.oninput=()=>{ el.value=el.value.replace(/[^\d]/g,''); };
