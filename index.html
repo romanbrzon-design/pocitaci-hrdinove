@@ -2065,6 +2065,8 @@ function bind(){
   document.querySelectorAll('[data-gender]').forEach(el=>el.onclick=()=>{ readDraft(); draft.gender=el.dataset.gender; render(); });
   document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{ readDraft(); draft.mode=el.dataset.mode; render(); });
   document.querySelectorAll('[data-species]').forEach(el=>el.onclick=()=>{ readDraft(); draft.species=el.dataset.species; render(); });
+  document.querySelectorAll('[data-subjon]').forEach(el=>el.onchange=()=>{ const box=el.closest('.subjbox'); if(!box) return; const cs=[...box.querySelectorAll('[data-cat]')]; if(!el.checked) cs.forEach(x=>x.checked=false); else if(!cs.some(x=>x.checked)){ const d=defaultCats(+($('#p-grade')||{}).value||0,[el.dataset.subjon]); cs.forEach(x=>x.checked=d.includes(x.dataset.cat)); } });
+  document.querySelectorAll('.subjbox [data-cat]').forEach(el=>el.onchange=()=>{ const sb=el.closest('.subjbox').querySelector('[data-subjon]'); const any=[...el.closest('.subjbox').querySelectorAll('[data-cat]')].some(x=>x.checked); sb.checked=any; });
   document.querySelectorAll('[data-playsubj]').forEach(el=>el.onclick=()=>startExtra(el.dataset.playsubj));
   document.querySelectorAll('[data-subj]').forEach(el=>el.onclick=()=>{ readDraft(); const s=el.dataset.subj; draft.subjects=draft.subjects||['m']; if(draft.subjects.includes(s)){ if(draft.subjects.length>1) draft.subjects=draft.subjects.filter(x=>x!==s); } else draft.subjects.push(s); render(); });
   document.querySelectorAll('[data-feed]').forEach(el=>el.onclick=()=>feed(el.dataset.feed));
@@ -2279,8 +2281,8 @@ function act(a){
     const pin=$('#p-pin').value.trim(); if(pin && !/^\d{4}$/.test(pin)){ toast('Kód musí mít 4 číslice'); return; } h.pin=pin;
     h.reward=$('#p-reward').value.trim();
     const g=+$('#p-grade').value;
-    const subsOn=[...document.querySelectorAll('[data-subjon]')].filter(x=>x.checked).map(x=>x.dataset.subjon); if(!subsOn.length) subsOn.push('m');
-    if(a==='defcats' || g!==h.grade){ h.grade=g; h.cats=defaultCats(g, subsOn); }
+    const subsOn=[...new Set([...document.querySelectorAll('[data-subjon]')].filter(x=>x.checked).map(x=>x.dataset.subjon).concat([...document.querySelectorAll('[data-cat]')].filter(x=>x.checked).map(x=>subjOf(x.dataset.cat))))]; if(!subsOn.length) subsOn.push('m');
+    if(a==='defcats' || g!==+h.grade){ h.grade=g; h.cats=defaultCats(g, subsOn); }
     else {
       let c=[...document.querySelectorAll('[data-cat]')].filter(x=>x.checked).map(x=>x.dataset.cat);
       c=c.filter(k=>subsOn.includes(subjOf(k)));
