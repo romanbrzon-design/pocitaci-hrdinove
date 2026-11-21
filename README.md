@@ -1,6 +1,12 @@
 # Počítací hrdinové
 
-RPG procvičování matematiky pro 1.–5. třídu. Každý den 20 příkladů, za body se kupuje výbava (meče, štíty, brnění…), kterou si hrdina/hrdinka musí nasadit. Na výpravě čeká 10 oblud – v boji je každý úder příklad. Za poražení draka čeká odměna od rodičů.
+Procvičování matematiky pro 1.–5. třídu jako hra. Každý den 10 příkladů (a libovolně sad navíc), body, truhly s předměty a tři dobrodružství na výběr:
+
+- ⚔️ **Výprava za drakem** – výbava (meče, štíty, brnění…), 10 oblud, souboje příklady.
+- 🏡 **Můj domeček** – zařizování pokojíčku, 10 návštěv až po královnu.
+- 🐾 **Moje zvířátko** – 10 mláďat (i potkan), krmení a růst, doplňky, 10 soutěží.
+
+Za splnění celého dobrodružství čeká odměna od rodičů.
 
 - `index.html` – celá aplikace (GitHub Pages)
 - `config.js` – adresa úložiště (Google Apps Script)

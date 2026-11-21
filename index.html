@@ -142,6 +142,17 @@ h3{margin:22px 0 8px}
 .prestage{position:relative;border-radius:16px;overflow:hidden;max-width:300px;margin:0 auto}
 .prestage .mon{position:relative;z-index:1}
 .prestage > .scene{position:absolute;inset:0;width:100%;height:100%}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:640px){.modes{grid-template-columns:1fr}}
+.modebtn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;border-radius:16px;background:#fff;border:2px solid var(--line);color:var(--ink);text-align:center}
+.modebtn small{font-weight:600;color:var(--muted);font-size:12px}
+.modebtn.on{border-color:var(--pri);background:#f4efff;box-shadow:0 0 0 3px #e6e0ff}
+.species{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+@media (max-width:640px){.species{grid-template-columns:repeat(3,1fr)}}
+.spbtn{display:flex;flex-direction:column;align-items:center;padding:4px;border-radius:14px;background:#fff;border:2px solid var(--line);color:var(--ink);font-size:13px}
+.spbtn svg{width:100%;height:auto}
+.spbtn.on{border-color:var(--pri);background:#f4efff}
+.stage.roomstage svg, .roomthumb svg{max-width:100%!important;width:100%}
 /* parent */
 .field{display:flex;flex-direction:column;gap:4px;margin:10px 0}
 .field label{font-size:14px;color:var(--muted)}
@@ -529,22 +540,22 @@ const LEN_MULT = {short:0.3, mid:0.5, long:0.8};
 const XP_PER_LEVEL = {short:15, mid:20, long:30};
 const MAX_LEVEL = 20;
 function mult(){ return LEN_MULT[S.settings.length]||0.5; }
-function price(slot,tier){ return Math.max(5, Math.round(SLOTMAP[slot].items[tier-1][4]*mult()/5)*5); }
+function price(slot,tier,p){ const sl=(p&&slotOf(p,slot))||SLOTMAP[slot]; return Math.max(5, Math.round(sl.items[tier-1][4]*mult()/5)*5); }
 function bounty(mi){ return Math.round(MONSTERS[mi].gold*mult()/5)*5; }
 function level(p){ return Math.min(MAX_LEVEL, 1+Math.floor((p.xp||0)/(XP_PER_LEVEL[S.settings.length]||20))); }
 function xpInfo(p){ const per=XP_PER_LEVEL[S.settings.length]||20, L=level(p); if(L>=MAX_LEVEL) return {L, cur:per, per, max:true}; return {L, cur:(p.xp||0)-(L-1)*per, per}; }
 function stats(p){
   const L=level(p); let atk=1+Math.floor((L-1)/2), def=0, hp=20+3*(L-1);
-  for(const sl of SLOTS){ const t=(p.eq||{})[sl.id]||0; if(t){ const it=sl.items[t-1]; atk+=it[1]; def+=it[2]; hp+=it[3]; } }
+  for(const sl of slotsOf(p)){ const t=(p.eq||{})[sl.id]||0; if(t){ const it=sl.items[t-1]; atk+=it[1]; def+=it[2]; hp+=it[3]; } }
   return {L, atk, def, hp};
 }
 function analyze(p, mi){
-  const st=stats(p), m=MONSTERS[mi];
+  const st=stats(p), m=foesOf(p)[mi];
   const myDmg=Math.max(1, st.atk-m.def), monDmg=Math.max(1, m.atk-st.def);
   const hits=Math.ceil(m.hp/myDmg), rounds=Math.ceil(st.hp/monDmg);
   return {st, m, myDmg, monDmg, hits, rounds, spare:rounds-hits};
 }
-function itemStatText(it){ const a=[]; if(it[1]) a.push(`⚔️+${it[1]}`); if(it[2]) a.push(`🛡️+${it[2]}`); if(it[3]) a.push(`❤️+${it[3]}`); return a.join(' '); }
+function itemStatText(it,p){ const ic=modeOf(p).st; const a=[]; if(it[1]) a.push(`${ic[0][0]}+${it[1]}`); if(it[2]) a.push(`${ic[1][0]}+${it[2]}`); if(it[3]) a.push(`${ic[2][0]}+${it[3]}`); return a.join(' '); }
 const G = (p, m, f) => p.gender==='f' ? f : m;
 
 /* ============ Drawing: hero / heroine ============ */
@@ -558,7 +569,8 @@ function heroBase(p, opts={}){
   s+=`<defs><radialGradient id="g${uid}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff6b0" stop-opacity="0"/></radialGradient><radialGradient id="r${uid}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ff9a8a" stop-opacity=".9"/><stop offset="1" stop-color="#ff9a8a" stop-opacity="0"/></radialGradient></defs>`;
   if(opts.glow) s+=`<circle cx="105" cy="130" r="115" fill="url(#g${uid})"/>`;
   s+=`<ellipse cx="105" cy="236" rx="70" ry="9" fill="#000" opacity=".1"/>`;
-  s+=`<g class="hb">`;
+  const XT = heroExtras(opts.x);
+  s+=`<g class="hb">`+XT.back;
   // cape behind
   if(C){ const col=['','#c0392b','#8e1b2b','#5b2a86'][C], len=[0,170,205,222][C];
     s+=`<g class="hc"><path d="M72 100 Q105 92 138 100 L${150+C*4} ${len} Q105 ${len+10} ${60-C*4} ${len} Z" fill="${col}"/><path d="M90 108 Q86 ${len-40} ${76-C*2} ${len-2} M120 108 Q124 ${len-40} ${134+C*2} ${len-2} M105 106 V${len+4}" stroke="#000" stroke-opacity=".2" stroke-width="3" fill="none"/>`;
@@ -630,6 +642,7 @@ function heroBase(p, opts={}){
     if(H===4) s+=`<path d="M105 30 q4-16 20-18 q-6 8-12 20z" fill="#e8435a"/><path d="M108 28 q8-14 22-12 q-8 6-14 16z" fill="#ff7a8c"/>`;
     if(girl) s+=`<path d="M128 62 q14 8 8 34 q-2 6 -6 8 q2-14 -6-26z" fill="${hair}"/>`; }
   if(H===5) s+=`<path d="M80 50 L84 26 L94 40 L105 20 L116 40 L126 26 L130 50 Z" fill="#f5c400" stroke="#c99a10" stroke-width="2"/><circle cx="105" cy="38" r="4" fill="#e84393"/><circle cx="90" cy="44" r="3" fill="#2fb5ff"/><circle cx="120" cy="44" r="3" fill="#2fb5ff"/>`;
+  s+=XT.front;
   s+=`</g>`;
   s+=`<g class="pet">`;
   // pet
@@ -740,7 +753,7 @@ function openChestFor(p){
   if(!p.chests || !p.chests.length) return null;
   const kind=p.chests.shift();
   p.owned=p.owned||{};
-  const cands = SLOTS.filter(sl=>(p.owned[sl.id]||0) < sl.items.length);
+  const cands = slotsOf(p).filter(sl=>(p.owned[sl.id]||0) < sl.items.length);
   const itemChance = kind==='gold' ? 1 : 0.6;
   if(cands.length && Math.random()<itemChance){
     // cheapest next item out of 3 random slots – drops stay useful for the current stage
@@ -820,12 +833,367 @@ function sceneSVG(i){
   }
   return V('');
 }
+
+/* ============ Dobrodružství: Domeček a Zvířátko ============ */
+// Stejná čísla jako výprava (vyváženo), jen jiné věci a jména.
+function mkSlots(defs){ return defs.map((d,si)=>({id:d.id, name:d.name, items:d.names.map((nm,ti)=>{ const it=SLOTS[si].items[ti]; return [nm,it[1],it[2],it[3],it[4]]; })})); }
+const HOME_SLOTS = mkSlots([
+  {id:'bed',    name:'Postel',   names:['Matrace','Dřevěná postýlka','Postel s peřinou','Postel se srdíčkem','Postel s nebesy','Zámecká postel','Kouzelná zlatá postel']},
+  {id:'rug',    name:'Koberec',  names:['Rohožka','Kulatý koberec','Pruhovaný koberec','Chlupatý koberec','Královský koberec']},
+  {id:'wall',   name:'Tapety',   names:['Sluníčkové tapety','Puntíkaté tapety','Květinové tapety','Hvězdné tapety','Zlaté tapety']},
+  {id:'lamp',   name:'Světlo',   names:['Svíčka','Stolní lampička','Lampa s motýlky','Lustr','Křišťálový lustr']},
+  {id:'curtain',name:'Okno',     names:['Záclonka','Krajkové závěsy','Kouzelné závěsy']},
+  {id:'plant',  name:'Kytky',    names:['Kaktus','Kytka v květináči','Velká palma']},
+  {id:'hpet',   name:'Mazlíček', names:['Rybička v akváriu','Koťátko v košíku','Papoušek']},
+]);
+const PET_SLOTS = mkSlots([
+  {id:'toy',    name:'Hračka',   names:['Klubíčko','Míček','Pískací kačenka','Létající talíř','Duhová kostka','Kouzelný míček','Zlatý míček']},
+  {id:'pbed',   name:'Pelíšek',  names:['Krabice','Polštářek','Proutěný košík','Měkký pelíšek','Královský pelíšek']},
+  {id:'collar', name:'Obojek',   names:['Provázek','Kožený obojek','Obojek se zvonečkem','Obojek s kamínky','Zlatý obojek']},
+  {id:'phat',   name:'Na hlavu', names:['Mašlička','Kšiltovka','Kloboučík','Věneček z kytiček','Korunka']},
+  {id:'shoes',  name:'Botičky',  names:['Ponožky','Botičky','Okřídlené botičky']},
+  {id:'outfit', name:'Oblečení', names:['Šátek','Svetříček','Superhrdinský plášť']},
+  {id:'friend', name:'Kamarád',  names:['Motýlek','Ptáček','Duhový motýl']},
+]);
+const GUESTS = MONSTERS.map((m,i)=>Object.assign({}, m, [
+  {name:'Kamarádka Ája', where:'Přišla si hrát',            look:{gender:'f',color:'#21b37a',hair:'#e0b040'}},
+  {name:'Babička',       where:'Přišla na čaj',             look:{gender:'f',color:'#8e44ad',hair:'#d8d8d8',x:{glasses:1}}},
+  {name:'Dědeček',       where:'Přišel na návštěvu',        look:{gender:'m',color:'#7a5230',hair:'#e6e6e6',x:{glasses:1,beard:'#f0f0f0'}}},
+  {name:'Paní učitelka', where:'Přišla se podívat',         look:{gender:'f',color:'#1fb5c9',hair:'#5b3a1e',x:{glasses:1}}},
+  {name:'Pan kuchař',    where:'Chce ochutnat dort',        look:{gender:'m',color:'#f2f2f2',hair:'#3b2a1d',x:{chef:1}}},
+  {name:'Víla',          where:'Přiletěla z lesa',          look:{gender:'f',color:'#ff9de0',hair:'#ffd84d',x:{wings:1,wand:1}}},
+  {name:'Kouzelník',     where:'Přišel s kouzly',           look:{gender:'m',color:'#3b2a8a',hair:'#cccccc',x:{wizard:1,beard:'#e0e0e0',wand:1}}},
+  {name:'Rytíř',         where:'Přijel na koni',            look:{gender:'m',color:'#4f7cff',hair:'#6b4226',eq:{weapon:5,shield:4,armor:4,head:4,cape:2}}},
+  {name:'Princezna',     where:'Přijela kočárem',           look:{gender:'f',color:'#ff6fb5',hair:'#ffd84d',eq:{head:5,cape:2}}},
+  {name:'Královna',      where:'Velká královská návštěva',  look:{gender:'f',color:'#8e1b2b',hair:'#3b2a1d',eq:{head:5,cape:3,armor:5}}},
+][i]));
+const SPECIES = [
+  {id:'cat',    name:'Koťátko',   color:'#f4a259'},
+  {id:'dog',    name:'Štěňátko',  color:'#c98b4f'},
+  {id:'bunny',  name:'Králíček',  color:'#e9e4f0'},
+  {id:'pony',   name:'Poník',     color:'#c9a0e8'},
+  {id:'rat',    name:'Potkan',    color:'#a3a3b2'},
+  {id:'hamster',name:'Křeček',    color:'#e8b36a'},
+  {id:'fox',    name:'Liška',     color:'#f07c2a'},
+  {id:'panda',  name:'Pandička',  color:'#f6f6f6'},
+  {id:'owl',    name:'Sovička',   color:'#a0703a'},
+  {id:'dragon', name:'Dráček',    color:'#5ccf8a'},
+];
+const SPMAP = Object.fromEntries(SPECIES.map(s=>[s.id,s]));
+const CONTESTS = MONSTERS.map((m,i)=>Object.assign({}, m, [
+  {name:'Skákání přes klacík', where:'Soupeř: králíček Fíbí',     opp:'bunny'},
+  {name:'Hledání pokladu',     where:'Soupeř: štěňátko Bertík',   opp:'dog'},
+  {name:'Závod na louce',      where:'Soupeř: křeček Pepík',      opp:'hamster'},
+  {name:'Aport',               where:'Soupeř: potkan Rumcajs',    opp:'rat'},
+  {name:'Přehlídka krásy',     where:'Soupeř: koťátko Mína',      opp:'cat'},
+  {name:'Překážková dráha',    where:'Soupeř: poník Blesk',       opp:'pony'},
+  {name:'Noční hlídka',        where:'Soupeř: sovička Hůhů',      opp:'owl'},
+  {name:'Lesní maraton',       where:'Soupeř: liška Zrzka',       opp:'fox'},
+  {name:'Bambusová výzva',     where:'Soupeř: pandička Bambi',    opp:'panda'},
+  {name:'Velké finále',        where:'Soupeř: dráček Ohnivák',    opp:'dragon'},
+][i]));
+const FOODS = [ {id:'f1', name:'Mňamka', icon:'🥣', price:15, grow:5}, {id:'f2', name:'Pamlsek', icon:'🦴', price:35, grow:13}, {id:'f3', name:'Dortík', icon:'🎂', price:70, grow:28} ];
+const PET_STAGES = ['Mládě','Malé','Dospívající','Dospělé'];
+function petStage(p){ const L=level(p); return L<=3?0:L<=8?1:L<=14?2:3; }
+
+const MODES = {
+  quest: { key:'quest', title:'Výprava za drakem', icon:'⚔️', desc:'Kup si meč, štít a brnění a poraz 10 oblud až po draka.',
+    slots:SLOTS, foes:MONSTERS, st:[['⚔️','Útok'],['🛡️','Obrana'],['❤️','Životy']], fst:[['⚔️','Útok'],['🛡️','Obrana'],['❤️','Životy']],
+    mapTitle:'🗺️ Výprava', gearTitle:'🎒 Výbava a obchod', wearing:'Na sobě', equipWord:'nasaď si ho', equipped:'Nasazeno', removed:'Sundáno',
+    foeW:['obluda','obludy','oblud'], fightBtn:'⚔️ Do boje!', finalName:'draka', finalIcon:'🐉',
+    line:(d,md)=>`Správně = úder za ${d} · Chyba = netrefíš · Obluda útočí za ${md}`,
+    explain:(d,md)=>`Každá správná odpověď = úder za <b>${d}</b>. Obluda ti každé kolo ubere <b>${md}</b> ❤️ – špatná odpověď znamená, že netrefíš, ale obluda útočí dál.`,
+    hit:['Zásah! ⚔️','Přesně! 💥','Bum! 💪','Trefa! ✨'], miss:'Vedle!', missFloat:'vedle',
+    roundsW:['ránu','rány','ran'], weakW:['slabý','slabá'],
+    winTitle:last=>last?'🐉 DRAK JE PORAŽEN!':'Vítězství!', winText:(p,f)=>`${G(p,'Porazil','Porazila')} jsi: ${f.name}!`, loseText:(p,f)=>`${f.name} tě porazil. 😓`,
+    goal:'Poraz všech 10 oblud. Na konci čeká drak – a za něj odměna od rodičů!', flee:'Opravdu utéct z boje? Obluda zůstane neporažená.', doneShort:'🏆 Drak poražen!', progW:'Poražených oblud' },
+  home: { key:'home', title:'Můj domeček', icon:'🏡', desc:'Zařiď si pokojíček krásnými věcmi a přivítej 10 návštěv až po královnu.',
+    slots:HOME_SLOTS, foes:GUESTS, st:[['✨','Útulnost'],['🛋️','Pohodlí'],['⏳','Čas']], fst:[['😤','Náročnost'],['🧐','Vybíravost'],['💖','Přání']],
+    mapTitle:'🚪 Návštěvy', gearTitle:'🛍️ Obchod a zařizování pokoje', wearing:'V pokoji', equipWord:'dej si ho do pokoje', equipped:'Dáno do pokoje', removed:'Uklizeno',
+    foeW:['návštěva','návštěvy','návštěv'], fightBtn:'🫖 Pozvat dál!', finalName:'královnu', finalIcon:'👑',
+    line:(d,md)=>`Správně = návštěvu potěšíš o ${d} 💖 · Chyba = nepovede se · Každé kolo ubyde ⏳ ${md}`,
+    explain:(d,md)=>`Každá správná odpověď návštěvu potěší o <b>${d}</b> 💖. Každé kolo ti ubyde <b>${md}</b> ⏳ času – při chybě se pohoštění nepovede.`,
+    hit:['Mňam! 🍰','Paráda! 💖','Návštěva se usmívá 😊','Krása! ✨'], miss:'Nepovedlo se!', missFloat:'ups',
+    roundsW:['kolo','kola','kol'], weakW:['připravený','připravená'],
+    winTitle:last=>last?'👑 KRÁLOVNA JE NADŠENÁ!':'Návštěva je nadšená!', winText:(p,f)=>`${f.name} se u tebe ${/a$|ka$/.test(f.name)?'měla':'měl'} moc krásně!`, loseText:(p,f)=>`${f.name} musel${/a$|ka$/.test(f.name)?'a':''} odejít dřív. 😕`,
+    goal:'Přivítej všech 10 návštěv. Nakonec přijede sama královna – a za ni odměna od rodičů!', flee:'Opravdu ukončit návštěvu? Bude potřeba ji pozvat znovu.', doneShort:'👑 Královna nadšená!', progW:'Spokojených návštěv' },
+  pet: { key:'pet', title:'Moje zvířátko', icon:'🐾', desc:'Starej se o mládě, krm ho, ať roste, a vyhrajte spolu 10 soutěží.',
+    slots:PET_SLOTS, foes:CONTESTS, st:[['🎯','Šikovnost'],['🧘','Klid'],['⚡','Energie']], fst:[['💨','Tempo'],['🧱','Obtížnost'],['🏅','Body soupeře']],
+    mapTitle:'🏆 Soutěže', gearTitle:'🛍️ Obchod a doplňky', wearing:'Má na sobě', equipWord:'dej ho zvířátku', equipped:'Nasazeno', removed:'Sundáno',
+    foeW:['soutěž','soutěže','soutěží'], fightBtn:'🏁 Soutěžit!', finalName:'velké finále', finalIcon:'🏆',
+    line:(d,md)=>`Správně = získáte ${d} 🏅 · Chyba = nepovede se · Každé kolo ubyde ⚡ ${md}`,
+    explain:(d,md)=>`Každá správná odpověď = <b>${d}</b> 🏅 bodů. Každé kolo ubyde <b>${md}</b> ⚡ energie – při chybě se cvik nepovede.`,
+    hit:['Hop! 🐾','Paráda! 🏅','Výborně! ✨','Jupí! 🎉'], miss:'Nepovedlo se!', missFloat:'ups',
+    roundsW:['kolo','kola','kol'], weakW:['připravený','připravená'],
+    winTitle:last=>last?'🏆 VYHRÁLI JSTE VELKÉ FINÁLE!':'Vyhráli jste!', winText:(p,f)=>`Vyhráli jste soutěž: ${f.name}!`, loseText:(p,f)=>`Tentokrát vyhrál soupeř. 😕`,
+    goal:'Vyhrajte spolu všech 10 soutěží. Na konci čeká velké finále – a za něj odměna od rodičů!', flee:'Opravdu odstoupit ze soutěže?', doneShort:'🏆 Finále vyhráno!', progW:'Vyhraných soutěží' },
+};
+const modeOf = p => MODES[(p&&p.mode)||'quest'] || MODES.quest;
+const slotsOf = p => modeOf(p).slots;
+const slotOf = (p,id) => slotsOf(p).find(s=>s.id===id);
+const foesOf = p => modeOf(p).foes;
+
+/* ---- Kreslení: hlavní obrázek podle dobrodružství ---- */
+function avatarSVG(p, opts={}){
+  const m=(p&&p.mode)||'quest';
+  if(m==='home') return roomSVG(p, opts);
+  if(m==='pet') return petSVG(p, Object.assign({mood: p.fedDate===todayKey()?'happy':'sad'}, opts));
+  return heroSVG(p, opts);
+}
+function kidSVG(p){ return heroSVG({gender:p.gender, color:p.color, eq:{}}); }
+function guestSVG(i){ const g=GUESTS[i].look; return heroSVG({gender:g.gender, color:g.color, hair:g.hair, eq:g.eq||{}}, {x:g.x||{}}); }
+function foeSVG(p, i){
+  const m=(p&&p.mode)||'quest';
+  if(m==='home') return guestSVG(i);
+  if(m==='pet'){ const c=CONTESTS[i]; const t=Math.min(5,1+Math.floor(i/2)); return petSVG({species:c.opp, xp:9999, eq:{collar:Math.min(5,t), phat:i>=3?Math.min(5,t):0, outfit:i>=6?Math.min(3,t-2):0}}, {flip:true, stage:Math.min(3,1+Math.floor(i/3))}); }
+  return monsterSVG(i);
+}
+function foeScene(p, i){
+  const m=(p&&p.mode)||'quest';
+  if(m==='home') return roomSVG(p, {scene:true});
+  if(m==='pet') return contestScene(i);
+  return sceneSVG(i);
+}
+
+/* ---- Pokojíček ---- */
+function roomSVG(p, opts={}){
+  const e=p.eq||{}; const BD=e.bed||0, RG=e.rug||0, WL=e.wall||0, LM=e.lamp||0, CU=e.curtain||0, PL=e.plant||0, HP=e.hpet||0;
+  const uid='r'+(++_uid);
+  let s=`<svg viewBox="0 0 400 260" ${opts.scene?'preserveAspectRatio="xMidYMid slice" class="scene"':''} xmlns="http://www.w3.org/2000/svg">`;
+  const wallCol=['#f3e9d6','#fde9a6','#ffd6e3','#e3f4d8','#28356b','#f5d98a'][WL];
+  s+=`<rect width="400" height="190" fill="${wallCol}"/>`;
+  if(WL===1) for(let x=0;x<400;x+=40) s+=`<rect x="${x}" width="20" height="190" fill="#fff3c4" opacity=".7"/>`;
+  if(WL===2) for(let y=15;y<190;y+=30) for(let x=(y%60?20:0);x<400;x+=40) s+=`<circle cx="${x}" cy="${y}" r="6" fill="#ff8fb3" opacity=".7"/>`;
+  if(WL===3) for(let y=20;y<190;y+=40) for(let x=(y%80?30:10);x<400;x+=60) s+=`<g opacity=".8"><circle cx="${x}" cy="${y}" r="5" fill="#ffd84d"/><circle cx="${x-7}" cy="${y}" r="5" fill="#ff8fb3"/><circle cx="${x+7}" cy="${y}" r="5" fill="#ff8fb3"/><circle cx="${x}" cy="${y-7}" r="5" fill="#ff8fb3"/><circle cx="${x}" cy="${y+7}" r="5" fill="#ff8fb3"/></g>`;
+  if(WL===4) for(let n=0;n<40;n++) s+=`<path d="M${(n*97)%400} ${(n*53)%180+6} l2 5 5 0 -4 3 2 5 -5 -3 -5 3 2 -5 -4 -3 5 0z" fill="#ffe14d"/>`;
+  if(WL===5) for(let y=20;y<190;y+=36) for(let x=(y%72?30:12);x<400;x+=44) s+=`<path d="M${x} ${y-9} q8 9 0 18 q-8 -9 0 -18z" fill="#c99a10" opacity=".55"/>`;
+  s+=`<rect y="180" width="400" height="10" fill="#e8d3b0"/><rect y="190" width="400" height="70" fill="#c89a63"/>`;
+  for(let x=0;x<400;x+=50) s+=`<path d="M${x} 190 V260" stroke="#a87b48" stroke-width="2"/>`;
+  // window
+  s+=`<rect x="30" y="30" width="100" height="90" rx="6" fill="#bfe6ff"/><circle cx="105" cy="55" r="12" fill="#fff3a0"/><path d="M30 100 q25 -16 50 0 t50 0 V120 H30z" fill="#8fd48a"/><path d="M80 30 V120 M30 75 H130" stroke="#fff" stroke-width="5"/><rect x="30" y="30" width="100" height="90" rx="6" fill="none" stroke="#fff" stroke-width="6"/>`;
+  if(CU){ const cc=['','#ffffff','#ffc2d6','#8e6bd8'][CU];
+    s+=`<path d="M22 24 Q40 70 30 126 L52 126 Q48 70 58 24Z" fill="${cc}" ${CU===1?'opacity=".85"':''}/><path d="M138 24 Q120 70 130 126 L108 126 Q112 70 102 24Z" fill="${cc}" ${CU===1?'opacity=".85"':''}/><rect x="18" y="20" width="124" height="7" rx="3" fill="#8a5a2b"/>`;
+    if(CU===3) s+=`<path d="M36 50 l2 4 4 0 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 4 0z M120 80 l2 4 4 0 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 4 0z" fill="#ffe14d"/>`;
+    if(CU===2) s+=`<path d="M24 126 q8 6 14 0 q8 6 14 0 M108 126 q8 6 14 0 q8 6 14 0" stroke="#fff" stroke-width="2" fill="none"/>`; }
+  // picture on wall
+  s+=`<rect x="296" y="44" width="56" height="42" rx="3" fill="#fff" /><path d="M302 80 l13 -17 9 11 8 -8 14 14z" fill="#7cc24f"/><circle cx="338" cy="55" r="5" fill="#ffd84d"/>`;
+  // rug
+  if(RG===1) s+=`<rect x="140" y="222" width="110" height="22" rx="3" fill="#a8703c"/><path d="M146 228 h98 M146 238 h98" stroke="#7a4b26" stroke-width="2"/>`;
+  if(RG===2) s+=`<ellipse cx="195" cy="232" rx="80" ry="18" fill="#5aa9e6"/><ellipse cx="195" cy="232" rx="55" ry="11" fill="#bfe1fb"/>`;
+  if(RG===3) { s+=`<ellipse cx="195" cy="232" rx="90" ry="20" fill="#ff8fb3"/>`; for(let k=0;k<4;k++) s+=`<ellipse cx="195" cy="232" rx="${80-k*18}" ry="${17-k*4}" fill="${['#ffd84d','#7cc24f','#5aa9e6','#fff'][k]}"/>`; }
+  if(RG===4) s+=`<path d="M105 232 q10 -22 30 -18 q15 -10 30 -4 q15 -10 30 -2 q16 -8 30 0 q16 -4 26 8 q12 10 -4 22 q-10 10 -30 6 q-14 6 -30 2 q-16 6 -32 0 q-16 6 -32 -2 q-24 2 -18 -12z" fill="#f4f0ff"/>`;
+  if(RG===5) s+=`<rect x="110" y="214" width="170" height="38" rx="6" fill="#b3122a"/><rect x="118" y="220" width="154" height="26" rx="4" fill="none" stroke="#f2c230" stroke-width="3"/><path d="M195 224 l4 6 7 0 -5 4 2 6 -8 -4 -8 4 2 -6 -5 -4 7 0z" fill="#f2c230"/>`;
+  // plant
+  if(PL===1) s+=`<rect x="20" y="214" width="26" height="22" rx="3" fill="#c0603a"/><path d="M33 214 v-30 M33 196 h-8 v-10 M33 200 h8 v-12" stroke="#4c9a3a" stroke-width="8" stroke-linecap="round"/>`;
+  if(PL===2) s+=`<rect x="18" y="212" width="30" height="24" rx="4" fill="#5aa9e6"/><path d="M33 212 v-24" stroke="#3d7a2a" stroke-width="3"/><circle cx="33" cy="184" r="9" fill="#ff6f91"/><circle cx="33" cy="184" r="4" fill="#ffd84d"/><circle cx="22" cy="196" r="6" fill="#ffb3c6"/><circle cx="44" cy="194" r="6" fill="#ffb3c6"/>`;
+  if(PL===3) s+=`<rect x="14" y="206" width="38" height="32" rx="5" fill="#a0522d"/><path d="M33 206 V140" stroke="#7a5230" stroke-width="6"/><path d="M33 142 q-30 -10 -34 14 M33 142 q30 -12 36 12 M33 142 q-16 -24 -38 -18 M33 142 q16 -24 40 -16 M33 142 q0 -24 2 -30" stroke="#3d9a4a" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  // nightstand + lamp
+  s+=`<rect x="232" y="176" width="34" height="46" rx="3" fill="#a8703c"/><rect x="236" y="194" width="26" height="10" rx="2" fill="#8a5a2b"/>`;
+  if(LM===1) s+=`<rect x="244" y="160" width="8" height="16" fill="#fff8e8"/><path d="M248 150 q6 6 0 10 q-6 -4 0 -10z" fill="#ffb02e"/><circle cx="248" cy="158" r="16" fill="#ffe08a" opacity=".35"/>`;
+  if(LM===2) s+=`<rect x="246" y="156" width="4" height="20" fill="#5f6a80"/><path d="M236 156 l8 -18 h10 l8 18z" fill="#5aa9e6"/><circle cx="249" cy="166" r="22" fill="#ffe08a" opacity=".3"/>`;
+  if(LM===3) s+=`<rect x="246" y="156" width="4" height="20" fill="#5f6a80"/><path d="M234 156 l8 -20 h14 l8 20z" fill="#ffd6e3"/><path d="M242 146 q-4 -4 0 -6 q4 2 2 6 M256 148 q4 -4 6 0 q-2 4 -6 0" fill="#c04cf5"/><circle cx="249" cy="166" r="24" fill="#ffe08a" opacity=".35"/>`;
+  if(LM>=4){ const cr=LM===5; s+=`<path d="M200 0 V30" stroke="#8a5a2b" stroke-width="3"/><path d="M170 40 q30 14 60 0" stroke="${cr?'#cfe8ff':'#c99a10'}" stroke-width="5" fill="none"/><circle cx="170" cy="38" r="5" fill="#fff3a0"/><circle cx="200" cy="46" r="5" fill="#fff3a0"/><circle cx="230" cy="38" r="5" fill="#fff3a0"/><circle cx="200" cy="40" r="50" fill="#fff3a0" opacity=".25"/>`; if(cr) s+=`<path d="M175 46 l-3 10 6 0z M200 54 l-3 10 6 0z M225 46 l-3 10 6 0z" fill="#d9f0ff"/>`; }
+  // bed
+  if(BD===1) s+=`<rect x="280" y="200" width="110" height="24" rx="8" fill="#e8e3ef"/><rect x="290" y="192" width="30" height="14" rx="6" fill="#fff"/>`;
+  if(BD>=2){ const frame=['', '', '#a8703c','#c98b4f','#ff8fb3','#e8e3ef','#8a6ad8','#f2c230'][BD], cover=['', '', '#5aa9e6','#7cc24f','#ffd6e3','#ffb3c6','#5b2a86','#fff2a6'][BD];
+    if(BD>=5) s+=`<path d="M278 120 h114 l-6 -14 h-102z" fill="${BD===7?'#f2c230':'#ffb3c6'}"/><path d="M282 120 v96 M388 120 v96" stroke="${frame}" stroke-width="5"/><path d="M284 122 q10 40 0 80 M386 122 q-10 40 0 80" fill="none" stroke="${BD===6?'#c9b3ff':'#ffffff'}" stroke-width="8" opacity=".8"/>`;
+    if(BD===6) s+=`<path d="M276 112 v-16 h8 v6 h6 v-6 h8 v16z M372 112 v-16 h8 v6 h6 v-6 h8 v16z" fill="#8a6ad8"/>`;
+    s+=`<rect x="280" y="150" width="14" height="80" rx="3" fill="${frame}"/>${BD===4?'<path d="M287 162 q-8 -10 0 -14 q8 4 0 14z" fill="#ff4d7d"/>':''}<rect x="294" y="186" width="96" height="30" rx="6" fill="${cover}"/><rect x="296" y="178" width="28" height="14" rx="6" fill="#fff"/><rect x="280" y="214" width="112" height="10" rx="3" fill="${frame}"/>`;
+    if(BD===7) s+=`<circle cx="335" cy="190" r="60" fill="#fff3a0" opacity=".25"/><path d="M340 194 l3 6 6 0 -5 4 2 6 -6 -4 -6 4 2 -6 -5 -4 6 0z" fill="#f2c230"/>`; }
+  // pet
+  if(HP===1) s+=`<path d="M242 176 q-2 -22 7 -26 q9 4 7 26z" fill="#bfe6ff" opacity=".85"/><path d="M246 162 q4 -4 8 0 q-4 4 -8 0z M254 162 l4 -3 v6z" fill="#ff8c1a"/>`;
+  if(HP===2) s+=`<ellipse cx="150" cy="236" rx="26" ry="10" fill="#c98b4f"/><path d="M126 232 q24 -10 48 0" stroke="#a8703c" stroke-width="5" fill="none"/><circle cx="150" cy="222" r="12" fill="#f4a259"/><path d="M140 214 l2 -10 6 7z M160 214 l-2 -10 -6 7z" fill="#f4a259"/><circle cx="146" cy="222" r="1.8" fill="#2b2340"/><circle cx="154" cy="222" r="1.8" fill="#2b2340"/>`;
+  if(HP===3) s+=`<path d="M150 236 V170 M138 172 h24" stroke="#7a5230" stroke-width="4"/><ellipse cx="150" cy="156" rx="11" ry="15" fill="#3cc47c"/><circle cx="150" cy="144" r="9" fill="#e8435a"/><path d="M157 144 l7 2 -7 3z" fill="#ffd84d"/><circle cx="152" cy="142" r="1.8" fill="#2b2340"/><path d="M146 168 q-4 10 -2 18" stroke="#5aa9e6" stroke-width="5" fill="none"/>`;
+  if(!opts.scene && opts.kid!==false) s+=`<g transform="translate(100 98) scale(.62)">${heroBase({gender:p.gender,color:p.color,eq:{}}).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'')}</g>`;
+  s+=`</svg>`;
+  return stylize(s,{sw:1.8});
+}
+
+/* ---- Zvířátka ---- */
+function petSVG(p, opts={}){
+  const sp=p.species||'cat', S0=SPMAP[sp]||SPECIES[0], col=p.petColor||S0.color, e=p.eq||{};
+  const stage = opts.stage!==undefined ? opts.stage : petStage(p);
+  const sc=[0.62,0.74,0.87,1][stage];
+  const dark=shade(col,-.3), light=shade(col,.45);
+  const TY=e.toy||0, PB=e.pbed||0, CO=e.collar||0, PH=e.phat||0, SH=e.shoes||0, OU=e.outfit||0, FR=e.friend||0;
+  const happy = opts.mood!=='sad';
+  let s=`<svg viewBox="0 0 240 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${S0.name}">`;
+  s+=`<ellipse cx="120" cy="238" rx="${60*sc+10}" ry="8" fill="#000" opacity=".1"/>`;
+  // bed (full size, behind)
+  if(PB===1) s+=`<path d="M48 236 v-34 h144 v34z" fill="#c89a63"/><path d="M48 202 l-10 -14 h164 l-10 14" fill="#d9b080"/>`;
+  if(PB===2) s+=`<ellipse cx="120" cy="230" rx="78" ry="14" fill="#5aa9e6"/>`;
+  if(PB===3) s+=`<path d="M40 214 q80 40 160 0 v6 q-80 30 -160 0z" fill="#c98b4f"/><ellipse cx="120" cy="226" rx="78" ry="14" fill="#a8703c"/>`;
+  if(PB===4) s+=`<ellipse cx="120" cy="226" rx="86" ry="20" fill="#ff8fb3"/><ellipse cx="120" cy="228" rx="64" ry="12" fill="#ffd6e3"/>`;
+  if(PB===5) s+=`<ellipse cx="120" cy="226" rx="90" ry="22" fill="#b3122a"/><ellipse cx="120" cy="228" rx="68" ry="13" fill="#e8435a"/><path d="M32 224 q88 24 176 0" stroke="#f2c230" stroke-width="4" fill="none"/>`;
+  // toy (beside, full size)
+  const toy = [
+    '', `<circle cx="206" cy="226" r="11" fill="#e8435a"/><path d="M197 222 q9 6 18 0 M198 230 q8 -6 16 0" stroke="#fff" stroke-width="1.5" fill="none"/>`,
+    `<circle cx="206" cy="224" r="12" fill="#ffffff"/><path d="M194 224 h24" stroke="#e8435a" stroke-width="6"/>`,
+    `<ellipse cx="206" cy="228" rx="13" ry="9" fill="#ffd84d"/><circle cx="214" cy="216" r="7" fill="#ffd84d"/><path d="M220 216 l6 2 -6 2z" fill="#ff8c1a"/>`,
+    `<ellipse cx="206" cy="230" rx="17" ry="6" fill="#5aa9e6"/><ellipse cx="206" cy="228" rx="9" ry="3" fill="#bfe1fb"/>`,
+    `<rect x="194" y="212" width="22" height="22" rx="3" fill="#ff6f91"/><path d="M194 219 h22 M194 226 h22 M201 212 v22 M208 212 v22" stroke="#fff" stroke-width="2"/><rect x="194" y="212" width="7" height="7" fill="#ffd84d"/><rect x="208" y="226" width="8" height="8" fill="#5aa9e6"/>`,
+    `<circle cx="206" cy="222" r="18" fill="#c04cf5" opacity=".25"/><circle cx="206" cy="224" r="11" fill="#8e44ad"/><path d="M202 220 l3 -4 3 4z" fill="#fff"/>`,
+    `<circle cx="206" cy="222" r="20" fill="#fff3a0" opacity=".5"/><circle cx="206" cy="224" r="12" fill="#f2c230"/><path d="M200 220 q6 -5 12 0" stroke="#fff" stroke-width="2" fill="none"/>`][TY];
+  s+=toy;
+  // friend floating
+  if(FR) s+=`<g class="pet">${['',`<path d="M200 64 q-14 -12 -16 4 q2 8 16 0z M200 64 q14 -12 16 4 q-2 8 -16 0z" fill="#ffb02e"/><path d="M200 58 v12" stroke="#2b2340" stroke-width="2"/>`,
+    `<ellipse cx="204" cy="66" rx="12" ry="9" fill="#5aa9e6"/><circle cx="212" cy="60" r="6" fill="#5aa9e6"/><path d="M217 60 l5 1 -5 2z" fill="#ffb02e"/><path d="M198 64 q-6 -8 2 -10" stroke="#3a7fc4" stroke-width="3" fill="none"/>`,
+    `<path d="M200 64 q-16 -16 -20 4 q2 10 20 0z" fill="#ff6f91"/><path d="M200 64 q16 -16 20 4 q-2 10 -20 0z" fill="#5aa9e6"/><path d="M200 66 q-12 8 -10 14 q6 0 10 -12z" fill="#ffd84d"/><path d="M200 66 q12 8 10 14 q-6 0 -10 -12z" fill="#7cc24f"/><path d="M200 58 v14" stroke="#2b2340" stroke-width="2"/>`][FR]}</g>`;
+  // pet body group (scaled by growth)
+  s+=`<g class="hb"><g transform="translate(120 236) scale(${opts.flip?-sc:sc} ${sc}) translate(-120 -236)">`;
+  // cape behind
+  if(OU===3) s+=`<path d="M86 160 Q120 150 154 160 L176 226 Q120 236 64 226Z" fill="#e8435a"/>`;
+  // species back parts (tails, back ears)
+  const T = {
+    cat:`<path d="M162 206 q34 -6 30 -40 q-2 -14 -12 -12 q8 16 -4 34 q-8 10 -18 8z" fill="${col}"/>`,
+    dog:`<path d="M164 196 q18 -10 18 -28" stroke="${col}" stroke-width="10" fill="none" stroke-linecap="round"/>`,
+    bunny:`<circle cx="166" cy="206" r="12" fill="#ffffff"/>`,
+    pony:`<path d="M164 190 q30 6 26 40 q-10 -6 -14 -2 q2 -22 -14 -30z" fill="#ff8fc8"/>`,
+    rat:`<path d="M162 214 q40 8 52 -18 q6 -14 -4 -20" stroke="#ffb3c6" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+    hamster:'',
+    fox:`<path d="M160 208 q44 4 40 -40 q-2 -18 -18 -16 q10 24 -6 40 q-8 8 -16 6z" fill="${col}"/><path d="M196 172 q-2 -18 -14 -16 q8 6 6 20z" fill="#ffffff"/>`,
+    panda:`<circle cx="164" cy="210" r="8" fill="#2b2340"/>`,
+    owl:'',
+    dragon:`<path d="M160 212 q40 8 50 -20" stroke="${col}" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M206 186 l14 -8 -4 16z" fill="#c04cf5"/>`,
+  }[sp]||'';
+  s+=T;
+  if(sp==='dragon') s+=`<path d="M82 170 q-30 -30 -40 -6 q12 0 14 10 q10 -4 26 6z M158 170 q30 -30 40 -6 q-12 0 -14 10 q-10 -4 -26 6z" fill="#c04cf5"/>`;
+  if(sp==='owl') s+=`<path d="M74 170 q-14 30 6 52 q10 -24 4 -52z M166 170 q14 30 -6 52 q-10 -24 -4 -52z" fill="${dark}"/>`;
+  // body
+  const bodyCol = sp==='panda' ? '#2b2340' : col;
+  s+=`<ellipse cx="120" cy="196" rx="${sp==='owl'?50:46}" ry="${sp==='owl'?44:36}" fill="${sp==='panda'?'#f6f6f6':col}"/>`;
+  if(sp==='panda') s+=`<path d="M78 180 q42 -22 84 0 q-6 14 -12 16 q-30 -12 -60 0 q-6 -2 -12 -16z" fill="#2b2340"/>`;
+  s+=`<ellipse cx="120" cy="206" rx="${sp==='owl'?30:26}" ry="${sp==='owl'?26:20}" fill="${sp==='panda'?'#ffffff':sp==='owl'?'#e8d2b0':light}"/>`;
+  if(sp==='owl') s+=`<path d="M108 196 l4 4 4 -4 M120 196 l4 4 4 -4 M114 208 l4 4 4 -4 M126 208 l4 4 4 -4" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  if(sp==='dragon') s+=`<path d="M106 192 h28 M104 202 h32 M106 212 h28" stroke="#f2c230" stroke-width="3"/>`;
+  // sweater
+  if(OU===2) s+=`<path d="M78 186 Q120 164 162 186 L160 214 Q120 226 80 214Z" fill="#7cc24f"/><path d="M84 194 h72 M82 204 h76" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`;
+  // feet
+  const footCol = sp==='panda' ? '#2b2340' : sp==='owl' ? '#ffb02e' : col;
+  s+=`<ellipse cx="98" cy="228" rx="15" ry="9" fill="${footCol}"/><ellipse cx="142" cy="228" rx="15" ry="9" fill="${footCol}"/>`;
+  if(SH) { const sc2=['','#ff8fb3','#5aa9e6','#f2c230'][SH]; s+=`<path d="M84 226 q14 -12 28 0 v8 h-28z M128 226 q14 -12 28 0 v8 h-28z" fill="${sc2}"/>`; if(SH===1) s+=`<path d="M86 230 h24 M130 230 h24" stroke="#fff" stroke-width="2"/>`; if(SH===3) s+=`<path d="M84 224 q-12 -8 -16 2 q8 0 16 4z M156 224 q12 -8 16 2 q-8 0 -16 4z" fill="#ffffff"/>`; }
+  // ears behind head
+  const E = {
+    cat:`<path d="M84 96 L80 52 L112 80Z M156 96 L160 52 L128 80Z" fill="${col}"/><path d="M88 88 L86 64 L104 80Z M152 88 L154 64 L136 80Z" fill="#ffb3c6"/>`,
+    dog:'',
+    bunny:`<ellipse cx="100" cy="52" rx="13" ry="38" fill="${col}"/><ellipse cx="140" cy="52" rx="13" ry="38" fill="${col}"/><ellipse cx="100" cy="54" rx="6" ry="28" fill="#ffb3c6"/><ellipse cx="140" cy="54" rx="6" ry="28" fill="#ffb3c6"/>`,
+    pony:`<path d="M90 90 L88 58 L108 80Z M150 90 L152 58 L132 80Z" fill="${col}"/>`,
+    rat:`<circle cx="82" cy="82" r="20" fill="${col}"/><circle cx="158" cy="82" r="20" fill="${col}"/><circle cx="82" cy="82" r="12" fill="#ffc2d6"/><circle cx="158" cy="82" r="12" fill="#ffc2d6"/>`,
+    hamster:`<circle cx="88" cy="84" r="11" fill="${col}"/><circle cx="152" cy="84" r="11" fill="${col}"/><circle cx="88" cy="84" r="6" fill="#ffc2d6"/><circle cx="152" cy="84" r="6" fill="#ffc2d6"/>`,
+    fox:`<path d="M80 100 L74 48 L114 80Z M160 100 L166 48 L126 80Z" fill="${col}"/><path d="M74 48 L78 66 L88 60Z M166 48 L162 66 L152 60Z" fill="#2b2340"/>`,
+    panda:`<circle cx="86" cy="80" r="15" fill="#2b2340"/><circle cx="154" cy="80" r="15" fill="#2b2340"/>`,
+    owl:`<path d="M84 90 L80 62 L104 82Z M156 90 L160 62 L136 82Z" fill="${dark}"/>`,
+    dragon:`<path d="M92 84 L84 52 L106 78Z M148 84 L156 52 L134 78Z" fill="#f5e6c8"/>`,
+  }[sp]||'';
+  s+=E;
+  // head
+  s+=`<circle cx="120" cy="118" r="${sp==='owl'?0:44}" fill="${col}"/>`;
+  if(sp==='owl') s+=`<ellipse cx="120" cy="124" rx="50" ry="44" fill="${col}"/>`;
+  if(sp==='pony') s+=`<path d="M80 96 q10 -34 50 -30 q-4 8 6 12 q-28 -6 -40 14 q-8 6 -16 4z" fill="#ff8fc8"/>`;
+  if(sp==='cat') s+=`<path d="M112 78 l3 12 M120 76 v12 M128 78 l-3 12" stroke="${dark}" stroke-width="3"/>`;
+  if(sp==='dog') s+=`<ellipse cx="78" cy="122" rx="14" ry="26" fill="${dark}" transform="rotate(16 78 122)"/><ellipse cx="162" cy="122" rx="14" ry="26" fill="${dark}" transform="rotate(-16 162 122)"/>`;
+  if(sp==='fox') s+=`<ellipse cx="98" cy="138" rx="17" ry="13" fill="#fff4e8"/><ellipse cx="142" cy="138" rx="17" ry="13" fill="#fff4e8"/>`;
+  if(sp==='hamster') s+=`<ellipse cx="90" cy="134" rx="16" ry="13" fill="#fff5e6"/><ellipse cx="150" cy="134" rx="16" ry="13" fill="#fff5e6"/>`;
+  if(sp==='panda') s+=`<ellipse cx="102" cy="118" rx="13" ry="16" fill="#2b2340" transform="rotate(-20 102 118)"/><ellipse cx="138" cy="118" rx="13" ry="16" fill="#2b2340" transform="rotate(20 138 118)"/>`;
+  if(sp==='dragon') s+=`<path d="M108 76 l4 -10 4 10z M120 74 l4 -12 4 12z" fill="#c04cf5"/>`;
+  if(sp==='owl') s+=`<circle cx="100" cy="116" r="18" fill="#fff8e8"/><circle cx="140" cy="116" r="18" fill="#fff8e8"/>`;
+  // muzzle
+  if(sp==='dog'||sp==='pony'||sp==='rat') s+=`<ellipse cx="120" cy="${sp==='pony'?142:138}" rx="${sp==='pony'?26:20}" ry="${sp==='pony'?17:14}" fill="${sp==='rat'?light:'#fff5e6'}"/>`;
+  // eyes
+  const er = sp==='owl'?10:8.5, ex=sp==='owl'?100:102, ex2=sp==='owl'?140:138, ey=sp==='owl'?116:116;
+  const irisC = sp==='owl'?'#ffb02e':sp==='dragon'?'#c04cf5':'#3a2a1d';
+  s+=`<circle cx="${ex}" cy="${ey}" r="${er}" fill="#ffffff"/><circle cx="${ex2}" cy="${ey}" r="${er}" fill="#ffffff"/><circle cx="${ex+1}" cy="${ey+1}" r="${er*0.72}" fill="${irisC}" stroke="none"/><circle cx="${ex2+1}" cy="${ey+1}" r="${er*0.72}" fill="${irisC}" stroke="none"/><circle cx="${ex+1}" cy="${ey+1.5}" r="${er*0.38}" fill="#1a1222"/><circle cx="${ex2+1}" cy="${ey+1.5}" r="${er*0.38}" fill="#1a1222"/><circle cx="${ex+3.5}" cy="${ey-2.5}" r="2.4" fill="#fff"/><circle cx="${ex2+3.5}" cy="${ey-2.5}" r="2.4" fill="#fff"/>`;
+  // nose & mouth
+  if(sp==='owl') s+=`<path d="M114 132 h12 l-6 12z" fill="#ffb02e"/>`;
+  else if(sp==='pony') s+=`<ellipse cx="111" cy="140" rx="3" ry="2.4" fill="#2b2340"/><ellipse cx="129" cy="140" rx="3" ry="2.4" fill="#2b2340"/>`;
+  else s+=`<path d="M114 ${sp==='dog'||sp==='rat'?130:132} q6 6 12 0z" fill="${sp==='cat'||sp==='bunny'||sp==='rat'||sp==='hamster'?'#ff7fa3':'#2b2340'}"/>`;
+  if(sp!=='owl') s+=`<path d="M110 ${sp==='pony'?150:142} q5 ${happy?6:2} 10 0 q5 ${happy?6:2} 10 0" stroke="#2b2340" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  if(sp==='dog') s+=`<path d="M116 146 q4 10 8 0z" fill="#ff7fa3"/>`;
+  if(sp==='bunny'||sp==='rat') s+=`<rect x="116" y="143" width="8" height="7" rx="1" fill="#ffffff"/>`;
+  if(sp==='cat'||sp==='rat'||sp==='hamster'||sp==='fox') s+=`<path d="M100 136 l-20 -4 M100 140 l-20 2 M140 136 l20 -4 M140 140 l20 2" stroke="#2b2340" stroke-width="1.4" opacity=".6"/>`;
+  s+=`<circle cx="96" cy="134" r="6" fill="#ff9a9a" opacity=".45"/><circle cx="144" cy="134" r="6" fill="#ff9a9a" opacity=".45"/>`;
+  // collar / scarf
+  if(CO){ const cc=['','#c9a26a','#8a5a2b','#e8435a','#5aa9e6','#f2c230'][CO]; s+=`<path d="M88 158 q32 14 64 0 v8 q-32 14 -64 0z" fill="${cc}"/>`; if(CO===3) s+=`<circle cx="120" cy="176" r="6" fill="#f2c230"/>`; if(CO===4) s+=`<circle cx="104" cy="168" r="3" fill="#ff6f91"/><circle cx="120" cy="171" r="3.5" fill="#ffffff"/><circle cx="136" cy="168" r="3" fill="#7cc24f"/>`; if(CO===5) s+=`<path d="M120 170 l5 8 -5 6 -5 -6z" fill="#e84393"/>`; }
+  if(OU===1) s+=`<path d="M90 156 q30 14 60 0 l-26 30 h-8z" fill="#5aa9e6"/><circle cx="104" cy="164" r="2" fill="#fff"/><circle cx="130" cy="166" r="2" fill="#fff"/>`;
+  // hat
+  if(PH===1) s+=`<path d="M146 82 l-14 -10 v20z M146 82 l14 -10 v20z" fill="#ff6f91"/><circle cx="146" cy="82" r="5" fill="#e8435a"/>`;
+  if(PH===2) s+=`<path d="M86 86 q34 -40 68 0z" fill="#5aa9e6"/><path d="M150 86 h30 q-6 8 -30 6z" fill="#3a7fc4"/>`;
+  if(PH===3) s+=`<ellipse cx="120" cy="80" rx="40" ry="8" fill="#8e44ad"/><path d="M98 80 q2 -30 22 -30 q20 0 22 30z" fill="#8e44ad"/><path d="M98 72 h44" stroke="#ff6f91" stroke-width="5"/>`;
+  if(PH===4) { for(let k=0;k<7;k++){ const a=Math.PI*(0.15+k*0.115); const x=120-Math.cos(a)*44, y=96-Math.sin(a)*26; s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${['#ff6f91','#ffd84d','#ffffff','#c04cf5'][k%4]}"/>`; } }
+  if(PH===5) s+=`<path d="M98 82 L100 60 L110 72 L120 54 L130 72 L140 60 L142 82Z" fill="#f5c400"/><circle cx="120" cy="70" r="3.5" fill="#e84393"/>`;
+  s+=`</g></g></svg>`;
+  return stylize(s,{sw:2.2});
+}
+
+function contestScene(i){
+  const V=inner=>`<svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" class="scene">${inner}</svg>`;
+  const skyC=[['#9fd8ff','#e8f7ff'],['#a8e0ff','#fff6e0'],['#8fd0ff','#e6f8ff'],['#b4e4ff','#f2fbff'],['#ffd6e3','#fff0f6'],['#9fd8ff','#e8f7ff'],['#0f1c3d','#2c4a7a'],['#5f8f6a','#cfe8c8'],['#bfe6c8','#effaf0'],['#2a1a4a','#7a4a8e']][i];
+  const id='cs'+i+'_'+(++_uid);
+  let s=`<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${skyC[0]}"/><stop offset="1" stop-color="${skyC[1]}"/></linearGradient></defs><rect width="400" height="220" fill="url(#${id})"/>`;
+  const grass=i===6?'#1d3a2e':i===9?'#3a2a5a':'#8fd48a';
+  if(i===6){ for(let n=0;n<30;n++) s+=`<circle cx="${(n*137)%400}" cy="${(n*53)%120}" r="1.3" fill="#fff"/>`; s+=`<circle cx="320" cy="50" r="24" fill="#fffbe0"/>`; }
+  else if(i!==9 && i!==4) s+=`<circle cx="60" cy="40" r="22" fill="#fff3a0"/><ellipse cx="260" cy="40" rx="40" ry="12" fill="#ffffff" opacity=".9"/><ellipse cx="300" cy="34" rx="26" ry="10" fill="#ffffff" opacity=".9"/>`;
+  if(i===4) s+=`<rect width="400" height="160" fill="#b3122a"/><path d="M0 0 q40 80 0 160 M400 0 q-40 80 0 160" fill="#8e1b2b"/>${[...Array(8)].map((_,k)=>`<circle cx="${30+k*48}" cy="14" r="8" fill="#ffe14d"/>`).join('')}`;
+  if(i===9) { s+=[...Array(9)].map((_,k)=>`<path d="M${20+k*45} 0 l-30 140" stroke="#fff3a0" stroke-width="10" opacity=".15"/>`).join(''); s+=`<path d="M0 120 h400 v40 h-400z" fill="#5b2a86"/>${[...Array(20)].map((_,k)=>`<circle cx="${10+k*20}" cy="${128+(k%2)*10}" r="6" fill="${['#ff6f91','#ffd84d','#5aa9e6','#7cc24f'][k%4]}"/>`).join('')}`; }
+  s+=`<rect y="160" width="400" height="60" fill="${i===4?'#e8d3b0':grass}"/>`;
+  if(i===0) s+=`<rect x="250" y="168" width="60" height="6" rx="3" fill="#8a5a2b"/>`;
+  if(i===1) s+=`<path d="M300 170 q10 -12 22 0z" fill="#8a5a2b"/><rect x="306" y="150" width="14" height="12" fill="#f2c230"/>`;
+  if(i===2||i===5) s+=[...Array(6)].map((_,k)=>`<path d="M${30+k*70} 160 v-40" stroke="#7a5230" stroke-width="3"/><path d="M${30+k*70} 120 l18 6 -18 6z" fill="${['#e8435a','#5aa9e6','#ffd84d'][k%3]}"/>`).join('');
+  if(i===5) s+=`<path d="M260 170 v-22 h40 v22 M268 148 v22 M292 148 v22" stroke="#ffffff" stroke-width="5" fill="none"/>`;
+  if(i===7) s+=[...Array(7)].map((_,k)=>`<path d="M${k*64} 160 l30 -80 l30 80z" fill="#2e6a3e"/>`).join('');
+  if(i===8) s+=[...Array(12)].map((_,k)=>`<rect x="${k*34+6}" y="20" width="9" height="150" fill="#7cc24f"/><path d="M${k*34+6} ${60+(k%3)*30} h9" stroke="#3d7a2a" stroke-width="2"/>`).join('');
+  if(i===3) s+=`<path d="M320 160 q-10 -60 30 -80 q40 20 30 80z" fill="#3d9a4a"/><rect x="342" y="140" width="10" height="24" fill="#7a5230"/>`;
+  return V(s);
+}
+
+/* ---- Doplňky postav návštěv (brýle, vousy, čepice, křídla, hůlka) ---- */
+function heroExtras(x){
+  let back='', front='';
+  if(!x) return {back,front};
+  if(x.wings) back+=`<path d="M78 112 q-50 -40 -60 10 q20 20 60 0z M132 112 q50 -40 60 10 q-20 20 -60 0z" fill="#dff4ff" opacity=".85"/>`;
+  if(x.glasses) front+=`<circle cx="95" cy="68" r="8" fill="none" stroke="#2b2340" stroke-width="2.2"/><circle cx="115" cy="68" r="8" fill="none" stroke="#2b2340" stroke-width="2.2"/><path d="M103 68 h4" stroke="#2b2340" stroke-width="2.2"/>`;
+  if(x.beard) front+=`<path d="M82 74 q4 40 23 44 q19 -4 23 -44 q-10 14 -23 12 q-13 2 -23 -12z" fill="${x.beard}"/>`;
+  if(x.chef) front+=`<rect x="84" y="36" width="42" height="16" fill="#ffffff"/><circle cx="90" cy="30" r="12" fill="#ffffff"/><circle cx="105" cy="24" r="14" fill="#ffffff"/><circle cx="120" cy="30" r="12" fill="#ffffff"/>`;
+  if(x.wizard) front+=`<path d="M74 48 h62 l-26 -46z" fill="#3b2a8a"/><ellipse cx="105" cy="48" rx="36" ry="7" fill="#3b2a8a"/><path d="M100 26 l2 4 4 0 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 4 0z" fill="#ffd84d"/>`;
+  if(x.wand) front+=`<path d="M144 150 L168 100" stroke="#5a3b1f" stroke-width="4"/><path d="M168 92 l3 6 6 1 -5 4 1 6 -5 -3 -5 3 1 -6 -5 -4 6 -1z" fill="#ffd84d"/><circle cx="168" cy="98" r="14" fill="#fff3a0" opacity=".4"/>`;
+  return {back,front};
+}
+
+/* ---- Tipy, krmení, info o zvířátku ---- */
+const TIPSPEC=[[[0,2],[1,1]],[[0,3],[2,1],[3,1]],[[1,2],[3,2]],[[0,4],[2,2]],[[1,3],[3,3]],[[0,5],[2,3]],[[1,4],[3,4]],[[0,6],[2,4]],[[1,5],[3,5],[5,3]],[[0,7],[2,5]]];
+function tipFor(p, mi){
+  if(((p&&p.mode)||'quest')==='quest') return MONSTERS[mi].tip;
+  const sl=slotsOf(p); const names=TIPSPEC[mi].map(([si,t])=>sl[si].items[t-1][0]);
+  const s = names.length>1 ? names.slice(0,-1).join(', ')+' a '+names[names.length-1].toLowerCase() : names[0];
+  return s;
+}
+function fedToday(p){ return p.fedDate===todayKey(); }
+function petInfoHTML(p){
+  const sp=SPMAP[p.species]||SPECIES[0], st=petStage(p);
+  return `<div class="center" style="margin-top:6px;font-size:17px">🐾 <b>${esc(p.petName||sp.name)}</b> · ${sp.name} · ${PET_STAGES[st]}</div>
+    <div class="center sub">${fedToday(p)?'😋 Dnes je najedené a spokojené':'🥺 Má hlad – nakrm ho!'}</div>`;
+}
+function feedHTML(p){
+  return `<h3>🍽️ Nakrmit zvířátko</h3><div class="card"><div class="sub" style="margin-bottom:8px">Jídlo dává zvířátku zkušenosti – roste a sílí. Za každý den, kdy ho nakrmíš, je spokojené.</div>
+    <div class="row">${FOODS.map(f=>{ const c=Math.max(5,Math.round(f.price*mult()*2/5)*5), can=p.points>=c; return `<button class="btn small ${can?'gold':'sec'}" data-feed="${f.id}" ${can?'':'disabled'}>${f.icon} ${f.name} · ⭐ ${c} <span style="opacity:.75">(+${f.grow} růst)</span></button>`; }).join('')}</div></div>`;
+}
+function feed(fid){
+  const p=prof(view.pid), f=FOODS.find(x=>x.id===fid); if(!p||!f) return;
+  const c=Math.max(5,Math.round(f.price*mult()*2/5)*5); if(p.points<c) return;
+  const before=petStage(p);
+  p.points-=c; p.xp=(p.xp||0)+f.grow; p.fedDate=todayKey(); save();
+  const after=petStage(p);
+  toast(after>before ? `🎉 ${p.petName||'Zvířátko'} vyrostlo! Teď je: ${PET_STAGES[after]}` : `${f.icon} Mňam! ${p.petName||'Zvířátko'} si pochutnalo.`);
+  if(after>before) confetti(40);
+  render();
+  const st=document.querySelector('.stage'); if(st){ st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
+}
 /* ============ State ============ */
 const LS_KEY='pocitani-hrdinove-v1';
 function newId(){ return 'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function newProfile(o={}){
   const grade=o.grade||2;
-  return Object.assign({id:newId(), name:'Hrdina', grade, gender:'m', color:'#4f7cff', cats:DEFAULT_CATS[grade].slice(), catsV:2, pin:'', reward:'',
+  return Object.assign({id:newId(), name:'Hrdina', grade, gender:'m', mode:'quest', color:'#4f7cff', cats:DEFAULT_CATS[grade].slice(), catsV:2, pin:'', reward:'',
     points:0, xp:0, owned:{}, eq:{}, beaten:0, chests:[], rewardClaimed:false, season:1, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0, created:Date.now()}, o);
 }
 function defaultState(){
@@ -837,6 +1205,7 @@ function migrate(p){
   if(!p) return p;
   if(p.owned===undefined || p.gear!==undefined){ p.owned={}; p.eq={}; p.xp=p.totalCorrect||0; p.beaten=0; delete p.gear; }
   if(!p.gender) p.gender='m';
+  if(!p.mode) p.mode='quest';
   if(p.pin===undefined) p.pin='';
   if(p.reward===undefined) p.reward='';
   if(!p.created) p.created=1;
@@ -940,7 +1309,8 @@ function render(){
 }
 function statsHTML(p){
   const st=stats(p), xi=xpInfo(p);
-  return `<div class="stats"><div class="stat"><small>Úroveň</small>⭐ ${st.L}</div><div class="stat"><small>Útok</small>⚔️ ${st.atk}</div><div class="stat"><small>Obrana</small>🛡️ ${st.def}</div><div class="stat"><small>Životy</small>❤️ ${st.hp}</div></div>
+  const M=modeOf(p);
+  return `<div class="stats"><div class="stat"><small>Úroveň</small>⭐ ${st.L}</div><div class="stat"><small>${M.st[0][1]}</small>${M.st[0][0]} ${st.atk}</div><div class="stat"><small>${M.st[1][1]}</small>${M.st[1][0]} ${st.def}</div><div class="stat"><small>${M.st[2][1]}</small>${M.st[2][0]} ${st.hp}</div></div>
     <div style="margin:10px 6px 0" class="bar"><i style="width:${xi.cur/xi.per*100}%"></i></div>
     <div class="sub center" style="margin-top:3px">${xi.max?'Maximální úroveň!':`Zkušenosti ${xi.cur}/${xi.per} do úrovně ${st.L+1} (1 za každý správný příklad)`}</div>`;
 }
@@ -953,13 +1323,13 @@ function homeView(){
     const status = t&&t.done ? `✅ Dnes splněno (+${t.pts})` : t&&t.idx ? `▶️ Rozpracováno ${t.idx}/${t.problems.length}` : `🎯 Čeká ${S.settings.perDay||20} příkladů`;
     const locked = p.pin && !unlocked.has(p.id);
     return `<div class="card profile" data-open="${p.id}">${locked?'<span class="lock">🔒</span>':''}
-      <div class="hero">${heroSVG(p,{glow:p.beaten>=10})}</div>
+      <div class="hero ${p.mode==='home'?'roomthumb':''}">${avatarSVG(p,{glow:p.beaten>=10})}</div>
       <h2>${esc(p.name)}</h2>
       <div class="sub">${p.grade}. třída · úroveň ${level(p)} · ⭐ ${p.points}</div>
-      <div class="sub">${p.beaten>=10?'🏆 Drak poražen!':`⚔️ Poražených oblud: ${p.beaten}/10`}</div>
+      <div class="sub">${modeOf(p).icon} ${p.beaten>=10?modeOf(p).doneShort:`${modeOf(p).progW}: ${p.beaten}/10`}</div>
       <div class="status ${t&&t.done?'done':''}">${status}</div></div>`;}).join('');
   const fame = hs.length>1 ? `<h3>🏆 Síň slávy</h3><div class="card"><table class="fame">${hs.slice().sort((a,b)=>(b.beaten-a.beaten)||((b.xp||0)-(a.xp||0))).map((p,i)=>
-      `<tr><td style="width:36px">${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td>${esc(p.name)} <span class="muted">${p.grade}. tř.</span></td><td>⚔️ ${p.beaten}/10 oblud</td><td>úroveň ${level(p)}</td></tr>`).join('')}</table></div>` : '';
+      `<tr><td style="width:36px">${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td>${esc(p.name)} <span class="muted">${p.grade}. tř.</span></td><td>${modeOf(p).icon} ${p.beaten}/10</td><td>úroveň ${level(p)}</td></tr>`).join('')}</table></div>` : '';
   return `<div class="top"><h1>🧮 Počítací hrdinové</h1><button class="btn sec small" data-act="parent">👨‍👩‍👦 Rodič</button></div>
     <p class="muted" style="margin-top:0">Vyber svého hrdinu, nebo si vytvoř nového.</p>
     <div class="grid3">${cards}<div class="card profile newhero" data-act="create"><b>＋</b>Nový hrdina</div></div>
@@ -970,7 +1340,7 @@ function homeView(){
 /* ---- create hero ---- */
 let draft=null;
 function createView(){
-  if(!draft) draft={name:'', gender:'m', grade:2, color:TUNICS[0], pin:'', reward:''};
+  if(!draft) draft={name:'', gender:'m', grade:2, color:TUNICS[0], pin:'', reward:'', mode:'quest', species:'cat', petName:''};
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Nový hrdina</h1></div>
   <div class="grid2"><div class="card">
     <div class="field"><label>Jak se jmenuješ?</label><input type="text" id="c-name" maxlength="20" value="${esc(draft.name)}" placeholder="Tvoje jméno"></div>
@@ -979,48 +1349,53 @@ function createView(){
     <div class="field"><label>Do které třídy chodíš? (podle toho budou příklady)</label><select id="c-grade">${[1,2,3,4,5].map(g=>`<option value="${g}" ${draft.grade==g?'selected':''}>${g}. třída</option>`).join('')}</select></div>
     <div class="field"><label>Barva oblečení</label><div class="row colors">${TUNICS.map(c=>`<button data-ccolor="${c}" style="background:${c};border:${draft.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
     <div class="field"><label>Tajný kód (4 číslice) – aby za tebe nikdo jiný nehrál. Nepovinné.</label><input type="password" id="c-pin" inputmode="numeric" maxlength="4" value="${esc(draft.pin)}"></div>
-    <div class="field"><label>🎁 Odměna od rodičů za poražení draka (ať vyplní rodič, nepovinné)</label><input type="text" id="c-reward" maxlength="80" value="${esc(draft.reward)}" placeholder="např. kino s tátou"></div>
+    <div class="field"><label>Vyber si dobrodružství</label><div class="modes">${Object.values(MODES).map(M=>`<button class="modebtn ${draft.mode===M.key?'on':''}" data-mode="${M.key}"><span style="font-size:30px">${M.icon}</span><b>${M.title}</b><small>${M.desc}</small></button>`).join('')}</div></div>
+    ${draft.mode==='pet'?`<div class="field"><label>Vyber si mládě</label><div class="species">${SPECIES.map(sp=>`<button class="spbtn ${draft.species===sp.id?'on':''}" data-species="${sp.id}">${petSVG({species:sp.id,eq:{}},{stage:1})}<span>${sp.name}</span></button>`).join('')}</div></div>
+      <div class="field"><label>Jak se bude zvířátko jmenovat?</label><input type="text" id="c-petname" maxlength="16" value="${esc(draft.petName||'')}" placeholder="např. Ťapka"></div>`:''}
+    <div class="field"><label>🎁 Odměna od rodičů za splnění celého dobrodružství (ať vyplní rodič, nepovinné)</label><input type="text" id="c-reward" maxlength="80" value="${esc(draft.reward)}" placeholder="např. kino s tátou"></div>
     <button class="btn ok" data-act="createok" style="width:100%">Vytvořit ${draft.gender==='f'?'hrdinku':'hrdinu'} ✨</button>
   </div>
-  <div class="card hero center" id="c-preview">${heroSVG({gender:draft.gender,color:draft.color,eq:{}})}<p class="muted">Zatím bez výbavy. Meč, štít a brnění si vybojuješ počítáním!</p></div></div>`;
+  <div class="card hero center" id="c-preview"><div class="stage">${draft.mode==='pet'?petSVG({species:draft.species,eq:{}},{stage:0}):draft.mode==='home'?roomSVG({gender:draft.gender,color:draft.color,eq:{}}):heroSVG({gender:draft.gender,color:draft.color,eq:{}})}</div><p class="muted">${draft.mode==='pet'?'Zatím je to malé mládě. Počítáním mu vyděláš na jídlo a doplňky – a poroste!':draft.mode==='home'?'Zatím prázdný pokojíček. Počítáním si ho krásně zařídíš!':'Zatím bez výbavy. Meč, štít a brnění si vybojuješ počítáním!'}</p></div></div>`;
 }
 
 /* ---- hero ---- */
 function heroView(){
   const p=prof(view.pid); if(!p) return homeView();
   const t=ensureToday(p);
-  const next = p.beaten<10 ? MONSTERS[p.beaten] : null;
+  const M=modeOf(p), FO=foesOf(p);
+  const next = p.beaten<10 ? FO[p.beaten] : null;
   const xs = p.extraSet && p.extraSet.date===todayKey() && p.extraSet.idx>0 ? p.extraSet : null;
   const playLabel = t.done ? (xs ? `▶️ Pokračovat v sadě navíc (${xs.idx}/${xs.problems.length})` : `➕ Dnes splněno – počítat dál (${S.settings.perDay||10} příkladů)`) : t.idx ? `▶️ Pokračovat (${t.idx}/${t.problems.length})` : `🚀 Dnešních ${t.problems.length} příkladů`;
-  const gear = SLOTS.map(sl=>{
+  const gear = slotsOf(p).map(sl=>{
     const eqT=(p.eq||{})[sl.id]||0, own=(p.owned||{})[sl.id]||0;
-    const chips = own ? `<div class="chips">${sl.items.slice(0,own).map((it,i)=>`<button class="chip ${eqT===i+1?'on':''} ${p.newItem===sl.id+':'+(i+1)?'new':''}" data-eq="${sl.id}:${i+1}" title="${itemStatText(it)}">${eqT===i+1?'✓ ':''}${it[0]}</button>`).join('')}</div>` : `<div class="sub">Batoh je prázdný.</div>`;
+    const chips = own ? `<div class="chips">${sl.items.slice(0,own).map((it,i)=>`<button class="chip ${eqT===i+1?'on':''} ${p.newItem===sl.id+':'+(i+1)?'new':''}" data-eq="${sl.id}:${i+1}" title="${itemStatText(it,p)}">${eqT===i+1?'✓ ':''}${it[0]}</button>`).join('')}</div>` : `<div class="sub">Zatím nic nemáš.</div>`;
     let buy;
-    if(own<sl.items.length){ const it=sl.items[own], c=price(sl.id,own+1), can=p.points>=c;
-      buy=`<div class="buy"><span>Koupit: <b>${it[0]}</b><br><span class="muted">${itemStatText(it)}</span></span><button class="btn small ${can?'gold':'sec'}" data-buy="${sl.id}" ${can?'':'disabled'}>⭐ ${c}</button></div>`;
+    if(own<sl.items.length){ const it=sl.items[own], c=price(sl.id,own+1,p), can=p.points>=c;
+      buy=`<div class="buy"><span>Koupit: <b>${it[0]}</b><br><span class="muted">${itemStatText(it,p)}</span></span><button class="btn small ${can?'gold':'sec'}" data-buy="${sl.id}" ${can?'':'disabled'}>⭐ ${c}</button></div>`;
     } else buy=`<div class="buy"><span class="muted">Máš všechno ✨</span></div>`;
-    return `<div class="slot"><h4><span>${sl.name}</span><span class="muted" style="font-size:13px">${eqT?itemStatText(sl.items[eqT-1]):''}</span></h4>
-      <div class="eqd">Na sobě: <b>${eqT?sl.items[eqT-1][0]:'nic'}</b></div>${chips}${buy}</div>`;
+    return `<div class="slot"><h4><span>${sl.name}</span><span class="muted" style="font-size:13px">${eqT?itemStatText(sl.items[eqT-1],p):''}</span></h4>
+      <div class="eqd">${M.wearing}: <b>${eqT?sl.items[eqT-1][0]:'nic'}</b></div>${chips}${buy}</div>`;
   }).join('');
   const testTools = isTest(p) ? `<div class="card" style="margin-top:14px"><b>🧪 Testovací nástroje</b><div class="row" style="margin-top:8px">
-      <button class="btn small" data-act="t-pts">+500 ⭐</button><button class="btn small" data-act="t-lvl">+1 úroveň</button><button class="btn small" data-act="t-unlock">Odemknout všechny obludy</button><button class="btn small" data-act="t-all">Koupit a nasadit vše</button><button class="btn small" data-act="t-chest">+1 truhla</button><button class="btn small sec" data-act="t-reset">Začít znovu</button></div></div>` : '';
-  const dragon = p.beaten>=10 ? `<div class="reward" style="margin-top:16px"><div style="font-size:44px">🐉🏆</div><h2>${G(p,'Porazil','Porazila')} jsi draka!</h2>
+      <button class="btn small" data-act="t-pts">+500 ⭐</button><button class="btn small" data-act="t-lvl">+1 úroveň</button><button class="btn small" data-act="t-unlock">Odemknout všechny výzvy</button><button class="btn small" data-act="t-all">Koupit a nasadit vše</button><button class="btn small" data-act="t-chest">+1 truhla</button><button class="btn small sec" data-act="t-reset">Začít znovu</button></div></div>` : '';
+  const dragon = p.beaten>=10 ? `<div class="reward" style="margin-top:16px"><div style="font-size:44px">${M.finalIcon}🏆</div><h2>${M.doneShort}</h2>
       <p style="font-size:18px">Odměna: <b>${esc(rewardOf(p))}</b></p><p class="muted">${p.rewardClaimed?'Odměna byla předána. 🎉':'Ukaž to rodičům!'}</p></div>` : '';
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>${esc(p.name)}</h1><span class="pill">⭐ ${p.points}</span></div>
     ${testBanner(p)}
     ${p.chests&&p.chests.length?`<div class="card row" style="margin-bottom:14px;background:#fff8dc;border-color:#f5d76e"><div style="width:70px">${chestSVG(p.chests[0])}</div><div style="flex:1;font-size:18px">Máš ${p.chests.length} ${plural(p.chests.length,'truhlu','truhly','truhel')} k otevření!</div><button class="btn gold" data-chest="1">🎁 Otevřít</button></div>`:''}
     <div class="grid2">
-      <div class="card hero"><div class="stage">${heroSVG(p,{glow:p.beaten>=10})}</div>${statsHTML(p)}</div>
+      <div class="card hero"><div class="stage ${p.mode==='home'?'roomstage':''}">${avatarSVG(p,{glow:p.beaten>=10})}</div>${p.mode==='pet'?petInfoHTML(p):''}${statsHTML(p)}</div>
       <div class="card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
         <button class="btn ${t.done?'ok':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>
-        <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`⚔️ Výprava – další: ${next.name}`:'🗺️ Výprava (drak poražen)'}</button>
-        <div class="sub">Za správný příklad ⭐ 10 bodů (napodruhé 4). Splněný den +30 a <b>truhla</b> s překvapením, všechno správně +30 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +15, za všechno správně truhla). Za body si kupuj výbavu – a nezapomeň si ji <b>nasadit</b>!</div>
+        <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`${M.mapTitle} – další: ${next.name}`:`${M.mapTitle} (${M.doneShort})`}</button>
+        <div class="sub">Za správný příklad ⭐ 10 bodů (napodruhé 4). Splněný den +30 a <b>truhla</b> s překvapením, všechno správně +30 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +15, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
         <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} v řadě</div>
-        <div class="sub">🎁 Za poražení draka: <b>${esc(rewardOf(p))}</b></div>
+        <div class="sub">🎁 Za ${M.finalName}: <b>${esc(rewardOf(p))}</b></div>
       </div>
     </div>
     ${dragon}${testTools}
-    <h3>🎒 Výbava a obchod</h3>
+    ${p.mode==='pet'?feedHTML(p):''}
+    <h3>${M.gearTitle}</h3>
     <div class="gear">${gear}</div>`;
 }
 
@@ -1058,91 +1433,92 @@ function summaryView(){
       ${p.chests&&p.chests.length?`<div style="max-width:170px;margin:6px auto" class="${'pop'}">${chestSVG(p.chests[0])}</div><button class="btn gold" data-chest="1" style="font-size:20px">🎁 Otevřít ${p.chests[0]==='gold'?'zlatou ':''}truhlu!</button>`:''}
       ${s.lvlUp?`<p style="font-size:20px">🎉 Nová úroveň ${level(p)}! Máš víc síly a životů.</p>`:''}
       ${s.wrong.length?`<div style="text-align:left;margin:14px auto;max-width:420px"><b>Na tyhle si dej pozor:</b><ul>${s.wrong.map(w=>`<li>${w}</li>`).join('')}</ul></div>`:''}
-      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-act="play">➕ Dalších ${S.settings.perDay||10} příkladů</button><button class="btn gold" data-act="hero">🎒 Výbava a obchod</button><button class="btn red" data-act="map">⚔️ Na výpravu</button></div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-act="play">➕ Dalších ${S.settings.perDay||10} příkladů</button><button class="btn gold" data-act="hero">🛍️ Obchod</button><button class="btn red" data-act="map">${modeOf(p).mapTitle}</button></div>
     </div>`;
 }
 
 /* ---- map / pre-fight ---- */
 function analysisHTML(p, mi){
-  const a=analyze(p,mi), m=a.m, st=a.st;
+  const a=analyze(p,mi), m=a.m, st=a.st, M=modeOf(p), RW=M.roundsW;
   let cls, txt;
-  if(a.spare>=2){ cls='good'; txt=`💪 Máš dobrou šanci! Potřebuješ <b>${a.hits}</b> správných odpovědí a vydržíš <b>${a.rounds}</b> ${plural(a.rounds,'ránu','rány','ran')}. Můžeš udělat až ${a.spare} ${plural(a.spare,'chybu','chyby','chyb')}.`; }
-  else if(a.spare>=0){ cls='tight'; txt = a.spare===0 ? `😬 Bude to hodně těsné – nesmíš udělat ani jednu chybu! (${a.hits} zásahů, vydržíš ${a.rounds} ${plural(a.rounds,'ránu','rány','ran')})` : `😬 Těsné! Můžeš udělat jen 1 chybu. (${a.hits} zásahů, vydržíš ${a.rounds} ${plural(a.rounds,'ránu','rány','ran')})`; }
+  if(a.spare>=2){ cls='good'; txt=`💪 Máš dobrou šanci! Potřebuješ <b>${a.hits}</b> správných odpovědí a vydržíš <b>${a.rounds}</b> ${plural(a.rounds,RW[0],RW[1],RW[2])}. Můžeš udělat až ${a.spare} ${plural(a.spare,'chybu','chyby','chyb')}.`; }
+  else if(a.spare>=0){ cls='tight'; txt = a.spare===0 ? `😬 Bude to hodně těsné – nesmíš udělat ani jednu chybu! (${a.hits} zásahů, vydržíš ${a.rounds} ${plural(a.rounds,RW[0],RW[1],RW[2])})` : `😬 Těsné! Můžeš udělat jen 1 chybu. (${a.hits} zásahů, vydržíš ${a.rounds} ${plural(a.rounds,RW[0],RW[1],RW[2])})`; }
   else {
     cls='bad';
     const atkNeed=Math.ceil(m.hp/a.rounds)+m.def;
-    txt=`⛔ Na tuhle obludu jsi zatím ${G(p,'slabý','slabá')}. Potřebuješ ${a.hits} zásahů, ale vydržíš jen ${a.rounds} ${plural(a.rounds,'ránu','rány','ran')} – nevyhraješ ani bez chyby.`;
-    if(st.atk<=m.def) txt+=`<br>Tvoje zbraň jí vůbec neublíží! Potřebuješ útok vyšší než ${m.def}.`;
-    else txt+=`<br>Pomůže silnější zbraň (útok aspoň ${atkNeed}, teď máš ${st.atk}), nebo lepší brnění, štít a helma, abys vydržel${G(p,'','a')} víc ran.`;
+    txt=`⛔ Na tohle jsi zatím ${G(p,M.weakW[0],M.weakW[1])}. Potřebuješ ${a.hits} správných odpovědí, ale vydržíš jen ${a.rounds} ${plural(a.rounds,RW[0],RW[1],RW[2])} – nepovede se to ani bez chyby.`;
+    if(st.atk<=m.def) txt+=`<br>${M.st[0][1]} ${M.st[0][0]} musí být vyšší než ${m.def}!`;
+    else txt+=`<br>Pomůže vyšší ${M.st[0][1].toLowerCase()} ${M.st[0][0]} (aspoň ${atkNeed}, teď máš ${st.atk}), nebo víc ${M.st[1][0]} a ${M.st[2][0]}.`;
   }
-  return `<div class="analysis ${cls}">${txt}</div><div class="sub" style="margin-top:8px">💡 Tip: ${m.tip}.</div>`;
+  return `<div class="analysis ${cls}">${txt}</div><div class="sub" style="margin-top:8px">💡 Tip: ${tipFor(p,mi)}.</div>`;
 }
 function mapView(){
   const p=prof(view.pid);
   const sel = view.sel;
   let pre='';
   if(sel!==undefined && sel!==null){
-    const m=MONSTERS[sel], a=analyze(p,sel), beaten = sel<p.beaten;
+    const M=modeOf(p), m=foesOf(p)[sel], a=analyze(p,sel), beaten = sel<p.beaten;
     pre=`<div class="card" style="margin-bottom:16px"><div class="grid2">
-      <div class="center"><div class="prestage">${sceneSVG(sel)}<div class="mon">${monsterSVG(sel)}</div></div><h2 style="margin:4px 0">${sel+1}. ${m.name}</h2><div class="sub">${m.where}</div>
-        <div class="stats"><div class="stat"><small>Útok</small>⚔️ ${m.atk}</div><div class="stat"><small>Obrana</small>🛡️ ${m.def}</div><div class="stat"><small>Životy</small>❤️ ${m.hp}</div></div></div>
-      <div><b>${G(p,'Ty','Ty')}:</b> ⚔️ ${a.st.atk} · 🛡️ ${a.st.def} · ❤️ ${a.st.hp}
-        <div class="sub" style="margin-top:6px">Každá správná odpověď = úder za <b>${a.myDmg}</b>. Obluda ti každé kolo ubere <b>${a.monDmg}</b> ❤️ – špatná odpověď znamená, že netrefíš, ale obluda útočí dál.</div>
+      <div class="center"><div class="prestage">${foeScene(p,sel)}<div class="mon">${foeSVG(p,sel)}</div></div><h2 style="margin:4px 0">${sel+1}. ${m.name}</h2><div class="sub">${m.where}</div>
+        <div class="stats"><div class="stat"><small>${M.fst[0][1]}</small>${M.fst[0][0]} ${m.atk}</div><div class="stat"><small>${M.fst[1][1]}</small>${M.fst[1][0]} ${m.def}</div><div class="stat"><small>${M.fst[2][1]}</small>${M.fst[2][0]} ${m.hp}</div></div></div>
+      <div><b>Ty:</b> ${M.st[0][0]} ${a.st.atk} · ${M.st[1][0]} ${a.st.def} · ${M.st[2][0]} ${a.st.hp}
+        <div class="sub" style="margin-top:6px">${M.explain(a.myDmg,a.monDmg)}</div>
         ${analysisHTML(p,sel)}
-        ${beaten?'<p class="sub">Tuhle obludu už máš poraženou – můžeš si boj zopakovat, ale odměnu už nedostaneš.</p>':`<p class="sub">Odměna za vítězství: ⭐ ${bounty(sel)}${sel===9?' + velká odměna od rodičů!':''}</p>`}
-        <div class="row"><button class="btn red" data-fight="${sel}" style="font-size:20px">⚔️ Do boje!</button><button class="btn sec" data-act="hero">🎒 Upravit výbavu</button></div>
+        ${beaten?'<p class="sub">Tohle už máš splněné – můžeš si to zopakovat, ale odměnu už nedostaneš.</p>':`<p class="sub">Odměna za vítězství: ⭐ ${bounty(sel)}${sel===9?' + velká odměna od rodičů!':''}</p>`}
+        <div class="row"><button class="btn red" data-fight="${sel}" style="font-size:20px">${M.fightBtn}</button><button class="btn sec" data-act="hero">🛍️ Obchod</button></div>
       </div></div></div>`;
   }
-  const cards = MONSTERS.map((m,i)=>{
+  const M=modeOf(p);
+  const cards = foesOf(p).map((m,i)=>{
     const locked=i>p.beaten, beaten=i<p.beaten, next=i===p.beaten;
     return `<div class="mcard ${locked?'locked':''} ${beaten?'beaten':''} ${next?'next':''}" ${locked?'':`data-sel="${i}"`}>
       <span class="num">${i+1}.</span>${beaten?'<span class="badge">✅</span>':locked?'<span class="badge">🔒</span>':''}
-      <div class="mpic">${sceneSVG(i)}<div class="mon">${monsterSVG(i)}</div></div><div><b>${locked?'???':m.name}</b></div><div class="sub">${locked?'Nejdřív poraz předchozí':`⚔️${m.atk} 🛡️${m.def} ❤️${m.hp}`}</div></div>`;
+      <div class="mpic">${foeScene(p,i)}<div class="mon">${foeSVG(p,i)}</div></div><div><b>${locked?'???':m.name}</b></div><div class="sub">${locked?'Nejdřív splň předchozí':`${M.fst[0][0]}${m.atk} ${M.fst[1][0]}${m.def} ${M.fst[2][0]}${m.hp}`}</div></div>`;
   }).join('');
-  return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>🗺️ Výprava</h1><span class="pill">⭐ ${p.points}</span></div>
+  return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>${M.mapTitle}</h1><span class="pill">⭐ ${p.points}</span></div>
     ${testBanner(p)}${pre}
-    <p class="muted" style="margin-top:0">Poraz všech 10 oblud. Na konci čeká drak – a za něj ${G(p,'tě','tě')} čeká odměna od rodičů!</p>
+    <p class="muted" style="margin-top:0">${M.goal}</p>
     <div class="mapgrid">${cards}</div>`;
 }
 
 /* ---- battle ---- */
 function battleView(){
-  const p=prof(view.pid), b=view.b, m=MONSTERS[b.mi], st=stats(p);
+  const p=prof(view.pid), b=view.b, m=foesOf(p)[b.mi], st=stats(p), M=modeOf(p);
   return `<div class="top"><button class="btn sec small" data-act="flee">🏃 Utéct</button><h1 class="center">Kolo ${b.round}</h1><span class="pill">${m.name}</span></div>
-    <div class="arena">${sceneSVG(b.mi)}
-      <div class="fighter" id="fh">${heroSVG(p)}<div class="nm">${esc(p.name)}</div><div class="bar hp"><i id="hhp" style="width:${b.hp/b.maxHp*100}%"></i></div><div class="sub" id="hhpt">❤️ ${b.hp}/${b.maxHp}</div></div>
+    <div class="arena">${foeScene(p,b.mi)}
+      <div class="fighter" id="fh">${p.mode==='home'?kidSVG(p):avatarSVG(p)}<div class="nm">${esc(p.mode==='pet'?(p.petName||p.name):p.name)}</div><div class="bar hp"><i id="hhp" style="width:${b.hp/b.maxHp*100}%"></i></div><div class="sub" id="hhpt">${M.st[2][0]} ${b.hp}/${b.maxHp}</div></div>
       <div class="vs">VS</div>
-      <div class="fighter" id="fm">${monsterSVG(b.mi)}<div class="nm">${m.name}</div><div class="bar mhp"><i id="mhp" style="width:${b.mhp/m.hp*100}%"></i></div><div class="sub" id="mhpt">❤️ ${b.mhp}/${m.hp}</div></div>
+      <div class="fighter" id="fm">${foeSVG(p,b.mi)}<div class="nm">${p.mode==='pet'?m.where.replace('Soupeř: ',''):m.name}</div><div class="bar mhp"><i id="mhp" style="width:${b.mhp/m.hp*100}%"></i></div><div class="sub" id="mhpt">${M.fst[2][0]} ${b.mhp}/${m.hp}</div></div>
     </div>
     <div class="card" id="pcard" style="margin-top:12px">
-      <div class="sub center">Správně = úder za ${Math.max(1,st.atk-m.def)} · Chyba = netrefíš · Obluda útočí za ${Math.max(1,m.atk-st.def)}</div>
+      <div class="sub center">${M.line(Math.max(1,st.atk-m.def), Math.max(1,m.atk-st.def))}</div>
       ${probHTML(b.pr)}${inputHTML(b.pr).replace(/<div class="(pad|cmpbtns)">/,'<div class="fb" id="fb"></div><div class="$1">')}
     </div>`;
 }
 function battleEndView(){
-  const p=prof(view.pid), e=view.e, m=MONSTERS[e.mi];
+  const p=prof(view.pid), e=view.e, m=foesOf(p)[e.mi], M=modeOf(p);
   if(e.win){
     const dragon = e.mi===9;
-    return `<div class="top"><h1>${dragon?'🐉 DRAK JE PORAŽEN!':'Vítězství!'}</h1></div>
+    return `<div class="top"><h1>${M.winTitle(dragon)}</h1></div>
       <div class="${dragon?'reward':'card'} center">
-        <div style="max-width:180px;margin:0 auto;opacity:.5;transform:rotate(-8deg)">${monsterSVG(e.mi)}</div>
-        <h2>${G(p,'Porazil','Porazila')} jsi: ${m.name}! ${dragon?'🏆':'🎉'}</h2>
-        <p style="font-size:18px">Zásahů: ${e.hits} · Chyb: ${e.miss}</p>
+        <div style="max-width:180px;margin:0 auto;${p.mode==='quest'?'opacity:.5;transform:rotate(-8deg)':''}">${foeSVG(p,e.mi)}</div>
+        <h2>${M.winText(p,m)} ${dragon?'🏆':'🎉'}</h2>
+        <p style="font-size:18px">Správně: ${e.hits} · Chyb: ${e.miss}</p>
         ${e.first&&e.gold?`<p style="font-size:20px">Odměna: ⭐ ${e.gold}</p>`:''}
         ${dragon&&e.first?`<p style="font-size:22px">🎁 Tvoje odměna od rodičů: <b>${esc(rewardOf(p))}</b></p><p>Ukaž tuhle obrazovku mamce nebo taťkovi!</p>`:''}
         ${e.first?`<p style="font-size:18px">A k tomu truhla! 🎁</p><button class="btn gold" data-chest="1" style="margin-bottom:12px">🎁 Otevřít truhlu</button>`:''}
-        ${!dragon&&e.first?`<p>Odemkla se další obluda: <b>${MONSTERS[e.mi+1].name}</b> 🔓</p>`:''}
-        <div class="row" style="justify-content:center"><button class="btn" data-act="map">🗺️ Na mapu</button><button class="btn gold" data-act="hero">🎒 Výbava</button></div>
+        ${!dragon&&e.first?`<p>Odemklo se další: <b>${foesOf(p)[e.mi+1].name}</b> 🔓</p>`:''}
+        <div class="row" style="justify-content:center"><button class="btn" data-act="map">${M.mapTitle}</button><button class="btn gold" data-act="hero">🛍️ Obchod</button></div>
       </div>`;
   }
   return `<div class="top"><h1>Tentokrát to nevyšlo…</h1></div>
     <div class="card center">
-      <div style="max-width:180px;margin:0 auto">${monsterSVG(e.mi)}</div>
-      <h2>${m.name} ${G(p,'tě porazil','tě porazil')}. 😓</h2>
-      <p style="font-size:18px">Zásahů: ${e.hits} · Chyb: ${e.miss} · Obludě zbylo ❤️ ${e.mhp}</p>
+      <div style="max-width:180px;margin:0 auto">${foeSVG(p,e.mi)}</div>
+      <h2>${M.loseText(p,m)}</h2>
+      <p style="font-size:18px">Správně: ${e.hits} · Chyb: ${e.miss} · Zbývalo ${M.fst[2][0]} ${e.mhp}</p>
       ${analysisHTML(p,e.mi)}
-      <p>Počítej dál, získej body a kup si lepší výbavu – nebo to zkus znovu a dej si pozor na chyby!</p>
-      <div class="row" style="justify-content:center"><button class="btn red" data-fight="${e.mi}">⚔️ Zkusit znovu</button><button class="btn gold" data-act="hero">🎒 Výbava</button><button class="btn sec" data-act="play">🧮 Počítat</button></div>
+      <p>Počítej dál, získej body a kup si lepší věci – nebo to zkus znovu a dej si pozor na chyby!</p>
+      <div class="row" style="justify-content:center"><button class="btn red" data-fight="${e.mi}">🔁 Zkusit znovu</button><button class="btn gold" data-act="hero">🛍️ Obchod</button><button class="btn sec" data-act="play">🧮 Počítat</button></div>
     </div>`;
 }
 
@@ -1156,18 +1532,20 @@ function heroEditHTML(p){
     <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální</option></select></div>
     <div class="field"><label>Barva oblečku</label><div class="row colors">${TUNICS.map(c=>`<button data-color="${c}" style="background:${c};border:${p.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
     <div class="field"><label>Tajný kód hrdiny (prázdné = bez kódu)</label><input type="text" id="p-pin" inputmode="numeric" maxlength="4" value="${esc(p.pin||'')}"></div>
-    <div class="field"><label>Odměna za draka (prázdné = výchozí: „${esc(S.settings.reward)}“)</label><input type="text" id="p-reward" value="${esc(p.reward||'')}"></div>
+    <div class="field"><label>Dobrodružství (změna vynuluje body a postup)</label><select id="p-mode">${Object.values(MODES).map(M=>`<option value="${M.key}" ${(p.mode||'quest')===M.key?'selected':''}>${M.icon} ${M.title}</option>`).join('')}</select></div>
+    ${p.mode==='pet'?`<div class="row"><div class="field" style="flex:1"><label>Zvířátko</label><select id="p-species">${SPECIES.map(s=>`<option value="${s.id}" ${p.species===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div><div class="field" style="flex:1"><label>Jméno zvířátka</label><input type="text" id="p-petname" value="${esc(p.petName||'')}"></div></div>`:''}
+    <div class="field"><label>Odměna za splnění celého dobrodružství (prázdné = výchozí: „${esc(S.settings.reward)}“)</label><input type="text" id="p-reward" value="${esc(p.reward||'')}"></div>
     <div class="field"><label>Typy příkladů (změna platí od zítřka, nebo hned po „Vygenerovat dnešek znovu“)</label>${cats}</div>
     <div class="row"><button class="btn ok small" data-act="saveprofile">Uložit</button><button class="btn sec small" data-act="defcats">Výchozí pro ročník</button><button class="btn sec small" data-act="regen">Vygenerovat dnešek znovu</button></div>
   </div><div>
-    <div class="card center" style="padding:10px">${heroSVG(p)}<div>⭐ ${p.points} · úroveň ${level(p)} · oblud ${p.beaten}/10</div></div>
+    <div class="card center" style="padding:10px"><div class="stage">${avatarSVG(p)}</div><div>⭐ ${p.points} · úroveň ${level(p)} · ${modeOf(p).icon} ${p.beaten}/10</div></div>
     <div class="field"><label>Přidat / ubrat body (např. bonus za úkol)</label><div class="row"><input type="number" id="p-bonus" value="20" style="width:110px"><button class="btn small" data-act="bonus">Připsat</button></div></div>
     <div class="row" style="margin-top:8px">
       ${p.beaten>=10 && !p.rewardClaimed ? `<button class="btn gold small" data-act="claimed">🎁 Odměna předána</button>`:''}
       <button class="btn sec small" data-act="newseason">🔄 Nová výprava</button>
       <button class="btn sec small" data-act="delhero" style="color:#a8322a">🗑️ Smazat hrdinu</button>
     </div>
-    <p class="muted" style="font-size:13px">Nová výprava vynuluje body, výbavu, úroveň a obludy. Historie zůstane.</p>
+    <p class="muted" style="font-size:13px">Nová výprava vynuluje body, věci, úroveň a postup. Historie zůstane.</p>
   </div></div>`;
 }
 function parentView(){
@@ -1177,8 +1555,8 @@ function parentView(){
   const tabs=[['settings','Nastavení'],['heroes','Hrdinové'],['history','Historie'],['test','🧪 Testování'],['backup','Záloha']];
   let body='';
   if(parentTab==='settings'){
-    body=`<div class="field"><label>Výchozí odměna za poražení draka</label><input type="text" id="s-reward" value="${esc(S.settings.reward)}"></div>
-      <div class="field"><label>Délka výpravy (jak rychle se dá dojít k drakovi)</label><select id="s-len">
+    body=`<div class="field"><label>Výchozí odměna za splnění celého dobrodružství</label><input type="text" id="s-reward" value="${esc(S.settings.reward)}"></div>
+      <div class="field"><label>Délka dobrodružství (jak rychle se dá dojít na konec)</label><select id="s-len">
         <option value="short" ${S.settings.length==='short'?'selected':''}>Krátká – zhruba 2 týdny</option>
         <option value="mid" ${S.settings.length==='mid'?'selected':''}>Střední – zhruba 3–4 týdny</option>
         <option value="long" ${S.settings.length==='long'?'selected':''}>Dlouhá – zhruba 6 týdnů</option></select></div>
@@ -1187,16 +1565,18 @@ function parentView(){
       <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
   } else if(parentTab==='heroes'){
     const hs=heroes(); if(!parentHero || !prof(parentHero) || prof(parentHero).deleted) parentHero = hs[0] && hs[0].id;
-    body = hs.length ? `<div class="field"><label>Hrdina</label><select id="p-sel">${hs.map(p=>`<option value="${p.id}" ${p.id===parentHero?'selected':''}>${esc(p.name)} (${p.grade}. tř., ${p.beaten}/10 oblud)</option>`).join('')}</select></div>${heroEditHTML(prof(parentHero))}` : '<p>Zatím žádní hrdinové.</p>';
+    body = hs.length ? `<div class="field"><label>Hrdina</label><select id="p-sel">${hs.map(p=>`<option value="${p.id}" ${p.id===parentHero?'selected':''}>${esc(p.name)} (${p.grade}. tř., ${modeOf(p).icon} ${p.beaten}/10)</option>`).join('')}</select></div>${heroEditHTML(prof(parentHero))}` : '<p>Zatím žádní hrdinové.</p>';
   } else if(parentTab==='history'){
     body = heroes().map(p=>{
       const keys=Object.keys(p.history||{}).sort().reverse().slice(0,21);
       const rows=keys.map(k=>{const h=p.history[k]; return `<tr><td>${k.split('-').reverse().join('. ')}</td><td>${h.c}/${h.n}</td><td>+${h.pts}</td><td class="muted" style="font-size:13px">${(h.wrongCats||[]).map(c=>CATS[c]?CATS[c].label:c).join(', ')}</td></tr>`;}).join('');
-      return `<h3>${esc(p.name)} <span class="muted" style="font-size:15px">· ${p.grade}. tř. · správně celkem ${p.totalCorrect} · oblud ${p.beaten}/10</span></h3>${rows?`<table class="hist"><tr><th>Den</th><th>Správně</th><th>Body</th><th>Kde chyboval</th></tr>${rows}</table>`:'<p class="muted">Zatím žádné dokončené dny.</p>'}`;}).join('') + `<p class="muted" style="font-size:13px">Podrobný přehled je i ve vaší Google tabulce na listu „Výsledky“.</p>`;
+      return `<h3>${esc(p.name)} <span class="muted" style="font-size:15px">· ${p.grade}. tř. · správně celkem ${p.totalCorrect} · ${modeOf(p).icon} ${p.beaten}/10</span></h3>${rows?`<table class="hist"><tr><th>Den</th><th>Správně</th><th>Body</th><th>Kde chyboval</th></tr>${rows}</table>`:'<p class="muted">Zatím žádné dokončené dny.</p>'}`;}).join('') + `<p class="muted" style="font-size:13px">Podrobný přehled je i ve vaší Google tabulce na listu „Výsledky“.</p>`;
   } else if(parentTab==='test'){
-    body=`<p>Vyzkoušejte si hru sami. Testovací hrdina se ukládá jen v tomto prohlížeči, nezobrazuje se dětem a nic neposílá do výsledků. V testu máte tlačítka na přidání bodů, úrovní a odemčení oblud.</p>
+    body=`<p>Vyzkoušejte si hru sami. Testovací hrdina se ukládá jen v tomto prohlížeči, nezobrazuje se dětem a nic neposílá do výsledků. V testu máte tlačítka na přidání bodů, úrovní a odemčení všech výzev.</p>
       <div class="row"><div class="field"><label>Ročník příkladů</label><select id="t-grade">${[1,2,3,4,5].map(g=>`<option value="${g}" ${(TEST&&TEST.grade||2)==g?'selected':''}>${g}. třída</option>`).join('')}</select></div>
-      <div class="field"><label>Postava</label><select id="t-gender"><option value="m">Hrdina</option><option value="f" ${TEST&&TEST.gender==='f'?'selected':''}>Hrdinka</option></select></div></div>
+      <div class="field"><label>Postava</label><select id="t-gender"><option value="m">Hrdina</option><option value="f" ${TEST&&TEST.gender==='f'?'selected':''}>Hrdinka</option></select></div>
+      <div class="field"><label>Dobrodružství</label><select id="t-mode">${Object.values(MODES).map(M=>`<option value="${M.key}" ${TEST&&TEST.mode===M.key?'selected':''}>${M.icon} ${M.title}</option>`).join('')}</select></div>
+      <div class="field"><label>Zvířátko (pro 🐾)</label><select id="t-species">${SPECIES.map(s=>`<option value="${s.id}" ${TEST&&TEST.species===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div></div>
       <div class="row">${TEST?'<button class="btn" data-act="t-open">▶️ Pokračovat s testovacím hrdinou</button>':''}<button class="btn ${TEST?'sec':''}" data-act="t-new">🧪 ${TEST?'Nový testovací hrdina':'Spustit testovacího hrdinu'}</button></div>`;
   } else if(parentTab==='backup'){
     body=`<p>Postup se ukládá automaticky do vaší Google tabulky. Pro jistotu si můžete zkopírovat zálohu.</p>
@@ -1250,7 +1630,7 @@ function openHero(id){
     pinBox(`🔒 Zadej tajný kód pro ${esc(p.name)}`, v=>{ if(v===String(p.pin)){ unlock(p.id); go({name:'hero',pid:p.id}); } else toast('Špatný kód. Zeptej se rodičů, pokud ho nevíš.'); });
   } else go({name:'hero',pid:p.id});
 }
-function readDraft(){ if(!draft) return; const n=$('#c-name'), g=$('#c-grade'), pin=$('#c-pin'), r=$('#c-reward'); if(n) draft.name=n.value; if(g) draft.grade=+g.value; if(pin) draft.pin=pin.value.replace(/\D/g,''); if(r) draft.reward=r.value; }
+function readDraft(){ if(!draft) return; const pn=$('#c-petname'); if(pn) draft.petName=pn.value; const n=$('#c-name'), g=$('#c-grade'), pin=$('#c-pin'), r=$('#c-reward'); if(n) draft.name=n.value; if(g) draft.grade=+g.value; if(pin) draft.pin=pin.value.replace(/\D/g,''); if(r) draft.reward=r.value; }
 
 function bind(){
   document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>openHero(el.dataset.open));
@@ -1263,6 +1643,9 @@ function bind(){
   document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{parentTab=el.dataset.tab; render();});
   document.querySelectorAll('[data-color]').forEach(el=>el.onclick=()=>{ const p=prof(parentHero); p.color=el.dataset.color; save(); render(); });
   document.querySelectorAll('[data-gender]').forEach(el=>el.onclick=()=>{ readDraft(); draft.gender=el.dataset.gender; render(); });
+  document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{ readDraft(); draft.mode=el.dataset.mode; render(); });
+  document.querySelectorAll('[data-species]').forEach(el=>el.onclick=()=>{ readDraft(); draft.species=el.dataset.species; render(); });
+  document.querySelectorAll('[data-feed]').forEach(el=>el.onclick=()=>feed(el.dataset.feed));
   document.querySelectorAll('[data-ccolor]').forEach(el=>el.onclick=()=>{ readDraft(); draft.color=el.dataset.ccolor; render(); });
   const psel=$('#p-sel'); if(psel) psel.onchange=()=>{ parentHero=psel.value; render(); };
   if(view.name==='play' || view.name==='battle'){
@@ -1358,17 +1741,18 @@ function finish(t){
 
 /* ---- gear ---- */
 function buy(slot){
-  const p=prof(view.pid); p.owned=p.owned||{}; const own=p.owned[slot]||0, sl=SLOTMAP[slot];
+  const p=prof(view.pid); p.owned=p.owned||{}; const own=p.owned[slot]||0, sl=slotOf(p,slot);
   if(own>=sl.items.length) return;
-  const c=price(slot,own+1); if(p.points<c) return;
+  const c=price(slot,own+1,p); if(p.points<c) return;
   p.points-=c; p.owned[slot]=own+1; p.newItem=slot+':'+(own+1); save();
-  toast(`🎒 ${sl.items[own][0]} je v batohu! Klikni na ${G(p,'něj','něj')} a nasaď si ho.`);
+  toast(`🛍️ ${sl.items[own][0]} – koupeno! Klikni na to v seznamu a ${modeOf(p).equipWord}.`);
   render();
 }
 function equip(slot, tier){
   const p=prof(view.pid); tier=+tier; p.eq=p.eq||{};
-  if(p.eq[slot]===tier){ p.eq[slot]=0; toast(`Sundáno: ${SLOTMAP[slot].items[tier-1][0]}`); }
-  else { p.eq[slot]=tier; toast(`Nasazeno: ${SLOTMAP[slot].items[tier-1][0]} ✨`); }
+  const sl=slotOf(p,slot), M=modeOf(p);
+  if(p.eq[slot]===tier){ p.eq[slot]=0; toast(`${M.removed}: ${sl.items[tier-1][0]}`); }
+  else { p.eq[slot]=tier; toast(`${M.equipped}: ${sl.items[tier-1][0]} ✨`); }
   if(p.newItem===slot+':'+tier) p.newItem=null;
   save(); render();
 }
@@ -1377,26 +1761,26 @@ function equip(slot, tier){
 function startBattle(mi){
   const p=prof(view.pid); if(mi>p.beaten) return;
   const st=stats(p);
-  go({name:'battle', pid:p.id, b:{mi, hp:st.hp, maxHp:st.hp, mhp:MONSTERS[mi].hp, round:1, hits:0, miss:0, pr:battleProblem(p)}});
+  go({name:'battle', pid:p.id, b:{mi, hp:st.hp, maxHp:st.hp, mhp:foesOf(p)[mi].hp, round:1, hits:0, miss:0, pr:battleProblem(p)}});
 }
 function anim(id, cls){ const el=document.getElementById(id); if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function floatTxt(id, txt, cls=''){ const el=document.getElementById(id); if(!el) return; const d=document.createElement('div'); d.className='dmg '+cls; d.textContent=txt; el.appendChild(d); setTimeout(()=>d.remove(),1000); }
-function updBars(){ const b=view.b, m=MONSTERS[b.mi];
+function updBars(){ const b=view.b, p=prof(view.pid), m=foesOf(p)[b.mi], M=modeOf(p);
   const h=$('#hhp'), mh=$('#mhp'); if(h) h.style.width=(b.hp/b.maxHp*100)+'%'; if(mh) mh.style.width=(b.mhp/m.hp*100)+'%';
-  const ht=$('#hhpt'), mt=$('#mhpt'); if(ht) ht.textContent=`❤️ ${b.hp}/${b.maxHp}`; if(mt) mt.textContent=`❤️ ${b.mhp}/${m.hp}`; }
+  const ht=$('#hhpt'), mt=$('#mhpt'); if(ht) ht.textContent=`${M.st[2][0]} ${b.hp}/${b.maxHp}`; if(mt) mt.textContent=`${M.fst[2][0]} ${b.mhp}/${m.hp}`; }
 function battleAnswer(val){
   if(busy) return; busy=true;
-  const b=view.b, p=prof(view.pid), st=stats(p), m=MONSTERS[b.mi], pr=b.pr;
+  const b=view.b, p=prof(view.pid), st=stats(p), m=foesOf(p)[b.mi], pr=b.pr, M=modeOf(p);
   const ok=isCorrect(pr,val);
   document.querySelectorAll('.pad button,.cmpbtns button').forEach(x=>x.disabled=true);
   if(ok){
     p.xp=(p.xp||0)+1;
     const d=Math.max(1, st.atk-m.def); b.mhp=Math.max(0,b.mhp-d); b.hits++;
-    setFb('ok', pick(['Zásah! ⚔️','Přesně! 💥','Bum! 💪','Trefa! ✨']));
-    anim('fh','lunge'); setTimeout(()=>{ anim('fm','hitme'); floatTxt('fm','−'+d); updBars(); },200);
+    setFb('ok', pick(M.hit));
+    anim('fh','lunge'); setTimeout(()=>{ anim('fm','hitme'); floatTxt('fm',(p.mode==='quest'?'−':'+')+d); updBars(); },200);
     if(b.mhp<=0){ setTimeout(()=>battleEnd(true),1200); return; }
   } else {
-    b.miss++; setFb('bad', `Vedle! Správně bylo <b>${shownAnswer(pr)}</b>.`); floatTxt('fm','vedle','miss');
+    b.miss++; setFb('bad', `${M.miss} Správně bylo <b>${shownAnswer(pr)}</b>.`); floatTxt('fm',M.missFloat,'miss');
   }
   setTimeout(()=>{
     const md=Math.max(1, m.atk-st.def); b.hp=Math.max(0,b.hp-md);
@@ -1429,12 +1813,13 @@ function act(a){
     readDraft(); const name=(draft.name||'').trim();
     if(!name){ toast('Napiš své jméno 🙂'); $('#c-name').focus(); return; }
     if(draft.pin && !/^\d{4}$/.test(draft.pin)){ toast('Tajný kód musí mít 4 číslice (nebo nech prázdné).'); return; }
-    const np=newProfile({name, grade:draft.grade, gender:draft.gender, color:draft.color, pin:draft.pin, reward:(draft.reward||'').trim()});
+    if(draft.mode==='pet' && !(draft.petName||'').trim()){ toast('Vymysli jméno pro zvířátko 🐾'); return; }
+    const np=newProfile({name, grade:draft.grade, gender:draft.gender, color:draft.color, pin:draft.pin, reward:(draft.reward||'').trim(), mode:draft.mode, species:draft.species, petName:(draft.petName||'').trim()});
     S.profiles.push(np); unlock(np.id); save(); draft=null;
-    toast(`Vítej, ${np.name}! ⚔️`); go({name:'hero',pid:np.id}); break; }
+    toast(`Vítej, ${np.name}! ${modeOf(np).icon}`); go({name:'hero',pid:np.id}); break; }
   case 'hero': case 'back': go({name:'hero',pid:view.pid}); break;
   case 'map': go({name:'map',pid:view.pid, sel: p && p.beaten<10 ? p.beaten : null}); break;
-  case 'flee': confirmBox('Opravdu utéct z boje? Obluda zůstane neporažená.', ()=>go({name:'map',pid:view.pid,sel:view.b.mi})); break;
+  case 'flee': confirmBox(modeOf(p).flee, ()=>go({name:'map',pid:view.pid,sel:view.b.mi})); break;
   case 'play': {
     const t=ensureToday(p);
     if(t.done){ if(!p.extraSet || p.extraSet.date!==todayKey()){ p.extraSet={date:todayKey(),idx:0,tries:0,res:[],problems:genDaily(p,todayKey()+'-extra-'+Date.now(),S.settings.perDay||10),pts:0,wrong:[]}; save(); } go({name:'play',pid:p.id,practice:p.extraSet,lvlStart:level(p)}); }
@@ -1443,11 +1828,11 @@ function act(a){
   // test tools
   case 't-pts': p.points+=500; save(); render(); break;
   case 't-lvl': p.xp=(p.xp||0)+(XP_PER_LEVEL[S.settings.length]||40); save(); render(); toast(`Úroveň ${level(p)}`); break;
-  case 't-unlock': p.beaten=Math.max(p.beaten,9); save(); render(); toast('Odemčeno až po draka'); break;
-  case 't-all': SLOTS.forEach(sl=>{ p.owned[sl.id]=sl.items.length; p.eq[sl.id]=sl.items.length; }); p.xp=Math.max(p.xp||0,(MAX_LEVEL-1)*(XP_PER_LEVEL[S.settings.length]||40)); save(); render(); break;
+  case 't-unlock': p.beaten=Math.max(p.beaten,9); save(); render(); toast('Odemčeno až po poslední výzvu'); break;
+  case 't-all': slotsOf(p).forEach(sl=>{ p.owned[sl.id]=sl.items.length; p.eq[sl.id]=sl.items.length; }); p.xp=Math.max(p.xp||0,(MAX_LEVEL-1)*(XP_PER_LEVEL[S.settings.length]||40)); save(); render(); break;
   case 't-chest': p.chests=p.chests||[]; p.chests.push(Math.random()<.3?'gold':'wood'); save(); render(); break;
-  case 't-reset': confirmBox('Začít s testovacím hrdinou znovu?', ()=>{ const g=TEST.grade, s=TEST.gender; TEST=newProfile({id:'test',name:'Testovací '+(s==='f'?'hrdinka':'hrdina'),grade:g,gender:s,color:'#1fb5c9'}); saveLocal(); render(); }); break;
-  case 't-new': { const g=+$('#t-grade').value, s=$('#t-gender').value; TEST=newProfile({id:'test',name:'Testovací '+(s==='f'?'hrdinka':'hrdina'),grade:g,gender:s,color:'#1fb5c9'}); saveLocal(); go({name:'hero',pid:'test'}); break; }
+  case 't-reset': confirmBox('Začít s testovacím hrdinou znovu?', ()=>{ const o=TEST; TEST=newProfile({id:'test',name:o.name,grade:o.grade,gender:o.gender,color:'#1fb5c9',mode:o.mode,species:o.species,petName:o.petName}); saveLocal(); render(); }); break;
+  case 't-new': { const g=+$('#t-grade').value, s=$('#t-gender').value, md=$('#t-mode').value, spc=$('#t-species').value; TEST=newProfile({id:'test',name:'Testovací '+(s==='f'?'hrdinka':'hrdina'),grade:g,gender:s,color:'#1fb5c9',mode:md,species:spc,petName:'Testík'}); saveLocal(); go({name:'hero',pid:'test'}); break; }
   case 't-open': go({name:'hero',pid:'test'}); break;
   // parent
   case 'pinok': { const v=$('#pin').value; if(v===String(S.settings.pin)){ parentOk=true; render(); } else { toast('Špatný PIN'); $('#pin').value=''; } break; }
@@ -1461,6 +1846,9 @@ function act(a){
     const h=prof(parentHero);
     h.name=$('#p-name').value.trim()||h.name;
     h.gender=$('#p-gender').value; h.diff=$('#p-diff').value;
+    if($('#p-species')) h.species=$('#p-species').value; if($('#p-petname')) h.petName=$('#p-petname').value.trim();
+    const nm=$('#p-mode').value;
+    if(nm!==(h.mode||'quest')){ confirmBox(`Změnit dobrodružství na „${MODES[nm].title}“? Body, věci a postup se vynulují.`, ()=>{ Object.assign(h,{mode:nm,points:0,xp:0,owned:{},eq:{},beaten:0,rewardClaimed:false,newItem:null,species:h.species||'cat',petName:h.petName||'Mazlíček'}); save(); render(); toast('Dobrodružství změněno'); }); return; }
     const pin=$('#p-pin').value.trim(); if(pin && !/^\d{4}$/.test(pin)){ toast('Kód musí mít 4 číslice'); return; } h.pin=pin;
     h.reward=$('#p-reward').value.trim();
     const g=+$('#p-grade').value;
