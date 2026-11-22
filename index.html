@@ -354,6 +354,9 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .choice.right{background:#c9f5d2!important;border-color:#2fae4f!important}.choice.wrong{background:#ffd0d0!important;border-color:#e8323c!important}
 .room{isolation:isolate}.arena .fighter{position:relative;z-index:2}.arena .vs{position:relative;z-index:2}
 .mcard.locked .mpic .mon .av{filter:brightness(0) opacity(.55)}.mcard.locked .mpic .room{filter:grayscale(1) brightness(.6)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.sw{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #b88a4a;cursor:pointer;padding:0;font-size:18px}
+.sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
 
 </style>
 </head>
@@ -1643,7 +1646,7 @@ const A_ = 'assets/';
 function heroStage(p){ const e=p.eq||{}; const s=((e.weapon||0)/7+(e.shield||0)/5+(e.armor||0)/5+(e.head||0)/5)/4; return Math.max(0,Math.min(5,Math.round(s*5))); }
 function heroImg(p, opts={}){
   const g=p.gender==='f'?'f':'m', comp=(p.eq||{}).pet;
-  return `<div class="av ${opts.glow?'glow':''}"><img class="main" src="${A_}hero_${g}${heroStage(p)}.webp" alt="">${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
+  return `<div class="av ${opts.glow?'glow':''}">${tintImg('hero_'+g+heroStage(p), 'hero_'+g, lookOf(p), 'class="main"')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
 }
 const _monsterSVG_old = monsterSVG, _sceneSVG_old = sceneSVG;
 monsterSVG = function(i){ return `<img class="monimg" src="${A_}mon${i}.webp" alt="${MONSTERS[i].name}" loading="lazy">`; };
@@ -1702,16 +1705,51 @@ roomSVG = function(p, opts={}){
     if(e.bed) s+=ovb('h_bed'+e.bed, .57, .03, .41, 3);
     if(e.plant) s+=ovb('h_plant'+e.plant, .01, .06, .14, 3);
     if(e.lamp && e.lamp<4) s+=ovb('h_lamp'+e.lamp, .16, .06, [0,.08,.1,.11][e.lamp], 3);
-    s+=ovb('kid_'+(p.gender==='f'?'f':'m'), .30, .04, .14, 5);
+    s+=tintImg('kid_'+(p.gender==='f'?'f':'m'), 'kid_'+(p.gender==='f'?'f':'m'), lookOf(p), 'class="ov" style="left:30%;bottom:4%;width:14%;z-index:5"');
     if(e.hpet) s+=ovb('h_hpet'+e.hpet, .46, .02, .13, 6);
   }
   return `<div class="room ${opts.scene?'scene':''}">${s}</div>`;
 };
-kidSVG = function(p){ return `<div class="av"><img class="main" src="${A_}kid_${p.gender==='f'?'f':'m'}.webp" alt=""></div>`; };
+kidSVG = function(p){ const g=p.gender==='f'?'f':'m'; return `<div class="av">${tintImg('kid_'+g,'kid_'+g,lookOf(p),'class="main"')}</div>`; };
 
 /* ---- návštěvy a pozadí soutěží (Gemini) ---- */
 guestSVG = function(i){ return `<div class="av"><img class="main" src="${A_}guest${i}.webp" alt=""></div>`; };
 contestScene = function(i){ return `<img class="scene" src="${A_}cbg${i}.webp" alt="">`; };
+
+/* ---- přebarvení oblečení (tričko / kalhoty-sukně / tunika) ---- */
+var TINT_CFG={
+ kid_m:{top:{h:[190,240],s:.25,y:[.36,.72]},bottom:{grey:1,v:[.35,.95],y:[.655,.935],x:[.15,.85]}},
+ kid_f:{top:{h:[35,70],s:.14,y:[.33,.56],x:[.2,.8]},bottom:{h:[315,360],h2:[0,10],s:.12,y:[.50,.74]}},
+ hero_m:{top:{h:[190,235],s:.2,y:[.30,.95]}},
+ hero_f:{top:{h:[318,360],h2:[0,12],s:.15,y:[.46,.95]}},
+};
+var _tintCache={}, _tintPend={};
+function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
+function tintImg(name, cfgKey, look, attrs){
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom)){ _tintPend[k]=1; const im=new Image();
+    im.onload=()=>{ try{ _tintCache[k]=doTint(im, TINT_CFG[cfgKey], look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
+    im.src=A_+name+'.webp'; }
+  return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
+}
+function doTint(im, cfg, look){
+  const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
+  for(const part of ['top','bottom']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+    const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
+    const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
+    for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue;
+      const r=a[i]/255, gg=a[i+1]/255, b=a[i+2]/255, mx=Math.max(r,gg,b), mn=Math.min(r,gg,b), s=mx>0?(mx-mn)/mx:0, dd=Math.max(mx-mn,1e-6);
+      let ok;
+      if(g.grey) ok = s<.14 && mx>=g.v[0] && mx<=g.v[1];
+      else { let h=mx===r?((gg-b)/dd)%6:mx===gg?(b-r)/dd+2:(r-gg)/dd+4; h*=60; if(h<0) h+=360;
+        ok = s>=g.s && mx>.25 && ((h>=g.h[0]&&h<=g.h[1]) || (g.h2 && h>=g.h2[0]&&h<=g.h2[1])); }
+      if(ok){ idx.push(i); vs.push(mx); } }
+    if(!idx.length) continue; const sv=vs.slice().sort((p,q)=>p-q), ref=sv[Math.floor(sv.length*.75)]||1;
+    for(let j=0;j<idx.length;j++){ const i=idx[j], f=Math.min(1.25, vs[j]/ref), ex=f>1?(f-1)*.8:0;
+      a[i]=Math.min(255,(t[0]*f+ex)*255); a[i+1]=Math.min(255,(t[1]*f+ex)*255); a[i+2]=Math.min(255,(t[2]*f+ex)*255); } }
+  x.putImageData(d,0,0); return c.toDataURL('image/png');
+}
 /* ============ State ============ */
 const LS_KEY='pocitani-hrdinove-v1';
 function newId(){ return 'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -2804,6 +2842,35 @@ function funSummaryHTML(p,s){
 function funHomeHTML(){ return familyHTML()+leaderboardHTML(); }
 setTimeout(()=>{ if(view.name==='home') introOpen(false); }, 600);
 
+/* ============ 🎨 Barvy oblečení – dítě si je nastaví samo ============ */
+var LOOK_COLORS=['#e8435a','#ff7a45','#f2a900','#21b37a','#1fb5c9','#4f7cff','#c04cf5','#ff6fb5','#8a5a2b','#9a9aa8','#2b2b2b','#f5f0e6'];
+function lookOpen(){
+  const p=prof(view.pid); if(!p) return; const M=p.mode||'quest'; if(M==='pet') return;
+  const parts = M==='home' ? [['top','👕 Tričko'],['bottom', p.gender==='f'?'👗 Sukně':'👖 Kalhoty']] : [['top','🧥 Tunika']];
+  const m=document.createElement('div'); m.className='modal';
+  const draw=()=>{ const l=lookOf(p);
+    m.innerHTML=`<div class="card center" style="max-width:520px"><h2 style="margin:4px 0">🎨 Barvy oblečení</h2>
+      <div style="max-width:170px;margin:0 auto">${M==='home'?kidSVG(p):heroImg(p)}</div>
+      ${parts.map(([k,lab])=>`<div style="margin:10px 0"><b>${lab}</b><div class="swatches">${LOOK_COLORS.map(c=>`<button class="sw ${l[k]===c?'on':''}" data-part="${k}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}${k==='bottom'?`<button class="sw orig ${!l.bottom?'on':''}" data-part="bottom" data-c="" title="Původní">↺</button>`:''}</div></div>`).join('')}
+      ${M==='quest'?'<p class="muted" style="font-size:14px">Tuniku je vidět hlavně, dokud nemáš brnění.</p>':''}
+      <button class="btn gold" id="lkok">Hotovo</button></div>`;
+    m.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ p.look=p.look||{}; const part=b.dataset.part, c=b.dataset.c; if(c) p.look[part]=c; else delete p.look[part]; if(part==='top' && c) p.color=c; save(); draw(); });
+    m.querySelector('#lkok').onclick=()=>{ m.remove(); render(); };
+  };
+  draw(); document.body.appendChild(m);
+}
+const _actLook=act;
+act=function(a){ if(a==='look') return lookOpen(); return _actLook(a); };
+const _funHeroLook=funHeroHTML;
+funHeroHTML=function(p){ const h=_funHeroLook(p); if(!p || p.mode==='pet') return h; return h.replace('<div class="funrow">','<div class="funrow"><button class="btn sec" data-act="look">🎨 Barvy oblečení</button>'); };
+// v domečku a u zvířátka se koupená věc rovnou použije (u výpravy se nasazuje ručně)
+const _buyLook=buy;
+buy=function(slot){ const p=prof(view.pid); const before=(p.owned||{})[slot]||0; _buyLook(slot);
+  if(p && p.mode && p.mode!=='quest' && ((p.owned||{})[slot]||0)>before){ p.eq=p.eq||{}; p.eq[slot]=p.owned[slot]; if(p.newItem===slot+':'+p.owned[slot]) p.newItem=null; save(); render(); try{ toast(`🛍️ ${slotOf(p,slot).items[p.owned[slot]-1][0]} – koupeno a hned použito ✨`); }catch(e){} } };
+// jednorázově: v domečku a u zvířátka nasadit koupené věci, které zůstaly ležet (dřív se musely nasazovat ručně)
+function autoEqOnce(p){ if(!p || !p.mode || p.mode==='quest') return; const f=fx(p); if(f.autoEq) return; f.autoEq=1; p.eq=p.eq||{};
+  for(const [s,n] of Object.entries(p.owned||{})) if(n>0 && !p.eq[s]) p.eq[s]=n; save(); }
+const _heroAuto=funHeroHTML; funHeroHTML=function(p){ try{ autoEqOnce(p); }catch(e){} return _heroAuto(p); };
 
 /* ============ Naučné nálepky: kartičky se zajímavostmi, skládačky obrázků, kvízy ============ */
 // [emoji, název, zajímavost]; poslední dvě v sadě jsou vzácné
