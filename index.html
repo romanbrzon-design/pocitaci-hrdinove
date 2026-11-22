@@ -943,8 +943,8 @@ const PR_BANK = [
   [0,2,'Které zvíře je divoké?','liška',['kráva','pes','slepice'],'🌲'],[0,2,'Které zvíře je domácí?','koza',['vlk','liška','jelen'],'🏡'],
   [1,3,'Kolik dní má týden?','7',['5','10','12'],'📅'],[1,3,'Kolik měsíců má rok?','12',['10','7','4'],'📆'],[1,3,'Kolik ročních období máme?','4',['2','3','12'],'🌍'],
   [2,3,'Čím vidíme?','očima',['ušima','nosem','jazykem'],'👀'],[2,3,'Čím slyšíme?','ušima',['očima','nosem','rukama'],'👂'],[2,3,'Čím cítíme vůni?','nosem',['ušima','očima','kolenem'],'👃'],
-  [2,4,'Který smysl máme v jazyku?','chuť',['zrak','sluch','čich'],'👅'],[2,4,'Který strom je jehličnatý?','smrk',['dub','buk','lípa'],'🌲'],
-  [2,4,'Který strom je listnatý?','dub',['smrk','borovice','jedle'],'🌳'],[2,4,'Co je ovoce?','hruška',['mrkev','brambora','cibule'],'🍐'],
+  [2,4,'Který smysl máme v jazyku?','chuť',['zrak','sluch','čich'],'👅'],[1,4,'Který strom je jehličnatý?','smrk',['dub','buk','lípa'],'🌲'],
+  [1,4,'Který strom je listnatý?','dub',['smrk','borovice','jedle'],'🌳'],[2,4,'Co je ovoce?','hruška',['mrkev','brambora','cibule'],'🍐'],
   [2,4,'Co je zelenina?','mrkev',['jablko','třešně','banán'],'🥕'],[2,4,'Jaká část rostliny je pod zemí?','kořen',['květ','list','plod'],'🌱'],
   [2,4,'Co se stane s vodou v mrazu?','zmrzne na led',['vypaří se','zezelená','zmizí'],'🧊'],[2,4,'Kolik nohou má hmyz?','6',['4','8','10'],'🐞'],
   [2,4,'Kolik nohou má pavouk?','8',['6','4','10'],'🕷️'],[2,4,'Kolikrát denně si máme čistit zuby?','2×',['1× za týden','nikdy','10×'],'🪥'],
@@ -961,6 +961,15 @@ const PR_BANK = [
   [4,5,'Nejvyšší hora Česka je…','Sněžka',['Praděd','Lysá hora','Říp'],'⛰️'],[4,5,'Nejdelší řeka v Česku je…','Vltava',['Labe','Morava','Dyje'],'🏞️'],
   [4,5,'Co jí sova?','myši',['trávu','ovoce','listí'],'🦉'],[4,5,'Kdo je na začátku potravního řetězce?','rostliny',['lišky','sovy','vlci'],'🌾'],
   [4,5,'Které zvíře v zimě spí zimním spánkem?','ježek',['zajíc','srnka','vrabec'],'🦔'],[4,5,'Který pták na zimu odlétá do teplých krajin?','vlaštovka',['vrabec','sýkora','kos'],'🐦'],
+  // stromy a jejich plody (prvouka 1. třídy)
+  [1,3,'Co roste na dubu?','žaludy',['kaštany','šišky','bukvice'],'🌳'],[1,3,'Kaštany rostou na stromě, kterému se správně říká…','jírovec',['dub','smrk','bříza'],'🌰'],
+  [1,3,'Na kterém stromu rostou bukvice?','na buku',['na dubu','na smrku','na bříze'],'🌳'],[1,3,'Na kterém stromu rostou vlašské ořechy?','na ořešáku',['na smrku','na bříze','na lípě'],'🌳'],
+  [1,3,'Na kterém stromu rostou šišky?','na smrku',['na dubu','na buku','na lípě'],'🌲'],[1,3,'Jehličnaté stromy mají místo listů…','jehličí',['trny','peří','chlupy'],'🌲'],
+  [1,3,'Který z těchto stromů má jehličí?','borovice',['bříza','javor','lípa'],'🌲'],[1,3,'Který z těchto stromů má listy?','javor',['smrk','jedle','borovice'],'🍁'],
+  [1,3,'Který strom má bílou kůru s černými skvrnami?','bříza',['dub','smrk','buk'],'🌳'],[1,3,'Plody javoru mají křidélka. Jak jim děti říkají?','nosánky',['žaludy','šišky','bukvice'],'🍁'],
+  [1,3,'Z květů kterého stromu se vaří čaj?','lípa',['smrk','dub','buk'],'🍵'],[1,3,'Co je plod jabloně?','jablko',['hruška','švestka','žalud'],'🍎'],
+  [1,3,'Kdy padají ze stromů kaštany a žaludy?','na podzim',['v zimě','na jaře','v létě'],'🌰'],[1,3,'Co dělají listnaté stromy na podzim?','shazují listí',['kvetou','rostou jim šišky','usnou v noře'],'🍂'],
+  [1,3,'Které zvíře si na zimu schovává oříšky a žaludy?','veverka',['liška','ryba','žába'],'🐿️'],[2,4,'Který jehličnatý strom na zimu shazuje jehličí?','modřín',['smrk','borovice','jedle'],'🌲'],
 ];
 CATS.pr_quiz = {grade:0, subj:'pr', label:'Přírodověda – otázky podle ročníku', gen(){
   const g=CUR_GRADE; let pool=PR_BANK.filter(q=>q[0]<=g && q[1]>=g); if(pool.length<6) pool=PR_BANK.filter(q=>q[0]<=g); if(!pool.length) pool=PR_BANK.filter(q=>q[0]===0);
