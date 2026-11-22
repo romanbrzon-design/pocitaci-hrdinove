@@ -959,13 +959,12 @@ const CJ_END = [['hra_','d','t'],['plo_','t','d'],['le_','d','t'],['du_','b','p'
 const CJ_POS = [['běhat','sloveso',3],['stůl','podstatné jméno',3],['zelený','přídavné jméno',3],['kočka','podstatné jméno',3],['skákat','sloveso',3],['veselý','přídavné jméno',3],['zpívá','sloveso',3],['město','podstatné jméno',3],['velký','přídavné jméno',3],
   ['pět','číslovka',4],['já','zájmeno',4],['na','předložka',4],['a','spojka',4],['rychle','příslovce',4],['jé','citoslovce',4],['kéž','částice',5],['třetí','číslovka',4],['oni','zájmeno',4],['pod','předložka',4],['ale','spojka',4],['dnes','příslovce',4]];
 const CJ_GEN = [['stůl','mužský'],['židle','ženský'],['okno','střední'],['pes','mužský'],['kočka','ženský'],['kuře','střední'],['hrad','mužský'],['moře','střední'],['růže','ženský'],['město','střední'],['strom','mužský'],['kost','ženský'],['srdce','střední'],['kůň','mužský'],['píseň','ženský']];
+// celá česká abeceda tak, jak se učí a recituje v 1. třídě (včetně Ď, Ň, Ť a CH) – vždy jednotně
 const ABC = 'A B C Č D Ď E F G H CH I J K L M N Ň O P Q R Ř S Š T Ť U V W X Y Z Ž'.split(' ');
-// u D/Ď, N/Ň, T/Ť se učebnice liší (některé háčková písmena v abecedě neuvádějí) – na ta se neptáme
-const ABC_SKIP = new Set(['D','Ď','N','Ň','T','Ť']);
 Object.assign(CATS, {
   cj_abc: {grade:1, subj:'cj', label:'Abeceda a slabiky', gen(){
-    if(R()<.5){ let i; do{ i=ri(0,ABC.length-2); }while(ABC_SKIP.has(ABC[i])||ABC_SKIP.has(ABC[i+1])); const right=ABC[i+1]; const opts=shuffle([right,...pickN(ABC.filter(x=>x!==right && x!==ABC[i] && !ABC_SKIP.has(x)),3)]);
-      return choice(`Které písmeno je v abecedě po <b>${ABC[i]}</b>?`, `Které písmeno je v abecedě po ${ABC[i]}?`, opts.map(o=>`<span class="num0">${o}</span>`), opts.indexOf(right), '', 'abc|'+ABC[i]); }
+    if(R()<.5){ const i=ri(0,ABC.length-2); const right=ABC[i+1]; const opts=shuffle([right,...pickN(ABC.filter(x=>x!==right && x!==ABC[i]),3)]);
+      return choice(`Které písmeno je v české abecedě po <b>${ABC[i]}</b>?`, `Které písmeno je v české abecedě po ${ABC[i]}?`, opts.map(o=>`<span class="num0">${o}</span>`), opts.indexOf(right), '', 'abc|'+ABC[i]); }
     const w=pick(CJ_SYL); const opts=[1,2,3,4];
     return choice(`Kolik slabik má slovo <b>${w[0].replace(/-/g,'')}</b>?`, `Kolik slabik má slovo ${w[0].replace(/-/g,'')}?`, opts.map(o=>`<span class="num0">${o}</span>`), w[1]-1, '', 'syl|'+w[0]);
   }},
