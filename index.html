@@ -352,6 +352,8 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .stkbtn small{font:800 13px Nunito,sans-serif;color:#5a3412}
 .stkpop small{display:block;font-size:13px;opacity:.8}
 .choice.right{background:#c9f5d2!important;border-color:#2fae4f!important}.choice.wrong{background:#ffd0d0!important;border-color:#e8323c!important}
+.room{isolation:isolate}.arena .fighter{position:relative;z-index:2}.arena .vs{position:relative;z-index:2}
+.mcard.locked .mpic .mon .av{filter:brightness(0) opacity(.55)}.mcard.locked .mpic .room{filter:grayscale(1) brightness(.6)}
 
 </style>
 </head>
@@ -1694,12 +1696,12 @@ roomSVG = function(p, opts={}){
   const e=p.eq||{};
   let s=`<img class="roombg" src="${A_}room${e.wall||0}.webp" alt="">`;
   if(e.curtain) s+=ov('h_curtain'+e.curtain, .30, .13, .40, 2);
-  if(e.lamp>=4) s+=ov('h_lamp'+e.lamp, .14, -.01, .13, 3);
+  if(e.lamp>=4 && !opts.scene) s+=ov('h_lamp'+e.lamp, .14, -.01, .13, 3);
   if(!opts.scene){
     if(e.rug) s+=ovb('h_rug'+e.rug, .17, .01, .42, 2);
     if(e.bed) s+=ovb('h_bed'+e.bed, .57, .03, .41, 3);
     if(e.plant) s+=ovb('h_plant'+e.plant, .01, .06, .14, 3);
-    if(e.lamp && e.lamp<4) s+=ovb('h_lamp'+e.lamp, .13, .06, [0,.08,.1,.11][e.lamp], 3);
+    if(e.lamp && e.lamp<4) s+=ovb('h_lamp'+e.lamp, .16, .06, [0,.08,.1,.11][e.lamp], 3);
     s+=ovb('kid_'+(p.gender==='f'?'f':'m'), .30, .04, .14, 5);
     if(e.hpet) s+=ovb('h_hpet'+e.hpet, .46, .02, .13, 6);
   }
@@ -1927,7 +1929,7 @@ function heroView(){
       ${(ic||p.mode==='quest')?`<div class="slotpic">${ic||'<span class="empty">prázdné</span>'}</div>`:''}<div class="eqd">${M.wearing}: <b>${eqT?sl.items[eqT-1][0]:'nic'}</b></div>${chips}${buy}</div>`;
   }).join('');
   const testTools = isTest(p) ? `<div class="card" style="margin-top:14px"><b>🧪 Testovací nástroje</b><div class="row" style="margin-top:8px">
-      <button class="btn small" data-act="t-pts">+500 ⭐</button><button class="btn small" data-act="t-lvl">+1 úroveň</button><button class="btn small" data-act="t-unlock">Odemknout všechny výzvy</button><button class="btn small" data-act="t-all">Koupit a nasadit vše</button><button class="btn small" data-act="t-chest">+1 truhla</button><button class="btn small sec" data-act="t-reset">Začít znovu</button></div></div>` : '';
+      <button class="btn small" data-act="t-pts">+500 ⭐</button><button class="btn small" data-act="t-lvl">+1 úroveň</button><button class="btn small" data-act="t-unlock">Odemknout všechny výzvy</button><button class="btn small" data-act="t-all">Koupit a nasadit vše</button><button class="btn small" data-act="t-chest">+1 truhla</button><button class="btn small" data-act="t-stk5">+5 nálepek</button><button class="btn small" data-act="t-stkall">Všechny nálepky</button><button class="btn small" data-act="t-wheel">Kolo štěstí znovu</button><button class="btn small sec" data-act="t-reset">Začít znovu</button></div></div>` : '';
   const dragon = p.beaten>=10 ? `<div class="reward" style="margin-top:16px"><div style="font-size:44px">${M.finalIcon}🏆</div><h2>${M.doneShort}</h2>
       <p style="font-size:18px">Odměna: <b>${esc(rewardOf(p))}</b></p><p class="muted">${p.rewardClaimed?'Odměna byla předána. 🎉':'Ukaž to rodičům!'}</p></div>` : '';
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>${esc(p.name)}</h1><span class="pill">⭐ ${p.points}</span></div>
@@ -2973,6 +2975,16 @@ function quizOpen(setId){
     m.querySelector('#qok').onclick=()=>{ m.remove(); render(); }; };
   draw(); document.body.appendChild(m);
 }
+// testovací nástroje pro nálepky
+const _actStk=act;
+act=function(a){ const p=prof(view.pid);
+  if(p && isTest(p)){
+    if(a==='t-stk5'){ for(let i=0;i<5;i++) dropSticker(p,true); save(); toast('📒 +5 nálepek'); render(); return; }
+    if(a==='t-stkall'){ const f=fx(p); ALL_STICKERS.forEach(s=>{ f.stk[s.id]=f.stk[s.id]||1; }); STICKER_SETS.forEach(s=>f.setDone[s.id]=1); f.quiz={}; save(); toast('📒 Všechny nálepky odemčené'); render(); return; }
+    if(a==='t-wheel'){ fx(p).wheel=''; if(p.today) p.today.done=true; save(); render(); return; }
+  }
+  return _actStk(a);
+};
 // kliky v albu a ve shrnutí
 var _bindStk=bind;
 bind=function(){ _bindStk();
