@@ -102,9 +102,9 @@ const PR_BANK = [
   [3,5,'Které zvíře je savec?','delfín',['žralok','kapr','pstruh'],'🐬'],[3,5,'Které zvíře je pták?','tučňák',['netopýr','motýl','delfín'],'🐧'],
   [3,5,'Netopýr je…','savec',['pták','hmyz','ryba'],'🦇'],[3,5,'Velryba je…','savec',['ryba','obojživelník','plaz'],'🐋'],
   [3,5,'Žába je…','obojživelník',['plaz','savec','pták'],'🐸'],[3,5,'Had je…','plaz',['obojživelník','savec','hmyz'],'🐍'],
-  [3,5,'Která houba je jedovatá?','muchomůrka zelená',['hřib smrkový','bedla','liška obecná'],'🍄'],[3,5,'Při kolika °C mrzne voda?','0 °C',['100 °C','10 °C','−50 °C'],'🌡️'],
-  [3,5,'Při kolika °C vře voda?','100 °C',['0 °C','50 °C','30 °C'],'♨️'],[3,5,'Kam patří plastová lahev?','do žlutého kontejneru',['do modrého','do zeleného','do hnědého'],'♻️'],
-  [3,5,'Kam patří papír?','do modrého kontejneru',['do žlutého','do zeleného','do černého'],'📰'],[3,5,'Kam patří sklo?','do zeleného kontejneru',['do modrého','do žlutého','do koše na bioodpad'],'🍾'],
+  [3,5,'Která houba je jedovatá?','muchomůrka zelená',['hřib smrkový','bedla vysoká','liška obecná'],'🍄'],[3,5,'Při kolika °C mrzne voda?','0 °C',['100 °C','10 °C','−50 °C'],'🌡️'],
+  [3,5,'Při kolika °C vře voda?','100 °C',['0 °C','50 °C','30 °C'],'♨️'],[3,5,'Do kterého kontejneru patří plastová lahev?','do žlutého',['do modrého','do zeleného','do hnědého'],'♻️'],
+  [3,5,'Do kterého kontejneru patří papír?','do modrého',['do žlutého','do zeleného','do černého'],'📰'],[3,5,'Do kterého kontejneru patří skleněná lahev?','do zeleného',['do modrého','do žlutého','do hnědého'],'🍾'],
   [3,5,'Co rostliny potřebují k životu?','světlo a vodu',['jen tmu','jen sůl','plast'],'🌻'],[4,5,'Který orgán pumpuje krev?','srdce',['plíce','žaludek','mozek'],'❤️'],
   [4,5,'Čím dýcháme?','plícemi',['srdcem','žaludkem','játry'],'🫁'],[4,5,'Co tvoří oporu těla?','kostra',['kůže','krev','vlasy'],'🦴'],
   [4,5,'Kolikátá planeta od Slunce je Země?','třetí',['první','pátá','desátá'],'🌍'],[4,5,'Která planeta je největší?','Jupiter',['Země','Mars','Merkur'],'🪐'],
@@ -120,26 +120,29 @@ CATS.pr_quiz = {grade:0, subj:'pr', label:'Přírodověda – otázky podle roč
 }};
 
 /* ---- Čeština ---- */
-const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-ko',2],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['di-no-sau-rus',4],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
+const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-lko',2],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['pa-pou-šek',3],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
 const CJ_OPP = [['velký','malý'],['den','noc'],['horký','studený'],['vysoký','nízký'],['rychlý','pomalý'],['veselý','smutný'],['starý','mladý'],['nahoře','dole'],['otevřít','zavřít'],['plný','prázdný'],['dlouhý','krátký'],['těžký','lehký'],['mokrý','suchý'],['světlo','tma'],['tlustý','tenký'],['začátek','konec']];
-const CJ_IY_HARD = [['r_ba','y'],['k_tka','y'],['ch_ba','y'],['t_gr','y'],['d_ně','y'],['hr_b','i'],['k_no','i'],['ch_tat','y'],['n_tka','i'],['d_vadlo','i']];
-const CJ_IY_SOFT = [['č_stý','i'],['ž_rafa','i'],['š_pka','i'],['ř_dič','i'],['c_bule','i'],['j_tro','i'],['č_slo','i'],['ž_dle','i'],['š_mpanz','i'],['c_tron','i']];
-const CJ_VYJ = [['b_dlet','y'],['l_pa','i'],['m_š','y'],['p_vo','i'],['s_n','y'],['v_dra','y'],['z_ma','i'],['jaz_k','y'],['m_lý','i'],['p_tel','y'],['s_la','i'],['v_dět','i'],['pl_š','y'],['l_ška','i'],['p_l','y'],['b_cykl','i'],['ob_čej','y'],['s_rový','y'],['m_slet','y'],['f_alka','i'],['hm_z','y'],['net_pýr','o'],['l_že','y'],['m_nce','i'],['kob_la','y'],['v_soký','y'],['b_tva','i'],['ses_lat','y'],['p_kat','y'],['z_vat','í']];
+const CJ_OPP_GRP = [['velký','malý','vysoký','nízký','dlouhý','krátký','tlustý','tenký','těžký','lehký'],['den','noc','světlo','tma','začátek','konec'],['horký','studený','mokrý','suchý'],['starý','mladý','rychlý','pomalý']];
+const CJ_IY_HARD = [['r_ba','y'],['k_tka','y'],['ch_ba','y'],['t_gr','y'],['kr_sa','y'],['t_ché','i'],['r_chle','y'],['ch_tat','y'],['n_tka','i'],['d_vadlo','i']];
+const CJ_IY_SOFT = [['č_stý','i'],['ž_rafa','i'],['š_pka','i'],['ř_dič','i'],['c_bule','i'],['j_tro','i'],['ž_vot','i'],['ž_dle','i'],['š_mpanz','i'],['c_tron','i']];
+const CJ_VYJ = [['b_dlet','y'],['l_st','i'],['m_š','y'],['p_vo','i'],['s_n','y'],['v_dra','y'],['z_ma','i'],['jaz_k','y'],['m_lý','i'],['p_tel','y'],['s_lný','i'],['v_dět','i'],['pl_š','y'],['l_ška','i'],['p_tlík','y'],['b_cykl','i'],['ob_čej','y'],['s_rový','y'],['m_slet','y'],['f_alka','i'],['hm_z','y'],['net_pýr','o'],['l_že','y'],['m_nce','i'],['kob_la','y'],['v_soký','y'],['b_tva','i'],['zv_k','y'],['p_kat','y'],['z_vat','í']];
 const CJ_END = [['hra_','d','t'],['plo_','t','d'],['le_','d','t'],['du_','b','p'],['zu_','b','p'],['vů_','z','s'],['nů_','ž','š'],['le_','v','f'],['mrá_','z','s'],['chlé_','b','p'],['sní_','h','ch'],['ha_','d','t'],['klu_','k','g'],['ko_','s','z'],['ry_','b','p']];
 const CJ_POS = [['běhat','sloveso',3],['stůl','podstatné jméno',3],['zelený','přídavné jméno',3],['kočka','podstatné jméno',3],['skákat','sloveso',3],['veselý','přídavné jméno',3],['zpívá','sloveso',3],['město','podstatné jméno',3],['velký','přídavné jméno',3],
-  ['pět','číslovka',4],['já','zájmeno',4],['na','předložka',4],['a','spojka',4],['rychle','příslovce',4],['jé','citoslovce',4],['ať','částice',5],['třetí','číslovka',4],['oni','zájmeno',4],['pod','předložka',4],['ale','spojka',4],['dnes','příslovce',4]];
+  ['pět','číslovka',4],['já','zájmeno',4],['na','předložka',4],['a','spojka',4],['rychle','příslovce',4],['jé','citoslovce',4],['kéž','částice',5],['třetí','číslovka',4],['oni','zájmeno',4],['pod','předložka',4],['ale','spojka',4],['dnes','příslovce',4]];
 const CJ_GEN = [['stůl','mužský'],['židle','ženský'],['okno','střední'],['pes','mužský'],['kočka','ženský'],['kuře','střední'],['hrad','mužský'],['moře','střední'],['růže','ženský'],['město','střední'],['strom','mužský'],['kost','ženský'],['srdce','střední'],['kůň','mužský'],['píseň','ženský']];
-const ABC = 'A B C Č D E F G H I J K L M N O P R Ř S Š T U V Y Z Ž'.split(' ');
+const ABC = 'A B C Č D Ď E F G H CH I J K L M N Ň O P Q R Ř S Š T Ť U V W X Y Z Ž'.split(' ');
+// u D/Ď, N/Ň, T/Ť se učebnice liší (některé háčková písmena v abecedě neuvádějí) – na ta se neptáme
+const ABC_SKIP = new Set(['D','Ď','N','Ň','T','Ť']);
 Object.assign(CATS, {
   cj_abc: {grade:1, subj:'cj', label:'Abeceda a slabiky', gen(){
-    if(R()<.5){ const i=ri(0,ABC.length-2); const right=ABC[i+1]; const opts=shuffle([right,...pickN(ABC.filter(x=>x!==right),3)]);
+    if(R()<.5){ let i; do{ i=ri(0,ABC.length-2); }while(ABC_SKIP.has(ABC[i])||ABC_SKIP.has(ABC[i+1])); const right=ABC[i+1]; const opts=shuffle([right,...pickN(ABC.filter(x=>x!==right && x!==ABC[i] && !ABC_SKIP.has(x)),3)]);
       return choice(`Které písmeno je v abecedě po <b>${ABC[i]}</b>?`, `Které písmeno je v abecedě po ${ABC[i]}?`, opts.map(o=>`<span class="num0">${o}</span>`), opts.indexOf(right), '', 'abc|'+ABC[i]); }
     const w=pick(CJ_SYL); const opts=[1,2,3,4];
     return choice(`Kolik slabik má slovo <b>${w[0].replace(/-/g,'')}</b>?`, `Kolik slabik má slovo ${w[0].replace(/-/g,'')}?`, opts.map(o=>`<span class="num0">${o}</span>`), w[1]-1, '', 'syl|'+w[0]);
   }},
   cj_opp: {grade:1, subj:'cj', label:'Slova opačného významu', gen(){
     const p=pick(CJ_OPP), rev=R()<.5, a=rev?p[1]:p[0], b=rev?p[0]:p[1];
-    const others=pickN(CJ_OPP.filter(x=>x!==p).map(x=>x[R()<.5?0:1]),3); const opts=shuffle([b,...others]);
+    const grp=w=>CJ_OPP_GRP.findIndex(g=>g.includes(w)); const gp=grp(p[0]); const others=pickN(CJ_OPP.filter(x=>x!==p && (gp<0 || grp(x[0])!==gp)).map(x=>x[R()<.5?0:1]),3); const opts=shuffle([b,...others]);
     return choice(`Co je opak slova <b>${a}</b>?`, `Co je opak slova ${a}?`, opts.map(o=>txt(o)), opts.indexOf(b), '', 'opp|'+a);
   }},
   cj_iy: {grade:2, subj:'cj', label:'I nebo Y po tvrdých a měkkých', gen(){

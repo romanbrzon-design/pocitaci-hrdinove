@@ -42,7 +42,7 @@ itemIcon=function(p,slot,tier){
   if(slot==='buddy'&&tier&&p.buddy) return `<img src="${A_}pet_${p.buddy}_${tier>=3?1:0}.webp" alt="">`;
   return _itemIcon0(p,slot,tier);
 };
-// kůň – hrdina sedí v sedle
+// kůň – stojí vedle hrdiny (hrdina vpravo, kůň vlevo hledí k němu)
 const _heroImg0=heroImg;
 heroImg=function(p,opts={}){
   const hz=(p.eq||{}).horse; if(!hz) return _heroImg0(p,opts);

@@ -159,7 +159,9 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .swatches{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
 .sw{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #b88a4a;cursor:pointer;padding:0;font-size:18px}
 .sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
-.av.rider{align-items:flex-end}
-.av.rider img.horse{position:absolute;left:2%;bottom:0;width:96%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.av.rider img.riderimg{position:absolute;left:30%;bottom:34%;height:64%;z-index:2;clip-path:inset(0 0 30% 0);filter:drop-shadow(0 4px 3px rgba(0,0,0,.25))}
+.av.rider{align-items:flex-end;justify-content:flex-end}
+.av.rider img.horse{position:absolute;left:-4%;bottom:0;width:64%;max-height:72%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.av.rider img.riderimg{position:relative;max-height:96%;max-width:46%;margin-right:0;object-fit:contain;z-index:2;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.anim .av.rider img.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.av.rider img.comp{right:-2%;width:22%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

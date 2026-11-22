@@ -17,7 +17,7 @@ const SHAPES = {
 const SHAPE_ACC = {'kruh':'KRUH','čtverec':'ČTVEREC','trojúhelník':'TROJÚHELNÍK','obdélník':'OBDÉLNÍK','hvězda':'HVĚZDU','srdíčko':'SRDÍČKO'};
 const shapeSvg = (name, c) => `<svg viewBox="0 0 60 60" width="62" height="62"><g stroke="#2b2340" stroke-width="2.5" stroke-linejoin="round">${SHAPES[name](c)}</g></svg>`;
 const COLORS0 = [['červená','#e8323c'],['modrá','#2f6fe0'],['zelená','#2fae4f'],['žlutá','#f7d02c'],['oranžová','#ff8c1a'],['fialová','#9b4dd6'],['růžová','#ff8fc8'],['hnědá','#8a5a2b'],['černá','#2b2b2b'],['bílá','#ffffff']];
-const COLOR_THINGS = [['🍓','jahoda','červená'],['🍌','banán','žlutá'],['🐸','žabka','zelená'],['🍊','pomeranč','oranžová'],['🍇','hrozny','fialová'],['☁️','mráček','bílá'],['🌻','slunečnice','žlutá'],['🍒','třešně','červená'],['🥒','okurka','zelená'],['🐷','prasátko','růžová'],['🐻','medvídek','hnědá'],['💙','srdíčko','modrá']];
+const COLOR_THINGS = [['🍓','jahoda','červená'],['🍌','banán','žlutá'],['🐸','žabka','zelená'],['🍊','pomeranč','oranžová'],['🍇','hrozny','fialová',1],['☁️','mráček','bílá'],['🌻','slunečnice','žlutá'],['🍒','třešně','červená',1],['🥒','okurka','zelená'],['🐷','prasátko','růžová'],['🐻','medvídek','hnědá'],['💙','srdíčko','modrá']];
 const COUNT_THINGS = [['🍎','jablíček'],['⭐','hvězdiček'],['🐟','rybiček'],['🌸','kytiček'],['🚗','autíček'],['🎈','balónků'],['🦋','motýlků'],['🐥','kuřátek'],['🍄','hříbků'],['⚽','míčů']];
 const ANIMALS0 = [['🐱','kočička'],['🐶','pejsek'],['🐰','zajíček'],['🐻','medvídek'],['🐷','prasátko'],['🐮','kravička'],['🦁','lvíček'],['🐵','opička'],['🐸','žabka'],['🐥','kuřátko'],['🐟','rybička'],['🐘','slon'],['🐴','koník'],['🦊','liška'],['🐭','myška'],['🐀','potkan']];
 const GROUPS0 = {ovoce:['🍎','🍌','🍐','🍇','🍓','🍒','🍊'], zvířátka:['🐶','🐱','🐰','🐻','🐷','🐮','🐵'], doprava:['🚗','🚌','🚲','🚂','✈️','🚜','🚀'], oblečení:['👕','👖','🧦','🧢','👗','🧤','👟'], hračky:['🧸','⚽','🪀','🎈','🪁','🎲']};
@@ -29,7 +29,7 @@ Object.assign(CATS, {
       return choice(`Kde je <b>${t[0].toUpperCase()}</b> barva?`, `Kde je ${t[0]} barva?`, opts.map(o=>blob(o[1])), opts.indexOf(t)); }
     const th=pick(COLOR_THINGS); const right=COLORS0.find(c=>c[0]===th[2]);
     const others=pickN(COLORS0.filter(c=>c[0]!==th[2]), EASY?2:3); const opts=shuffle([right,...others]);
-    return choice(`Jakou barvu má ${th[1]}?`, `Jakou barvu má ${th[1]}?`, opts.map(o=>blob(o[1])), opts.indexOf(right), em(th[0],70));
+    const vb=th[3]?'mají':'má'; return choice(`Jakou barvu ${vb} ${th[1]}?`, `Jakou barvu ${vb} ${th[1]}?`, opts.map(o=>blob(o[1])), opts.indexOf(right), em(th[0],70));
   }},
   shapes0: {grade:0, label:'Poznávání tvarů', gen(){
     const names=Object.keys(SHAPES); const opts=pickN(EASY?names.slice(0,4).concat(['srdíčko','hvězda']):names, EASY?3:4); const t=opts[ri(0,opts.length-1)];
@@ -42,11 +42,11 @@ Object.assign(CATS, {
     const opts=shuffle([...set]);
     return choice(`Kolik je tu ${th[1]}?`, `Kolik je tu ${th[1]}?`, opts.map(x=>`<span class="num0">${x}</span>`), opts.indexOf(n), `<div class="many">${Array(n).fill(em(th[0],40)).join('')}</div>`, 'cnt|'+th[0]+n+'|'+opts.join(','));
   }},
-  more0: {grade:0, label:'Kde je víc / míň', gen(){
+  more0: {grade:0, label:'Kde je víc / méně', gen(){
     const th=pick(COUNT_THINGS); let a=ri(1,EASY?5:8), b=ri(1,EASY?5:8); while(a===b) b=ri(1,EASY?5:8);
     const more=R()<.6, want = more ? (a>b?0:1) : (a<b?0:1);
     const g=x=>`<div class="many sm">${Array(x).fill(em(th[0],28)).join('')}</div>`;
-    return choice(`Kde je <b>${more?'VÍC':'MÍŇ'}</b> ${th[1]}?`, `Kde je ${more?'víc':'míň'} ${th[1]}?`, [g(a),g(b)], want, '', 'more|'+th[0]+a+'|'+b+more);
+    return choice(`Kde je <b>${more?'VÍC':'MÉNĚ'}</b> ${th[1]}?`, `Kde je ${more?'víc':'méně'} ${th[1]}?`, [g(a),g(b)], want, '', 'more|'+th[0]+a+'|'+b+more);
   }},
   odd0: {grade:0, label:'Co sem nepatří', gen(){
     const keys=Object.keys(GROUPS0); const k=pick(keys); let k2=pick(keys); while(k2===k) k2=pick(keys);
@@ -56,7 +56,7 @@ Object.assign(CATS, {
   size0: {grade:0, label:'Největší a nejmenší', gen(){
     const e=pick(['🐘','🍎','⭐','🐟','🏠','🌳','🎈','🐻']); const sizes=shuffle(EASY?[26,44,66]:[22,36,50,66]); const big=R()<.5;
     const target = big ? Math.max(...sizes) : Math.min(...sizes);
-    return choice(`Který je <b>${big?'NEJVĚTŠÍ':'NEJMENŠÍ'}</b>?`, `Který je ${big?'největší':'nejmenší'}?`, sizes.map(s=>em(e,s)), sizes.indexOf(target));
+    return choice(`Který obrázek je <b>${big?'NEJVĚTŠÍ':'NEJMENŠÍ'}</b>?`, `Který obrázek je ${big?'největší':'nejmenší'}?`, sizes.map(s=>em(e,s)), sizes.indexOf(target));
   }},
   pattern0: {grade:0, label:'Co bude dál (řady)', gen(){
     const pool=pick([['🔴','🔵','🟢','🟡'],['🍎','🍌','🍐'],['⭐','🌙','☀️'],['🐶','🐱','🐰'],['🟥','🟦','🟨']]);

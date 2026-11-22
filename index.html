@@ -361,9 +361,11 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .swatches{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
 .sw{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #b88a4a;cursor:pointer;padding:0;font-size:18px}
 .sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
-.av.rider{align-items:flex-end}
-.av.rider img.horse{position:absolute;left:2%;bottom:0;width:96%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.av.rider img.riderimg{position:absolute;left:30%;bottom:34%;height:64%;z-index:2;clip-path:inset(0 0 30% 0);filter:drop-shadow(0 4px 3px rgba(0,0,0,.25))}
+.av.rider{align-items:flex-end;justify-content:flex-end}
+.av.rider img.horse{position:absolute;left:-4%;bottom:0;width:64%;max-height:72%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.av.rider img.riderimg{position:relative;max-height:96%;max-width:46%;margin-right:0;object-fit:contain;z-index:2;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.anim .av.rider img.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.av.rider img.comp{right:-2%;width:22%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 
 </style>
@@ -650,44 +652,44 @@ Object.assign(CATS, {
 
 /* ---- Slovní úlohy: velké zásobníky ---- */
 const WORD1 = [
-  (n,x)=>{ const a=ri(2,9), b=ri(1,9); return {q:`${n} měl${x} ${a} pastelek a dostal${x} ještě ${b}. Kolik pastelek má teď?`, a:a+b}; },
-  ()=>{ const a=ri(8,18), b=ri(1,7); return {q:`Na stromě sedělo ${a} ptáčků. ${b} odletělo. Kolik ptáčků zůstalo na stromě?`, a:a-b}; },
-  ()=>{ const a=ri(2,9), b=ri(1,9); return {q:`Na louce se pase ${a} kraviček a ${b} koníků. Kolik zvířat je na louce?`, a:a+b}; },
+  (n,x)=>{ const a=ri(2,9), b=ri(1,9); return {q:`${n} měl${x} ${a} ${kus(a,'pastelku','pastelky','pastelek')} a dostal${x} ještě ${b}. Kolik pastelek má teď?`, a:a+b}; },
+  ()=>{ const a=ri(8,18), b=ri(1,7); return {q:`Na stromě sedělo ${a} ptáčků. ${kus(b,'Jeden ptáček odletěl','Odletěli '+b+' ptáčci','Odletělo '+b+' ptáčků')}. Kolik ptáčků zůstalo na stromě?`, a:a-b}; },
+  ()=>{ const a=ri(2,9), b=ri(1,9); return {q:`Na louce se pasou ${a} ${kus(a,'kravička','kravičky','kraviček')} a ${b} ${kus(b,'koník','koníci','koníků')}. Kolik zvířat je na louce?`, a:a+b}; },
   ()=>{ const a=ri(8,15), b=ri(2,7); return {q:`Maminka upekla ${a} koláčů. Děti snědly ${b}. Kolik koláčů zbylo?`, a:a-b}; },
-  ()=>{ const a=ri(3,10), b=ri(1,8); return {q:`V akváriu plave ${a} rybiček. Přikoupili jsme ještě ${b}. Kolik rybiček je v akváriu?`, a:a+b}; },
+  ()=>{ const a=ri(3,10), b=ri(1,8); return {q:`V akváriu ${kus(a,'plave','plavou','plave')} ${a} ${kus(a,'rybička','rybičky','rybiček')}. Přikoupili jsme ještě ${b}. Kolik rybiček je teď v akváriu?`, a:a+b}; },
   (n,x)=>{ const a=ri(5,12), b=ri(1,8); return {q:`${n} má ${a} Kč a od babičky dostal${x} ${b} Kč. Kolik korun má teď?`, a:a+b}; },
-  ()=>{ const a=ri(10,19), b=ri(2,8); return {q:`Na parkovišti stálo ${a} aut. ${b} aut odjelo. Kolik aut zůstalo?`, a:a-b}; },
-  (n,x)=>{ const a=ri(3,9), b=ri(2,9); return {q:`${n} našl${x?'a':''} v lese ${a} hub a tatínek ${b}. Kolik hub našli dohromady?`, a:a+b}; },
-  ()=>{ const a=ri(11,19), b=ri(1,9); return {q:`V krabici bylo ${a} vajíček. ${b} se rozbilo. Kolik vajíček zůstalo celých?`, a:a-b}; },
-  ()=>{ const a=ri(2,8); return {q:`Ve třídě sedí ${a} holčiček a o 2 víc kluků. Kolik je ve třídě kluků?`, a:a+2}; },
+  ()=>{ const a=ri(10,19), b=ri(2,8); return {q:`Na parkovišti stálo ${a} aut. ${kus(b,'','Odjela '+b+' auta','Odjelo '+b+' aut')}. Kolik aut zůstalo?`, a:a-b}; },
+  (n,x)=>{ const a=ri(3,9), b=ri(2,9); return {q:`${n} ${x?'našla':'našel'} v lese ${a} ${kus(a,'houbu','houby','hub')} a tatínek ${b}. Kolik hub našli dohromady?`, a:a+b}; },
+  ()=>{ const a=ri(11,19), b=ri(1,9); return {q:`V krabici bylo ${a} vajíček. ${kus(b,'Jedno vajíčko se rozbilo','Rozbila se '+b+' vajíčka','Rozbilo se '+b+' vajíček')}. Kolik vajíček zůstalo celých?`, a:a-b}; },
+  ()=>{ const a=ri(2,8); return {q:`Ve třídě ${kus(a,'sedí','sedí','sedí')} ${a} ${kus(a,'holčička','holčičky','holčiček')}. Kluků je o 2 víc. Kolik je ve třídě kluků?`, a:a+2}; },
 ];
 const WORD2 = [
-  (n,x)=>{ const a=NUM(()=>ri(5,20),()=>ri(12,40)), b=NUM(()=>ri(2,9),()=>ri(5,20)); return {q:`${n} měl${x} ${a} kuliček a dostal${x} dalších ${b}. Kolik kuliček má teď?`, a:a+b}; },
-  ()=>{ const a=NUM(()=>ri(12,30),()=>ri(25,60)), b=NUM(()=>ri(2,9),()=>ri(6,20)); return {q:`V autobuse sedělo ${a} lidí. Na zastávce ${b} vystoupilo. Kolik lidí zůstalo v autobuse?`, a:a-b}; },
-  ()=>{ const m=pick(EASY?[2,5]:[2,3,4,5]), n2=ri(2,EASY?5:8); return {q:`Na stole je ${n2} talířů a na každém leží ${m} ${kus(m,'jablko','jablka','jablek')}. Kolik jablek je dohromady?`, a:m*n2}; },
-  ()=>{ const m=pick(EASY?[2,5]:[2,3,4,5]), n2=ri(2,EASY?5:8); return {q:`${m*n2} bonbónů rozdělíme spravedlivě mezi ${m} děti. Kolik bonbónů dostane každé dítě?`, a:n2}; },
+  (n,x)=>{ const a=NUM(()=>ri(5,20),()=>ri(12,40)), b=NUM(()=>ri(2,9),()=>ri(5,20)); return {q:`${n} měl${x} ${a} kuliček a dostal${x} ${kus(b,'ještě','další','dalších')} ${b}. Kolik kuliček má teď?`, a:a+b}; },
+  ()=>{ const a=NUM(()=>ri(12,30),()=>ri(25,60)), b=NUM(()=>ri(2,9),()=>ri(6,20)); return {q:`V autobuse sedělo ${a} lidí. Na zastávce ${kus(b,'vystoupil 1 člověk','vystoupili '+b+' lidé','vystoupilo '+b+' lidí')}. Kolik lidí zůstalo v autobuse?`, a:a-b}; },
+  ()=>{ const m=pick(EASY?[2,5]:[2,3,4,5]), n2=ri(2,EASY?5:8); return {q:`Na stole ${kus(n2,'je','jsou','je')} ${n2} ${kus(n2,'talíř','talíře','talířů')} a na každém ${kus(m,'leží','leží','leží')} ${m} ${kus(m,'jablko','jablka','jablek')}. Kolik jablek je dohromady?`, a:m*n2}; },
+  ()=>{ const m=pick(EASY?[2,5]:[2,3,4,5]), n2=ri(2,EASY?5:8); return {q:`${m*n2} ${kus(m*n2,'bonbón','bonbóny','bonbónů')} rozdělíme spravedlivě mezi ${m} ${kus(m,'dítě','děti','dětí')}. Kolik bonbónů dostane každé dítě?`, a:n2}; },
   (n,x)=>{ const a=NUM(()=>ri(3,8)*10,()=>ri(40,99)), b=NUM(()=>ri(1,2)*10,()=>ri(12,a-10)); return {q:`Kniha má ${a} stran. ${n} už přečetl${x} ${b} stran. Kolik stran ${x?'jí':'mu'} zbývá?`, a:a-b}; },
   ()=>{ const a=NUM(()=>ri(2,9)*5,()=>ri(12,45)), b=NUM(()=>ri(1,4)*5,()=>ri(8,30)); return {q:`Rohlíky stojí ${a} Kč a mléko ${b} Kč. Kolik zaplatíme za obojí?`, a:a+b}; },
-  ()=>{ const n2=ri(2,EASY?5:9); return {q:`Trojkolka má 3 kola. Kolik kol má ${n2} ${kus(n2,'trojkolka','trojkolky','trojkolek')}?`, a:3*n2}; },
-  ()=>{ const n2=ri(2,EASY?5:9); return {q:`Pejsek má 4 nohy. Kolik nohou má ${n2} ${kus(n2,'pejsek','pejsci','pejsků')}?`, a:4*n2}; },
+  ()=>{ const n2=ri(2,EASY?5:9); return {q:`Trojkolka má 3 kola. Kolik kol ${kus(n2,'má','mají','má')} ${n2} ${kus(n2,'trojkolka','trojkolky','trojkolek')}?`, a:3*n2}; },
+  ()=>{ const n2=ri(2,EASY?5:9); return {q:`Pejsek má 4 nohy. Kolik nohou ${kus(n2,'má','mají','má')} ${n2} ${kus(n2,'pejsek','pejsci','pejsků')}?`, a:4*n2}; },
   (n,x,f)=>{ const a=ri(6,10), b=NUM(()=>ri(20,30),()=>ri(24,40)); return {q:`${n} má ${a} let. ${f?'Její':'Jeho'} táta je o ${b} let starší. Kolik let má táta?`, a:a+b}; },
   (n)=>{ const a=NUM(()=>ri(10,20),()=>ri(20,60)), b=NUM(()=>ri(a-8,a-2),()=>ri(10,a-5)); return {q:`${n} má ${a} nálepek, kamarád ${b}. O kolik nálepek má ${n} víc?`, a:a-b}; },
-  ()=>{ const r=ri(2,EASY?5:9), s=pick(EASY?[2,5,10]:[3,4,5,10]); return {q:`Na zahradě je ${r} řad stromků a v každé řadě ${s} stromků. Kolik stromků je na zahradě?`, a:r*s}; },
-  ()=>{ const a=NUM(()=>ri(20,40),()=>ri(30,80)), b=NUM(()=>ri(2,9),()=>ri(5,15)), c=NUM(()=>ri(2,9),()=>ri(5,15)); return {q:`Ve stáji bylo ${a} ovcí. Ráno ${b} ovcí vyšlo na pastvu a odpoledne dalších ${c}. Kolik ovcí zůstalo ve stáji?`, a:a-b-c}; },
+  ()=>{ const r=ri(2,EASY?5:9), s=pick(EASY?[2,5,10]:[3,4,5,10]); return {q:`Na zahradě ${kus(r,'je','jsou','je')} ${r} ${kus(r,'řada','řady','řad')} stromků a v každé řadě ${kus(s,'je','jsou','je')} ${s} ${kus(s,'stromek','stromky','stromků')}. Kolik stromků je na zahradě?`, a:r*s}; },
+  ()=>{ const a=NUM(()=>ri(20,40),()=>ri(30,80)), b=NUM(()=>ri(2,9),()=>ri(5,15)), c=NUM(()=>ri(2,9),()=>ri(5,15)); return {q:`Ve stáji bylo ${a} ovcí. Ráno ${kus(b,'vyšla','vyšly','vyšlo')} na pastvu ${b} ${kus(b,'ovce','ovce','ovcí')} a odpoledne ${kus(c,'další','další','dalších')} ${c}. Kolik ovcí zůstalo ve stáji?`, a:a-b-c}; },
 ];
 const WORD4 = [
   (n,x,f)=>{ const p=ri(2,EASY?4:9), c=NUM(()=>ri(2,9)*5,()=>ri(12,25)), m=p*c+NUM(()=>ri(1,9)*5,()=>ri(5,60)); return {q:`${n} má ${m} Kč. Koupí ${p} ${kus(p,'sešit','sešity','sešitů')} po ${c} Kč. Kolik korun ${f?'jí':'mu'} zbude?`, a:m-p*c}; },
-  ()=>{ const b=ri(8,15), extra=ri(3,15); return {q:`Ve třídě je ${b} lavic a v každé sedí 2 žáci. Na výlet jede ještě ${extra} žáků z jiné třídy. Kolik žáků jede na výlet?`, a:b*2+extra}; },
-  ()=>{ const box=ri(3,EASY?6:8), per=ri(EASY?4:6,9), eaten=ri(2,box*per-5); return {q:`V ${box} krabicích je po ${per} kouscích čokolády. Děti snědly ${eaten} kousků. Kolik kousků zbylo?`, a:box*per-eaten}; },
+  ()=>{ const b=ri(8,15), extra=ri(3,15); return {q:`Ve třídě je ${b} lavic a v každé sedí 2 žáci. Celá třída jede na výlet a s ní ještě ${extra} ${kus(extra,'žák','žáci','žáků')} z jiné třídy. Kolik žáků jede na výlet?`, a:b*2+extra}; },
+  ()=>{ const box=ri(3,EASY?6:8), per=ri(EASY?4:6,9), eaten=ri(2,box*per-5); return {q:`${box<=4?'Ve':'V'} ${box} krabicích je po ${per} kouscích čokolády. Děti snědly ${eaten} ${kus(eaten,'kousek','kousky','kousků')}. Kolik kousků zbylo?`, a:box*per-eaten}; },
   ()=>{ const km=NUM(()=>ri(2,9)*10,()=>ri(12,45)), d=ri(2,EASY?4:7); return {q:`Cyklista ujede každý den ${km} km. Kolik kilometrů ujede za ${d} ${kus(d,'den','dny','dní')}?`, a:km*d}; },
   ()=>{ const c=NUM(()=>ri(8,15)*10,()=>ri(120,190)), n2=ri(3,EASY?4:6); return {q:`Vstupenka do kina stojí ${c} Kč. Kolik zaplatí rodina za ${n2} vstupenky?`.replace(' vstupenky',n2>=5?' vstupenek':' vstupenky'), a:c*n2}; },
-  ()=>{ const t=ri(3,EASY?5:9), s=ri(18,28); return {q:`Ve škole je ${t} tříd a v každé ${s} žáků. Kolik žáků chodí do školy?`, a:t*s}; },
+  ()=>{ const t=ri(3,EASY?5:9), s=ri(18,28); return {q:`Ve škole ${kus(t,'je','jsou','je')} ${t} ${kus(t,'třída','třídy','tříd')} a v každé je ${s} žáků. Kolik žáků chodí do školy?`, a:t*s}; },
   ()=>{ const v=pick(EASY?[50,60,80]:[45,60,75,80,90]), h=ri(2,EASY?3:5); return {q:`Vlak jede rychlostí ${v} km za hodinu. Kolik kilometrů ujede za ${h} hodiny?`.replace(' hodiny',h>=5?' hodin':' hodiny'), a:v*h}; },
-  ()=>{ const a=NUM(()=>ri(10,30)*10,()=>ri(250,600)), b=NUM(()=>ri(2,8)*10,()=>ri(40,150)), c=NUM(()=>ri(2,8)*10,()=>ri(40,150)); return {q:`Obchod měl ${a} kg jablek. Dopoledne prodal ${b} kg a odpoledne ${c} kg. Kolik kilogramů jablek zbylo?`, a:a-b-c}; },
+  ()=>{ const b=NUM(()=>ri(2,8)*10,()=>ri(40,150)), c=NUM(()=>ri(2,8)*10,()=>ri(40,150)), a=b+c+NUM(()=>ri(1,10)*10,()=>ri(20,300)); return {q:`Obchod měl ${a} kg jablek. Dopoledne prodal ${b} kg a odpoledne ${c} kg. Kolik kilogramů jablek zbylo?`, a:a-b-c}; },
   (n)=>{ const s=pick(EASY?[5,10]:[6,8,12,15]), d=ri(4,EASY?8:12); return {q:`Kniha má ${s*d} stran. ${n} čte ${s} stran denně. Za kolik dní knihu přečte?`, a:d}; },
-  ()=>{ const s=ri(EASY?3:8,EASY?9:20), k=ri(EASY?2:3,EASY?5:12); return {q:`Na farmě je ${s} slepic a ${k} krav. Kolik nohou mají všechna zvířata dohromady?`, a:2*s+4*k}; },
+  ()=>{ const s=ri(EASY?3:8,EASY?9:20), k=ri(EASY?2:3,EASY?5:12); return {q:`Na farmě chovají ${s} ${kus(s,'slepici','slepice','slepic')} a ${k} ${kus(k,'krávu','krávy','krav')}. Kolik nohou mají všechna tato zvířata dohromady?`, a:2*s+4*k}; },
   (n,x,f)=>{ const a=NUM(()=>ri(3,9)*100,()=>ri(800,2500)), b=NUM(()=>ri(1,a/100-1)*100,()=>ri(200,a-100)); return {q:`Stavebnice stojí ${fmt(a)} Kč. ${n} má našetřeno ${fmt(b)} Kč. Kolik korun ${f?'jí':'mu'} ještě chybí?`, a:a-b}; },
-  ()=>{ const n2=ri(3,EASY?5:8), q=NUM(()=>ri(2,9)*10,()=>ri(25,90)); return {q:`Babička rozdělila ${fmt(n2*q)} Kč spravedlivě mezi ${n2} vnoučat. Kolik korun dostalo každé?`, a:q}; },
+  ()=>{ const n2=ri(3,EASY?5:8), q=NUM(()=>ri(2,9)*10,()=>ri(25,90)); return {q:`Babička rozdělila ${fmt(n2*q)} Kč spravedlivě mezi ${n2} ${kus(n2,'vnouče','vnoučata','vnoučat')}. Kolik korun dostalo každé vnouče?`, a:q}; },
 ];
 function fromBank(bank){ const [n,f]=pick(NAMES); return pick(bank)(n, f?'a':'', f); }
 CATS.word1.gen = ()=>fromBank(WORD1);
@@ -726,7 +728,7 @@ const SHAPES = {
 const SHAPE_ACC = {'kruh':'KRUH','čtverec':'ČTVEREC','trojúhelník':'TROJÚHELNÍK','obdélník':'OBDÉLNÍK','hvězda':'HVĚZDU','srdíčko':'SRDÍČKO'};
 const shapeSvg = (name, c) => `<svg viewBox="0 0 60 60" width="62" height="62"><g stroke="#2b2340" stroke-width="2.5" stroke-linejoin="round">${SHAPES[name](c)}</g></svg>`;
 const COLORS0 = [['červená','#e8323c'],['modrá','#2f6fe0'],['zelená','#2fae4f'],['žlutá','#f7d02c'],['oranžová','#ff8c1a'],['fialová','#9b4dd6'],['růžová','#ff8fc8'],['hnědá','#8a5a2b'],['černá','#2b2b2b'],['bílá','#ffffff']];
-const COLOR_THINGS = [['🍓','jahoda','červená'],['🍌','banán','žlutá'],['🐸','žabka','zelená'],['🍊','pomeranč','oranžová'],['🍇','hrozny','fialová'],['☁️','mráček','bílá'],['🌻','slunečnice','žlutá'],['🍒','třešně','červená'],['🥒','okurka','zelená'],['🐷','prasátko','růžová'],['🐻','medvídek','hnědá'],['💙','srdíčko','modrá']];
+const COLOR_THINGS = [['🍓','jahoda','červená'],['🍌','banán','žlutá'],['🐸','žabka','zelená'],['🍊','pomeranč','oranžová'],['🍇','hrozny','fialová',1],['☁️','mráček','bílá'],['🌻','slunečnice','žlutá'],['🍒','třešně','červená',1],['🥒','okurka','zelená'],['🐷','prasátko','růžová'],['🐻','medvídek','hnědá'],['💙','srdíčko','modrá']];
 const COUNT_THINGS = [['🍎','jablíček'],['⭐','hvězdiček'],['🐟','rybiček'],['🌸','kytiček'],['🚗','autíček'],['🎈','balónků'],['🦋','motýlků'],['🐥','kuřátek'],['🍄','hříbků'],['⚽','míčů']];
 const ANIMALS0 = [['🐱','kočička'],['🐶','pejsek'],['🐰','zajíček'],['🐻','medvídek'],['🐷','prasátko'],['🐮','kravička'],['🦁','lvíček'],['🐵','opička'],['🐸','žabka'],['🐥','kuřátko'],['🐟','rybička'],['🐘','slon'],['🐴','koník'],['🦊','liška'],['🐭','myška'],['🐀','potkan']];
 const GROUPS0 = {ovoce:['🍎','🍌','🍐','🍇','🍓','🍒','🍊'], zvířátka:['🐶','🐱','🐰','🐻','🐷','🐮','🐵'], doprava:['🚗','🚌','🚲','🚂','✈️','🚜','🚀'], oblečení:['👕','👖','🧦','🧢','👗','🧤','👟'], hračky:['🧸','⚽','🪀','🎈','🪁','🎲']};
@@ -738,7 +740,7 @@ Object.assign(CATS, {
       return choice(`Kde je <b>${t[0].toUpperCase()}</b> barva?`, `Kde je ${t[0]} barva?`, opts.map(o=>blob(o[1])), opts.indexOf(t)); }
     const th=pick(COLOR_THINGS); const right=COLORS0.find(c=>c[0]===th[2]);
     const others=pickN(COLORS0.filter(c=>c[0]!==th[2]), EASY?2:3); const opts=shuffle([right,...others]);
-    return choice(`Jakou barvu má ${th[1]}?`, `Jakou barvu má ${th[1]}?`, opts.map(o=>blob(o[1])), opts.indexOf(right), em(th[0],70));
+    const vb=th[3]?'mají':'má'; return choice(`Jakou barvu ${vb} ${th[1]}?`, `Jakou barvu ${vb} ${th[1]}?`, opts.map(o=>blob(o[1])), opts.indexOf(right), em(th[0],70));
   }},
   shapes0: {grade:0, label:'Poznávání tvarů', gen(){
     const names=Object.keys(SHAPES); const opts=pickN(EASY?names.slice(0,4).concat(['srdíčko','hvězda']):names, EASY?3:4); const t=opts[ri(0,opts.length-1)];
@@ -751,11 +753,11 @@ Object.assign(CATS, {
     const opts=shuffle([...set]);
     return choice(`Kolik je tu ${th[1]}?`, `Kolik je tu ${th[1]}?`, opts.map(x=>`<span class="num0">${x}</span>`), opts.indexOf(n), `<div class="many">${Array(n).fill(em(th[0],40)).join('')}</div>`, 'cnt|'+th[0]+n+'|'+opts.join(','));
   }},
-  more0: {grade:0, label:'Kde je víc / míň', gen(){
+  more0: {grade:0, label:'Kde je víc / méně', gen(){
     const th=pick(COUNT_THINGS); let a=ri(1,EASY?5:8), b=ri(1,EASY?5:8); while(a===b) b=ri(1,EASY?5:8);
     const more=R()<.6, want = more ? (a>b?0:1) : (a<b?0:1);
     const g=x=>`<div class="many sm">${Array(x).fill(em(th[0],28)).join('')}</div>`;
-    return choice(`Kde je <b>${more?'VÍC':'MÍŇ'}</b> ${th[1]}?`, `Kde je ${more?'víc':'míň'} ${th[1]}?`, [g(a),g(b)], want, '', 'more|'+th[0]+a+'|'+b+more);
+    return choice(`Kde je <b>${more?'VÍC':'MÉNĚ'}</b> ${th[1]}?`, `Kde je ${more?'víc':'méně'} ${th[1]}?`, [g(a),g(b)], want, '', 'more|'+th[0]+a+'|'+b+more);
   }},
   odd0: {grade:0, label:'Co sem nepatří', gen(){
     const keys=Object.keys(GROUPS0); const k=pick(keys); let k2=pick(keys); while(k2===k) k2=pick(keys);
@@ -765,7 +767,7 @@ Object.assign(CATS, {
   size0: {grade:0, label:'Největší a nejmenší', gen(){
     const e=pick(['🐘','🍎','⭐','🐟','🏠','🌳','🎈','🐻']); const sizes=shuffle(EASY?[26,44,66]:[22,36,50,66]); const big=R()<.5;
     const target = big ? Math.max(...sizes) : Math.min(...sizes);
-    return choice(`Který je <b>${big?'NEJVĚTŠÍ':'NEJMENŠÍ'}</b>?`, `Který je ${big?'největší':'nejmenší'}?`, sizes.map(s=>em(e,s)), sizes.indexOf(target));
+    return choice(`Který obrázek je <b>${big?'NEJVĚTŠÍ':'NEJMENŠÍ'}</b>?`, `Který obrázek je ${big?'největší':'nejmenší'}?`, sizes.map(s=>em(e,s)), sizes.indexOf(target));
   }},
   pattern0: {grade:0, label:'Co bude dál (řady)', gen(){
     const pool=pick([['🔴','🔵','🟢','🟡'],['🍎','🍌','🍐'],['⭐','🌙','☀️'],['🐶','🐱','🐰'],['🟥','🟦','🟨']]);
@@ -898,9 +900,9 @@ const PR_BANK = [
   [3,5,'Které zvíře je savec?','delfín',['žralok','kapr','pstruh'],'🐬'],[3,5,'Které zvíře je pták?','tučňák',['netopýr','motýl','delfín'],'🐧'],
   [3,5,'Netopýr je…','savec',['pták','hmyz','ryba'],'🦇'],[3,5,'Velryba je…','savec',['ryba','obojživelník','plaz'],'🐋'],
   [3,5,'Žába je…','obojživelník',['plaz','savec','pták'],'🐸'],[3,5,'Had je…','plaz',['obojživelník','savec','hmyz'],'🐍'],
-  [3,5,'Která houba je jedovatá?','muchomůrka zelená',['hřib smrkový','bedla','liška obecná'],'🍄'],[3,5,'Při kolika °C mrzne voda?','0 °C',['100 °C','10 °C','−50 °C'],'🌡️'],
-  [3,5,'Při kolika °C vře voda?','100 °C',['0 °C','50 °C','30 °C'],'♨️'],[3,5,'Kam patří plastová lahev?','do žlutého kontejneru',['do modrého','do zeleného','do hnědého'],'♻️'],
-  [3,5,'Kam patří papír?','do modrého kontejneru',['do žlutého','do zeleného','do černého'],'📰'],[3,5,'Kam patří sklo?','do zeleného kontejneru',['do modrého','do žlutého','do koše na bioodpad'],'🍾'],
+  [3,5,'Která houba je jedovatá?','muchomůrka zelená',['hřib smrkový','bedla vysoká','liška obecná'],'🍄'],[3,5,'Při kolika °C mrzne voda?','0 °C',['100 °C','10 °C','−50 °C'],'🌡️'],
+  [3,5,'Při kolika °C vře voda?','100 °C',['0 °C','50 °C','30 °C'],'♨️'],[3,5,'Do kterého kontejneru patří plastová lahev?','do žlutého',['do modrého','do zeleného','do hnědého'],'♻️'],
+  [3,5,'Do kterého kontejneru patří papír?','do modrého',['do žlutého','do zeleného','do černého'],'📰'],[3,5,'Do kterého kontejneru patří skleněná lahev?','do zeleného',['do modrého','do žlutého','do hnědého'],'🍾'],
   [3,5,'Co rostliny potřebují k životu?','světlo a vodu',['jen tmu','jen sůl','plast'],'🌻'],[4,5,'Který orgán pumpuje krev?','srdce',['plíce','žaludek','mozek'],'❤️'],
   [4,5,'Čím dýcháme?','plícemi',['srdcem','žaludkem','játry'],'🫁'],[4,5,'Co tvoří oporu těla?','kostra',['kůže','krev','vlasy'],'🦴'],
   [4,5,'Kolikátá planeta od Slunce je Země?','třetí',['první','pátá','desátá'],'🌍'],[4,5,'Která planeta je největší?','Jupiter',['Země','Mars','Merkur'],'🪐'],
@@ -916,26 +918,29 @@ CATS.pr_quiz = {grade:0, subj:'pr', label:'Přírodověda – otázky podle roč
 }};
 
 /* ---- Čeština ---- */
-const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-ko',2],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['di-no-sau-rus',4],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
+const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-lko',2],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['pa-pou-šek',3],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
 const CJ_OPP = [['velký','malý'],['den','noc'],['horký','studený'],['vysoký','nízký'],['rychlý','pomalý'],['veselý','smutný'],['starý','mladý'],['nahoře','dole'],['otevřít','zavřít'],['plný','prázdný'],['dlouhý','krátký'],['těžký','lehký'],['mokrý','suchý'],['světlo','tma'],['tlustý','tenký'],['začátek','konec']];
-const CJ_IY_HARD = [['r_ba','y'],['k_tka','y'],['ch_ba','y'],['t_gr','y'],['d_ně','y'],['hr_b','i'],['k_no','i'],['ch_tat','y'],['n_tka','i'],['d_vadlo','i']];
-const CJ_IY_SOFT = [['č_stý','i'],['ž_rafa','i'],['š_pka','i'],['ř_dič','i'],['c_bule','i'],['j_tro','i'],['č_slo','i'],['ž_dle','i'],['š_mpanz','i'],['c_tron','i']];
-const CJ_VYJ = [['b_dlet','y'],['l_pa','i'],['m_š','y'],['p_vo','i'],['s_n','y'],['v_dra','y'],['z_ma','i'],['jaz_k','y'],['m_lý','i'],['p_tel','y'],['s_la','i'],['v_dět','i'],['pl_š','y'],['l_ška','i'],['p_l','y'],['b_cykl','i'],['ob_čej','y'],['s_rový','y'],['m_slet','y'],['f_alka','i'],['hm_z','y'],['net_pýr','o'],['l_že','y'],['m_nce','i'],['kob_la','y'],['v_soký','y'],['b_tva','i'],['ses_lat','y'],['p_kat','y'],['z_vat','í']];
+const CJ_OPP_GRP = [['velký','malý','vysoký','nízký','dlouhý','krátký','tlustý','tenký','těžký','lehký'],['den','noc','světlo','tma','začátek','konec'],['horký','studený','mokrý','suchý'],['starý','mladý','rychlý','pomalý']];
+const CJ_IY_HARD = [['r_ba','y'],['k_tka','y'],['ch_ba','y'],['t_gr','y'],['kr_sa','y'],['t_ché','i'],['r_chle','y'],['ch_tat','y'],['n_tka','i'],['d_vadlo','i']];
+const CJ_IY_SOFT = [['č_stý','i'],['ž_rafa','i'],['š_pka','i'],['ř_dič','i'],['c_bule','i'],['j_tro','i'],['ž_vot','i'],['ž_dle','i'],['š_mpanz','i'],['c_tron','i']];
+const CJ_VYJ = [['b_dlet','y'],['l_st','i'],['m_š','y'],['p_vo','i'],['s_n','y'],['v_dra','y'],['z_ma','i'],['jaz_k','y'],['m_lý','i'],['p_tel','y'],['s_lný','i'],['v_dět','i'],['pl_š','y'],['l_ška','i'],['p_tlík','y'],['b_cykl','i'],['ob_čej','y'],['s_rový','y'],['m_slet','y'],['f_alka','i'],['hm_z','y'],['net_pýr','o'],['l_že','y'],['m_nce','i'],['kob_la','y'],['v_soký','y'],['b_tva','i'],['zv_k','y'],['p_kat','y'],['z_vat','í']];
 const CJ_END = [['hra_','d','t'],['plo_','t','d'],['le_','d','t'],['du_','b','p'],['zu_','b','p'],['vů_','z','s'],['nů_','ž','š'],['le_','v','f'],['mrá_','z','s'],['chlé_','b','p'],['sní_','h','ch'],['ha_','d','t'],['klu_','k','g'],['ko_','s','z'],['ry_','b','p']];
 const CJ_POS = [['běhat','sloveso',3],['stůl','podstatné jméno',3],['zelený','přídavné jméno',3],['kočka','podstatné jméno',3],['skákat','sloveso',3],['veselý','přídavné jméno',3],['zpívá','sloveso',3],['město','podstatné jméno',3],['velký','přídavné jméno',3],
-  ['pět','číslovka',4],['já','zájmeno',4],['na','předložka',4],['a','spojka',4],['rychle','příslovce',4],['jé','citoslovce',4],['ať','částice',5],['třetí','číslovka',4],['oni','zájmeno',4],['pod','předložka',4],['ale','spojka',4],['dnes','příslovce',4]];
+  ['pět','číslovka',4],['já','zájmeno',4],['na','předložka',4],['a','spojka',4],['rychle','příslovce',4],['jé','citoslovce',4],['kéž','částice',5],['třetí','číslovka',4],['oni','zájmeno',4],['pod','předložka',4],['ale','spojka',4],['dnes','příslovce',4]];
 const CJ_GEN = [['stůl','mužský'],['židle','ženský'],['okno','střední'],['pes','mužský'],['kočka','ženský'],['kuře','střední'],['hrad','mužský'],['moře','střední'],['růže','ženský'],['město','střední'],['strom','mužský'],['kost','ženský'],['srdce','střední'],['kůň','mužský'],['píseň','ženský']];
-const ABC = 'A B C Č D E F G H I J K L M N O P R Ř S Š T U V Y Z Ž'.split(' ');
+const ABC = 'A B C Č D Ď E F G H CH I J K L M N Ň O P Q R Ř S Š T Ť U V W X Y Z Ž'.split(' ');
+// u D/Ď, N/Ň, T/Ť se učebnice liší (některé háčková písmena v abecedě neuvádějí) – na ta se neptáme
+const ABC_SKIP = new Set(['D','Ď','N','Ň','T','Ť']);
 Object.assign(CATS, {
   cj_abc: {grade:1, subj:'cj', label:'Abeceda a slabiky', gen(){
-    if(R()<.5){ const i=ri(0,ABC.length-2); const right=ABC[i+1]; const opts=shuffle([right,...pickN(ABC.filter(x=>x!==right),3)]);
+    if(R()<.5){ let i; do{ i=ri(0,ABC.length-2); }while(ABC_SKIP.has(ABC[i])||ABC_SKIP.has(ABC[i+1])); const right=ABC[i+1]; const opts=shuffle([right,...pickN(ABC.filter(x=>x!==right && x!==ABC[i] && !ABC_SKIP.has(x)),3)]);
       return choice(`Které písmeno je v abecedě po <b>${ABC[i]}</b>?`, `Které písmeno je v abecedě po ${ABC[i]}?`, opts.map(o=>`<span class="num0">${o}</span>`), opts.indexOf(right), '', 'abc|'+ABC[i]); }
     const w=pick(CJ_SYL); const opts=[1,2,3,4];
     return choice(`Kolik slabik má slovo <b>${w[0].replace(/-/g,'')}</b>?`, `Kolik slabik má slovo ${w[0].replace(/-/g,'')}?`, opts.map(o=>`<span class="num0">${o}</span>`), w[1]-1, '', 'syl|'+w[0]);
   }},
   cj_opp: {grade:1, subj:'cj', label:'Slova opačného významu', gen(){
     const p=pick(CJ_OPP), rev=R()<.5, a=rev?p[1]:p[0], b=rev?p[0]:p[1];
-    const others=pickN(CJ_OPP.filter(x=>x!==p).map(x=>x[R()<.5?0:1]),3); const opts=shuffle([b,...others]);
+    const grp=w=>CJ_OPP_GRP.findIndex(g=>g.includes(w)); const gp=grp(p[0]); const others=pickN(CJ_OPP.filter(x=>x!==p && (gp<0 || grp(x[0])!==gp)).map(x=>x[R()<.5?0:1]),3); const opts=shuffle([b,...others]);
     return choice(`Co je opak slova <b>${a}</b>?`, `Co je opak slova ${a}?`, opts.map(o=>txt(o)), opts.indexOf(b), '', 'opp|'+a);
   }},
   cj_iy: {grade:2, subj:'cj', label:'I nebo Y po tvrdých a měkkých', gen(){
@@ -1802,7 +1807,7 @@ itemIcon=function(p,slot,tier){
   if(slot==='buddy'&&tier&&p.buddy) return `<img src="${A_}pet_${p.buddy}_${tier>=3?1:0}.webp" alt="">`;
   return _itemIcon0(p,slot,tier);
 };
-// kůň – hrdina sedí v sedle
+// kůň – stojí vedle hrdiny (hrdina vpravo, kůň vlevo hledí k němu)
 const _heroImg0=heroImg;
 heroImg=function(p,opts={}){
   const hz=(p.eq||{}).horse; if(!hz) return _heroImg0(p,opts);
@@ -2969,7 +2974,7 @@ var STK_DATA = {
   ['🪐','Saturn','Saturn má krásné prstence z ledu a kamínků. Je tak lehký, že by ve velikánské vaně s vodou plaval.'],
   ['🟠','Jupiter','Jupiter je největší planeta Sluneční soustavy. Má obří bouři zvanou Velká rudá skvrna – je větší než celá Země.'],
   ['⭐','Hvězdy','Hvězdy jsou obrovská slunce, která jsou tak daleko, že vypadají jako malé tečky. Nejbližší hvězda je naše Slunce.'],
-  ['☄️','Kometa','Kometa je obří koule ledu a prachu. Když se přiblíží ke Slunci, narostе jí dlouhý zářící ohon.'],
+  ['☄️','Kometa','Kometa je obří koule ledu a prachu. Když se přiblíží ke Slunci, naroste jí dlouhý zářící ohon.'],
   ['🚀','Raketa','Raketa musí letět hodně rychle, aby unikla zemské přitažlivosti. Prvním člověkem ve vesmíru byl Jurij Gagarin v roce 1961.'],
   ['👩‍🚀','Astronautka','Na vesmírné stanici se astronauti vznášejí. Spí připoutaní ve spacáku, aby jim neodplavali.'],
   ['🌌','Mléčná dráha','Naše Slunce je jen jedna z miliard hvězd v galaxii Mléčná dráha. Za tmavé noci ji uvidíš jako světlý pruh na obloze.'],
@@ -2983,7 +2988,7 @@ var STK_DATA = {
   ['🦎','Ještěrky','Ještěrky nejsou dinosauři, jsou to jen jejich vzdálení příbuzní. Dinosauři žili před více než 66 miliony let.'],
   ['🐊','Krokodýl','Krokodýli žili už v době dinosaurů a přežili až dodnes. Je to taková živá zkamenělina.'],
   ['🐦','Ptáci','Vědci zjistili, že ptáci jsou potomci dinosaurů. Až uvidíš vrabce, vzpomeň si, že je to malý dinosaurus!'],
-  ['🌋','Sopky','V době dinosaurů bylo na Zemi tepleji než dnes a pevniny byly spojené dohromady.'],
+  ['🌋','Sopky','V době dinosaurů soptilo hodně sopek a na Zemi bylo tepleji než dnes. Zpočátku byly všechny pevniny spojené v jeden obří světadíl.'],
   ['☄️','Asteroid','Dinosauři vyhynuli, když na Zemi dopadl obrovský asteroid. Prach zakryl Slunce a velká zvířata to nepřežila.'],
   ['🌿','Kapradiny','Dinosauři jedli rostliny jako kapradiny a přesličky. Tráva tehdy skoro ještě nerostla.'],
   ['🔍','Paleontolog','Vědec, který hledá a zkoumá zkameněliny dinosaurů, se jmenuje paleontolog.'],
@@ -2991,7 +2996,7 @@ var STK_DATA = {
  ], quiz:[['Čí potomci jsou ptáci?','dinosaurů',['ryb','koček','žab']],['Jak se jmenuje vědec, který zkoumá zkameněliny?','paleontolog',['astronaut','kuchař','lékař']],['Co jedl Brachiosaurus?','listy ze stromů',['maso','ryby','trávu z louky']],['Z čeho se dinosauři líhli?','z vajec',['z pupenů','z kamenů','nelíhli se']]]},
  ls:{name:'Zvířata našich lesů', icon:'🦊', items:[
   ['🦊','Liška','Liška má výborný sluch – slyší i myš, která šustí pod sněhem. Bydlí v noře.'],
-  ['🦌','Jelen','Jelenovi každé jaro opadnou parohy a pak mu narostou nové, často ještě větší.'],
+  ['🦌','Jelen','Jelenovi každý rok na konci zimy opadnou parohy. Pak mu narostou nové, často ještě větší.'],
   ['🐗','Divočák','Divoké prase rozrývá rypákem zem a hledá kořínky a žaludy. Jeho mláďata se jmenují selata a mají pruhy.'],
   ['🦔','Ježek','Ježek má na zádech tisíce bodlin. V zimě spí zimním spánkem v hromádce listí.'],
   ['🐿️','Veverka','Veverka si na podzim schovává oříšky. Na některé zapomene – a z nich pak vyrostou nové stromy.'],
@@ -3002,7 +3007,7 @@ var STK_DATA = {
   ['🐞','Beruška','Beruška je malý brouk, který sní spoustu mšic. Proto ji mají zahrádkáři rádi.'],
   ['🐺','Vlk','Vlci se do našich hor vrátili. Žijí ve smečkách a dorozumívají se vytím.'],
   ['🐻','Medvěd','Medvěd hnědý občas přijde do Beskyd ze Slovenska. V zimě spí v brlohu a jí skoro všechno – i med a borůvky.'],
- ], quiz:[['Jak se jmenují mláďata divokého prasete?','selata',['koťata','štěňata','telata']],['Co dělá ježek v zimě?','spí zimním spánkem',['létá na jih','staví hnízdo','plave v rybníce']],['Co se jelenovi stane každé jaro?','opadnou mu parohy',['změní barvu','naroste mu ocas','začne létat']],['Kdo se vylíhne z žabích vajíček?','pulci',['kuřátka','housenky','rybičky']]]},
+ ], quiz:[['Jak se jmenují mláďata divokého prasete?','selata',['koťata','štěňata','telata']],['Co dělá ježek v zimě?','spí zimním spánkem',['létá na jih','staví hnízdo','plave v rybníce']],['Co se jelenovi stane každý rok?','opadnou mu parohy',['změní barvu','naroste mu ocas','začne létat']],['Kdo se vylíhne z žabích vajíček?','pulci',['kuřátka','housenky','rybičky']]]},
  tl:{name:'Lidské tělo', icon:'❤️', items:[
   ['❤️','Srdce','Srdce je sval velký asi jako tvoje pěst. Pumpuje krev do celého těla a nikdy neodpočívá.'],
   ['🧠','Mozek','Mozek řídí celé tělo. Přemýšlí, pamatuje si a pracuje i ve spánku.'],
@@ -3023,11 +3028,11 @@ var STK_DATA = {
   ['🌉','Karlův most','Karlův most v Praze vede přes Vltavu a je starý přes 600 let. Stojí na něm třicet soch.'],
   ['🏞️','Vltava','Vltava je nejdelší česká řeka. Pramení na Šumavě, protéká Prahou a u Mělníka se vlévá do Labe.'],
   ['⛰️','Sněžka','Sněžka je nejvyšší hora Česka. Měří 1 603 metrů a leží v Krkonoších.'],
-  ['🕰️','Orloj','Pražský orloj je starý přes 600 let. Každou celou hodinu se v okénkách ukážou apoštolové.'],
+  ['🕰️','Orloj','Pražský orloj je starý přes 600 let. Přes den se každou celou hodinu v okénkách ukážou apoštolové.'],
   ['🎵','Hymna','Česká hymna se jmenuje Kde domov můj. Zpívá se při slavnostech i sportovních zápasech.'],
   ['🇨🇿','Vlajka','Česká vlajka je bílo-červená s modrým klínem.'],
   ['🦁','Lev ve znaku','Ve státním znaku Česka je dvouocasý lev. Je symbolem odvahy a síly.'],
-  ['🌲','Šumava','Šumava jsou velké lesy na jihu Čech. Žijí tam rysi a pramení tam Vltava.'],
+  ['🌲','Šumava','Šumava jsou velké lesy na jihozápadě Čech. Žijí tam rysi a pramení tam Vltava.'],
   ['⛪','Brno','Brno je druhé největší město Česka. Zvony na katedrále na Petrově odbíjejí poledne už v jedenáct hodin.'],
   ['🐟','Kapr','Na Vánoce se u nás tradičně jí kapr. Chovají se v rybnících – nejvíc jich je v jižních Čechách.'],
  ], quiz:[['Která hora je nejvyšší v Česku?','Sněžka',['Říp','Petřín','Mount Everest']],['Kdo nechal postavit Karlštejn?','Karel IV.',['Jurij Gagarin','Eiffel','paleontolog']],['Jak se jmenuje česká hymna?','Kde domov můj',['Ach synku, synku','Skákal pes','Holka modrooká']],['Která řeka je nejdelší v Česku?','Vltava',['Nil','Dunaj','Svitava']]]},
@@ -3035,11 +3040,11 @@ var STK_DATA = {
   ['🗺️','Světadíly','Na Zemi je sedm světadílů: Evropa, Asie, Afrika, Severní a Jižní Amerika, Austrálie a Antarktida.'],
   ['🌊','Oceány','Oceány pokrývají skoro tři čtvrtiny Země. Největší je Tichý oceán.'],
   ['🐧','Tučňák','Tučňáci žijí na jižní polokouli, nejvíc kolem Antarktidy. Neumí létat, ale skvěle plavou.'],
-  ['🧊','Lední medvěd','Lední medvěd žije u severního pólu. Pod bílou srstí má černou kůži, která chytá teplo ze slunce.'],
+  ['🐻‍❄️','Lední medvěd','Lední medvěd žije u severního pólu. Pod bílou srstí má černou kůži, která chytá teplo ze slunce.'],
   ['🦘','Klokan','Klokan žije v Austrálii. Své mládě nosí v kapse na bříšku.'],
   ['🐘','Slon','Slon je největší suchozemské zvíře. Chobotem pije, troubí i se s ním objímá.'],
   ['🗽','Socha Svobody','Socha Svobody stojí v New Yorku v Americe. Lidé ji dostali darem z Francie.'],
-  ['🗼','Eiffelova věž','Eiffelova věž je v Paříži ve Francii. Je ze železa a měří asi 330 metrů.'],
+  ['🥖','Francie','Francie je známá křupavými bagetami. V jejím hlavním městě Paříži stojí slavná Eiffelova věž – je ze železa a měří asi 330 metrů.'],
   ['🐼','Panda','Panda velká žije v horách Číny. Skoro celý den jí bambus.'],
   ['🏜️','Poušť','Největší horká poušť je Sahara v Africe. Prší tam jen málokdy a velbloudi tam vydrží dlouho bez vody.'],
   ['🏔️','Mount Everest','Mount Everest je nejvyšší hora světa. Měří přes 8 800 metrů a leží v Asii v Himálaji.'],
