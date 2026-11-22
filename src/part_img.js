@@ -80,23 +80,27 @@ var TINT_CFG={
  kid_f:{top:{h:[35,70],s:.14,y:[.33,.56],x:[.2,.8]},bottom:{h:[315,360],h2:[0,10],s:.12,y:[.50,.74]}},
  hero_m:{top:{h:[190,235],s:.2,y:[.30,.95]}},
  hero_f:{top:{h:[318,360],h2:[0,12],s:.15,y:[.46,.95]}},
+ // vyšší stupně: tunika není vidět (jinak by se přebarvilo brnění) – barví se plášť
+ hero_m3:{top:null,cape:{h:[345,360],h2:[0,15],s:.55,y:[.41,1]}}, hero_f3:{top:null,cape:{h:[345,360],h2:[0,15],s:.55,y:[.41,1]}},
+ hero_m4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}}, hero_f4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}},
+ hero_m5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}}, hero_f5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}},
 };
 var _tintCache={}, _tintPend={};
 function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
 function tintImg(name, cfgKey, look, attrs){
-  const k=name+'|'+(look.top||'')+'|'+(look.bottom||''); const done=_tintCache[k];
-  if(!done && !_tintPend[k] && (look.top||look.bottom)){ _tintPend[k]=1; const im=new Image();
-    im.onload=()=>{ try{ _tintCache[k]=doTint(im, TINT_CFG[cfgKey], look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape)){ _tintPend[k]=1; const im=new Image();
+    im.onload=()=>{ try{ _tintCache[k]=doTint(im, Object.assign({}, TINT_CFG[cfgKey], TINT_CFG[name]), look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
     im.src=A_+name+'.webp'; }
   return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
 }
 function doTint(im, cfg, look){
   const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
-  for(const part of ['top','bottom']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+  for(const part of ['top','bottom','cape']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
     const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
     const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
-    for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue;
+    for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue; if(g.ex && xx>=g.ex[0]*W && xx<g.ex[1]*W && yy>=g.ex[2]*H && yy<g.ex[3]*H) continue;
       const r=a[i]/255, gg=a[i+1]/255, b=a[i+2]/255, mx=Math.max(r,gg,b), mn=Math.min(r,gg,b), s=mx>0?(mx-mn)/mx:0, dd=Math.max(mx-mn,1e-6);
       let ok;
       if(g.grey) ok = s<.14 && mx>=g.v[0] && mx<=g.v[1];

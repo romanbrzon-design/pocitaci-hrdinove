@@ -149,7 +149,7 @@ function probHTML(pr){
   const hasEq=/=/.test(plain), long=!pr.word && plain.length>16;
   const sayB = ((pr.type==='choice'&&pr.say!=='')||pr.word||(readOn()&&!pr.noAuto)) ? ` <button class="say" data-say title="Přečíst nahlas">🔊</button>` : '';
   if(pr.type==='choice') return `<div class="prob mid">${pr.q}${sayB}</div>${pr.pic?`<div class="pic0">${pr.pic}</div>`:''}`;
-  return `<div class="prob ${pr.word?'word':''} ${long?'mid':''}">${pr.q}${pr.word||pr.small||pr.type==='cmp'||hasEq?'':' = '}${sayB}</div>`;
+  return `<div class="prob ${pr.word?'word':''} ${long?'mid':''}">${pr.q}${pr.word||pr.small||pr.type==='cmp'||hasEq?'':' = '}${sayB}</div>${pr.pic?`<div class="pic0">${pr.pic}</div>`:''}`;
 }
 function inputHTML(pr){
   let input='';
@@ -279,7 +279,7 @@ function heroEditHTML(p){
     <div class="field"><label>Jméno</label><input type="text" id="p-name" value="${esc(p.name)}"></div>
     <div class="row"><div class="field" style="flex:1"><label>Ročník</label><select id="p-grade">${[0,1,2,3,4,5].map(g=>`<option value="${g}" ${p.grade==g?'selected':''}>${gl(g)}</option>`).join('')}</select></div>
       <div class="field" style="flex:1"><label>Postava</label><select id="p-gender"><option value="m" ${p.gender!=='f'?'selected':''}>Hrdina</option><option value="f" ${p.gender==='f'?'selected':''}>Hrdinka</option></select></div></div>
-    <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální</option></select></div>
+    <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno; v 1. třídě čísla do 10 – začátek roku)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální (v 1. třídě do 20 – druhé pololetí)</option></select></div>
     <div class="field"><label>Barva oblečku</label><div class="row colors">${TUNICS.map(c=>`<button data-color="${c}" style="background:${c};border:${p.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
     <div class="field"><label>Tajný kód hrdiny (prázdné = bez kódu)</label><input type="text" id="p-pin" inputmode="numeric" maxlength="4" value="${esc(p.pin||'')}"></div>
     <div class="field"><label>Dobrodružství (změna vynuluje body a postup)</label><select id="p-mode">${Object.values(MODES).map(M=>`<option value="${M.key}" ${(p.mode||'quest')===M.key?'selected':''}>${M.icon} ${M.title}</option>`).join('')}</select></div>

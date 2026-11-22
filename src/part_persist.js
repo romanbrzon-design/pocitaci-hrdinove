@@ -1,15 +1,25 @@
 const BACKEND = (window.BACKEND_URL||'').trim();
 const HAS_GAS = !!BACKEND;
-async function gas(fn, arg){
+async function gas(fn, arg, keep){
   if(fn==='loadAll'){ const r=await fetch(BACKEND+'?t='+Date.now()); if(!r.ok) throw new Error(r.status); return r.json(); }
   const body = fn==='saveItems' ? {action:'save', items:arg} : {action:'log', result:arg};
-  const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  const bs=JSON.stringify(body); const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:bs,keepalive:!!keep&&bs.length<60000});
   if(!r.ok) throw new Error(r.status); return r.json();
 }
 let writing=false, pendingWrite=false, saveTimer=null, syncState=HAS_GAS?'loading':'local';
 const lastSent={};
+let pulledOnce=false; const shadow={};
+const bodyOf=p=>{ const o=p.ts; delete p.ts; const j=JSON.stringify(p); if(o!==undefined) p.ts=o; return j; };
+// časové razítko u profilu, jehož obsah se změnil – podle něj pull nepřepíše novější místní postup starší verzí ze serveru
+function stampDirty(){ if(!pulledOnce) return; const now=Date.now();
+  for(const p of S.profiles){ const j=bodyOf(p); if(shadow[p.id]!==j){ shadow[p.id]=j; p.ts=now; } } }
+function dirtyItems(){ const items={};
+  const sj=JSON.stringify(S.settings); if(lastSent.settings!==sj) items.settings=sj;
+  for(const p of S.profiles){ const j=JSON.stringify(p); if(lastSent[p.id]!==j) items[p.id]=j; }
+  return items; }
 function save(){
   S.savedAt=Date.now();
+  stampDirty();
   saveLocal();
   if(!HAS_GAS) return;
   clearTimeout(saveTimer); saveTimer=setTimeout(flush, 700);
@@ -19,9 +29,7 @@ async function flush(){
   if(writing){ pendingWrite=true; return; }
   writing=true;
   try{
-    const items={};
-    const sj=JSON.stringify(S.settings); if(lastSent.settings!==sj) items.settings=sj;
-    for(const p of S.profiles){ const j=JSON.stringify(p); if(lastSent[p.id]!==j) items[p.id]=j; }
+    const items=dirtyItems();
     if(Object.keys(items).length){ await gas('saveItems', items); Object.assign(lastSent, items); }
     syncState='cloud';
   }catch(e){ syncState='offline'; setTimeout(flush, 8000); }
@@ -33,14 +41,20 @@ async function pull(rerender){
   if(!HAS_GAS || writing) return;
   try{
     const r = await gas('loadAll');
-    if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; const before=S.settings.ver; migrateSettings(); if(before!==S.settings.ver) setTimeout(flush,100); }
+    const setDirty = lastSent.settings!==undefined && JSON.stringify(S.settings)!==lastSent.settings;
+    if(r && r.settings && setDirty){ /* rodič právě změnil nastavení – nepřepisovat, odešle se */ }
+    else if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; const before=S.settings.ver; migrateSettings(); if(before!==S.settings.ver) setTimeout(flush,100); }
+    let keptLocal=false;
     for(const [id,j] of Object.entries((r&&r.profiles)||{})){
       const o=migrate(JSON.parse(j)); const i=S.profiles.findIndex(p=>p.id===id);
-      if(i>=0) S.profiles[i]=o; else S.profiles.push(o);
-      lastSent[id]=j;
+      // místní verze má neodeslané změny a je novější než serverová → nechat místní (a odeslat ji)
+      if(i>=0){ const loc=S.profiles[i]; const dirty=JSON.stringify(loc)!==j; if(dirty && (loc.ts||0)>(o.ts||0)){ keptLocal=true; continue; } S.profiles[i]=o; }
+      else S.profiles.push(o);
+      lastSent[id]=j; shadow[id]=bodyOf(o);
     }
+    pulledOnce=true;
     saveLocal(); syncState='cloud';
-    if(!r || !r.settings) flush();
+    if(!r || !r.settings || keptLocal || setDirty) setTimeout(flush, 50);
     if(rerender) render();
   }catch(e){ syncState='offline'; }
   updateSyncNote();
@@ -58,3 +72,9 @@ function updateSyncNote(){ const el=$('#syncnote'); if(!el) return;
                    syncState==='offline' ? '⚠️ Nepodařilo se spojit s úložištěm – zkusím to znovu.' :
                    '💾 Postup se ukládá v tomto prohlížeči.'; }
 
+// při zavření / přepnutí aplikace hned odeslat neuložené změny (i když běží odpočet 700 ms)
+function flushOnHide(){ if(!HAS_GAS || (typeof FAMILY!=='undefined' && !FAMILY)) return; clearTimeout(saveTimer);
+  const items=dirtyItems(); if(!Object.keys(items).length) return;
+  gas('saveItems', items, true).then(()=>Object.assign(lastSent, items)).catch(()=>{}); }
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushOnHide(); });
+addEventListener('pagehide', flushOnHide);

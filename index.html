@@ -367,6 +367,8 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .anim .av.rider img.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .av.rider img.comp{right:-2%;width:22%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}
+.addpic{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}.addpic .grp{display:grid;grid-template-columns:repeat(5,auto);gap:2px 3px;background:#fff7e6;border:2px dashed #e8c06a;border-radius:12px;padding:3px 5px}.addpic .emo{font-size:22px;line-height:1.15}.addpic .op{font:900 34px Nunito,sans-serif;color:#5a3412}
 
 </style>
 </head>
@@ -704,6 +706,35 @@ Object.assign(DEFAULT_CATS, {
   4:['mulall','rem','big','mulext','divext','order','fractions','round','seq4','units4','money4','word4'],
   5:['mulall','rem','big','mulext','divext','order','fractions','round','seq4','units4','money4','word4']});
 const NEW_CATS_V2 = {1:['seq1','double1','money1'],2:['seq2','halfdouble2','money2','diff2','tens2'],3:['seq2','halfdouble2','money2','diff2','units4'],4:['seq4','units4','money4'],5:['seq4','units4','money4']};
+
+/* ---- 1. třída, lehčí obtížnost = začátek školního roku: čísla do 10, u sčítání obrázky na prstíky ---- */
+const PIC1=['🍎','⭐','🐟','🌸','🎈','🐥','🍓','🚗'];
+const grp=(n,e,gone=0)=>`<span class="grp">${Array(n).fill(0).map((_,i)=>`<span class="emo${i>=n-gone?' gone':''}">${e}</span>`).join('')}</span>`;
+const picAdd=(a,b,e)=>{ e=e||pick(PIC1); return `<div class="addpic">${grp(a,e)}<span class="op">+</span>${grp(b,e)}</div>`; };
+const picSub=(c,b,e)=>{ e=e||pick(PIC1); return `<div class="addpic">${grp(c,e,b)}</div>`; };
+Object.assign(EASY_GEN, {
+  add10(){ const c=ri(2,10), a=ri(1,c-1), b=c-a;
+    return R()<.6 ? {q:`${a} + ${b}`, a:c, pic:c<=10?picAdd(a,b):''} : {q:`${c} − ${b}`, a:a, pic:picSub(c,b)}; },
+  add20nb(){ const u=ri(1,9), k=ri(0,2);
+    if(k===0) return {q:`10 + ${u}`, a:10+u};
+    if(k===1) return u<9 ? {q:`1${u} + 1`, a:11+u} : {q:`10 + 9`, a:19};
+    return {q:`1${u} − ${u}`, a:10}; },
+  missing10(){ const c=ri(3,8), a=ri(1,c-1); return R()<.5 ? {q:`${a} + <u>&nbsp;?&nbsp;</u> = ${c}`, a:c-a} : {q:`<u>&nbsp;?&nbsp;</u> + ${c-a} = ${c}`, a:a}; },
+  compare20(){ const lv=ri(0,10), rv=R()<.2?lv:ri(0,10); return {q:`${lv} &nbsp;◯&nbsp; ${rv}`, type:'cmp', a: lv<rv?'<':lv>rv?'>':'='}; },
+  seq1(){ const start=ri(0,5), s=[0,1,2,3].map(i=>start+i); return {q:`Pokračuj v řadě: ${s.join(', ')}, ?`, a:start+4, small:true}; },
+  money1(){ let c; do{ c=[pick([1,2,5]),pick([1,2,5])]; }while(c[0]+c[1]>10); c.sort((x,y)=>y-x); return {q:`🪙 ${c.map(x=>x+' Kč').join(' + ')} = ? Kč`, a:c[0]+c[1], small:true}; },
+});
+const WORD1_EASY = [
+  (n,x)=>{ const a=ri(2,5), b=ri(1,4); return {q:`${n} měl${x} ${a} ${kus(a,'pastelku','pastelky','pastelek')} a dostal${x} ještě ${b}. Kolik pastelek má teď?`, a:a+b, pic:picAdd(a,b,'✏️')}; },
+  ()=>{ const a=ri(5,9), b=ri(1,4); return {q:`Na stromě sedělo ${a} ptáčků. ${kus(b,'Jeden ptáček odletěl','Odletěli '+b+' ptáčci','')}. Kolik ptáčků zůstalo na stromě?`, a:a-b, pic:picSub(a,b,'🐦')}; },
+  ()=>{ const a=ri(2,5), b=ri(1,4); return {q:`Na louce se pasou ${a} ${kus(a,'kravička','kravičky','kraviček')} a ${b} ${kus(b,'koník','koníci','koníků')}. Kolik zvířat je na louce?`, a:a+b}; },
+  ()=>{ const a=ri(5,9), b=ri(1,4); return {q:`Maminka upekla ${a} koláčů. Děti snědly ${b}. Kolik koláčů zbylo?`, a:a-b}; },
+  ()=>{ const a=ri(2,6), b=ri(1,4); return {q:`V akváriu ${kus(a,'plave','plavou','plave')} ${a} ${kus(a,'rybička','rybičky','rybiček')}. Přikoupili jsme ještě ${b}. Kolik rybiček je teď v akváriu?`, a:a+b}; },
+  (n,x)=>{ const a=ri(2,6), b=ri(1,4); return {q:`${n} má ${a} Kč a od babičky dostal${x} ${b} Kč. Kolik korun má teď?`, a:a+b}; },
+  (n,x)=>{ const a=ri(2,5), b=ri(1,4); return {q:`${n} ${x?'našla':'našel'} v lese ${a} ${kus(a,'houbu','houby','hub')} a tatínek ${b}. Kolik hub našli dohromady?`, a:a+b}; },
+  ()=>{ const a=ri(2,6); return {q:`Ve třídě sedí ${a} ${kus(a,'holčička','holčičky','holčiček')}. Kluků je o 2 víc. Kolik je ve třídě kluků?`, a:a+2}; },
+];
+CATS.word1.gen = ()=>fromBank(EASY && CUR_GRADE<=1 ? WORD1_EASY : WORD1);
 
 /* ---- Paměť proti opakování ---- */
 const SEEN_MAX = 400;
@@ -1735,23 +1766,27 @@ var TINT_CFG={
  kid_f:{top:{h:[35,70],s:.14,y:[.33,.56],x:[.2,.8]},bottom:{h:[315,360],h2:[0,10],s:.12,y:[.50,.74]}},
  hero_m:{top:{h:[190,235],s:.2,y:[.30,.95]}},
  hero_f:{top:{h:[318,360],h2:[0,12],s:.15,y:[.46,.95]}},
+ // vyšší stupně: tunika není vidět (jinak by se přebarvilo brnění) – barví se plášť
+ hero_m3:{top:null,cape:{h:[345,360],h2:[0,15],s:.55,y:[.41,1]}}, hero_f3:{top:null,cape:{h:[345,360],h2:[0,15],s:.55,y:[.41,1]}},
+ hero_m4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}}, hero_f4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}},
+ hero_m5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}}, hero_f5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}},
 };
 var _tintCache={}, _tintPend={};
 function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
 function tintImg(name, cfgKey, look, attrs){
-  const k=name+'|'+(look.top||'')+'|'+(look.bottom||''); const done=_tintCache[k];
-  if(!done && !_tintPend[k] && (look.top||look.bottom)){ _tintPend[k]=1; const im=new Image();
-    im.onload=()=>{ try{ _tintCache[k]=doTint(im, TINT_CFG[cfgKey], look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape)){ _tintPend[k]=1; const im=new Image();
+    im.onload=()=>{ try{ _tintCache[k]=doTint(im, Object.assign({}, TINT_CFG[cfgKey], TINT_CFG[name]), look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
     im.src=A_+name+'.webp'; }
   return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
 }
 function doTint(im, cfg, look){
   const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
-  for(const part of ['top','bottom']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+  for(const part of ['top','bottom','cape']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
     const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
     const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
-    for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue;
+    for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue; if(g.ex && xx>=g.ex[0]*W && xx<g.ex[1]*W && yy>=g.ex[2]*H && yy<g.ex[3]*H) continue;
       const r=a[i]/255, gg=a[i+1]/255, b=a[i+2]/255, mx=Math.max(r,gg,b), mn=Math.min(r,gg,b), s=mx>0?(mx-mn)/mx:0, dd=Math.max(mx-mn,1e-6);
       let ok;
       if(g.grey) ok = s<.14 && mx>=g.v[0] && mx<=g.v[1];
@@ -1878,16 +1913,26 @@ function rewardOf(p){ return (p.reward||'').trim() || S.settings.reward; }
 const isTest = p => p && p.id==='test';
 const BACKEND = (window.BACKEND_URL||'').trim();
 const HAS_GAS = !!BACKEND;
-async function gas(fn, arg){
+async function gas(fn, arg, keep){
   if(fn==='loadAll'){ const r=await fetch(BACKEND+'?t='+Date.now()); if(!r.ok) throw new Error(r.status); return r.json(); }
   const body = fn==='saveItems' ? {action:'save', items:arg} : {action:'log', result:arg};
-  const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  const bs=JSON.stringify(body); const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:bs,keepalive:!!keep&&bs.length<60000});
   if(!r.ok) throw new Error(r.status); return r.json();
 }
 let writing=false, pendingWrite=false, saveTimer=null, syncState=HAS_GAS?'loading':'local';
 const lastSent={};
+let pulledOnce=false; const shadow={};
+const bodyOf=p=>{ const o=p.ts; delete p.ts; const j=JSON.stringify(p); if(o!==undefined) p.ts=o; return j; };
+// časové razítko u profilu, jehož obsah se změnil – podle něj pull nepřepíše novější místní postup starší verzí ze serveru
+function stampDirty(){ if(!pulledOnce) return; const now=Date.now();
+  for(const p of S.profiles){ const j=bodyOf(p); if(shadow[p.id]!==j){ shadow[p.id]=j; p.ts=now; } } }
+function dirtyItems(){ const items={};
+  const sj=JSON.stringify(S.settings); if(lastSent.settings!==sj) items.settings=sj;
+  for(const p of S.profiles){ const j=JSON.stringify(p); if(lastSent[p.id]!==j) items[p.id]=j; }
+  return items; }
 function save(){
   S.savedAt=Date.now();
+  stampDirty();
   saveLocal();
   if(!HAS_GAS) return;
   clearTimeout(saveTimer); saveTimer=setTimeout(flush, 700);
@@ -1897,9 +1942,7 @@ async function flush(){
   if(writing){ pendingWrite=true; return; }
   writing=true;
   try{
-    const items={};
-    const sj=JSON.stringify(S.settings); if(lastSent.settings!==sj) items.settings=sj;
-    for(const p of S.profiles){ const j=JSON.stringify(p); if(lastSent[p.id]!==j) items[p.id]=j; }
+    const items=dirtyItems();
     if(Object.keys(items).length){ await gas('saveItems', items); Object.assign(lastSent, items); }
     syncState='cloud';
   }catch(e){ syncState='offline'; setTimeout(flush, 8000); }
@@ -1911,14 +1954,20 @@ async function pull(rerender){
   if(!HAS_GAS || writing) return;
   try{
     const r = await gas('loadAll');
-    if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; const before=S.settings.ver; migrateSettings(); if(before!==S.settings.ver) setTimeout(flush,100); }
+    const setDirty = lastSent.settings!==undefined && JSON.stringify(S.settings)!==lastSent.settings;
+    if(r && r.settings && setDirty){ /* rodič právě změnil nastavení – nepřepisovat, odešle se */ }
+    else if(r && r.settings){ S.settings=JSON.parse(r.settings); lastSent.settings=r.settings; const before=S.settings.ver; migrateSettings(); if(before!==S.settings.ver) setTimeout(flush,100); }
+    let keptLocal=false;
     for(const [id,j] of Object.entries((r&&r.profiles)||{})){
       const o=migrate(JSON.parse(j)); const i=S.profiles.findIndex(p=>p.id===id);
-      if(i>=0) S.profiles[i]=o; else S.profiles.push(o);
-      lastSent[id]=j;
+      // místní verze má neodeslané změny a je novější než serverová → nechat místní (a odeslat ji)
+      if(i>=0){ const loc=S.profiles[i]; const dirty=JSON.stringify(loc)!==j; if(dirty && (loc.ts||0)>(o.ts||0)){ keptLocal=true; continue; } S.profiles[i]=o; }
+      else S.profiles.push(o);
+      lastSent[id]=j; shadow[id]=bodyOf(o);
     }
+    pulledOnce=true;
     saveLocal(); syncState='cloud';
-    if(!r || !r.settings) flush();
+    if(!r || !r.settings || keptLocal || setDirty) setTimeout(flush, 50);
     if(rerender) render();
   }catch(e){ syncState='offline'; }
   updateSyncNote();
@@ -1936,6 +1985,12 @@ function updateSyncNote(){ const el=$('#syncnote'); if(!el) return;
                    syncState==='offline' ? '⚠️ Nepodařilo se spojit s úložištěm – zkusím to znovu.' :
                    '💾 Postup se ukládá v tomto prohlížeči.'; }
 
+// při zavření / přepnutí aplikace hned odeslat neuložené změny (i když běží odpočet 700 ms)
+function flushOnHide(){ if(!HAS_GAS || (typeof FAMILY!=='undefined' && !FAMILY)) return; clearTimeout(saveTimer);
+  const items=dirtyItems(); if(!Object.keys(items).length) return;
+  gas('saveItems', items, true).then(()=>Object.assign(lastSent, items)).catch(()=>{}); }
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushOnHide(); });
+addEventListener('pagehide', flushOnHide);
 /* ============ Day logic ============ */
 function ensureToday(p){
   const k=todayKey();
@@ -2087,7 +2142,7 @@ function probHTML(pr){
   const hasEq=/=/.test(plain), long=!pr.word && plain.length>16;
   const sayB = ((pr.type==='choice'&&pr.say!=='')||pr.word||(readOn()&&!pr.noAuto)) ? ` <button class="say" data-say title="Přečíst nahlas">🔊</button>` : '';
   if(pr.type==='choice') return `<div class="prob mid">${pr.q}${sayB}</div>${pr.pic?`<div class="pic0">${pr.pic}</div>`:''}`;
-  return `<div class="prob ${pr.word?'word':''} ${long?'mid':''}">${pr.q}${pr.word||pr.small||pr.type==='cmp'||hasEq?'':' = '}${sayB}</div>`;
+  return `<div class="prob ${pr.word?'word':''} ${long?'mid':''}">${pr.q}${pr.word||pr.small||pr.type==='cmp'||hasEq?'':' = '}${sayB}</div>${pr.pic?`<div class="pic0">${pr.pic}</div>`:''}`;
 }
 function inputHTML(pr){
   let input='';
@@ -2217,7 +2272,7 @@ function heroEditHTML(p){
     <div class="field"><label>Jméno</label><input type="text" id="p-name" value="${esc(p.name)}"></div>
     <div class="row"><div class="field" style="flex:1"><label>Ročník</label><select id="p-grade">${[0,1,2,3,4,5].map(g=>`<option value="${g}" ${p.grade==g?'selected':''}>${gl(g)}</option>`).join('')}</select></div>
       <div class="field" style="flex:1"><label>Postava</label><select id="p-gender"><option value="m" ${p.gender!=='f'?'selected':''}>Hrdina</option><option value="f" ${p.gender==='f'?'selected':''}>Hrdinka</option></select></div></div>
-    <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální</option></select></div>
+    <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno; v 1. třídě čísla do 10 – začátek roku)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální (v 1. třídě do 20 – druhé pololetí)</option></select></div>
     <div class="field"><label>Barva oblečku</label><div class="row colors">${TUNICS.map(c=>`<button data-color="${c}" style="background:${c};border:${p.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
     <div class="field"><label>Tajný kód hrdiny (prázdné = bez kódu)</label><input type="text" id="p-pin" inputmode="numeric" maxlength="4" value="${esc(p.pin||'')}"></div>
     <div class="field"><label>Dobrodružství (změna vynuluje body a postup)</label><select id="p-mode">${Object.values(MODES).map(M=>`<option value="${M.key}" ${(p.mode||'quest')===M.key?'selected':''}>${M.icon} ${M.title}</option>`).join('')}</select></div>
@@ -2937,13 +2992,13 @@ setTimeout(()=>{ if(view.name==='home') introOpen(false); }, 600);
 var LOOK_COLORS=['#e8435a','#ff7a45','#f2a900','#21b37a','#1fb5c9','#4f7cff','#c04cf5','#ff6fb5','#8a5a2b','#9a9aa8','#2b2b2b','#f5f0e6'];
 function lookOpen(){
   const p=prof(view.pid); if(!p) return; const M=p.mode||'quest'; if(M==='pet') return;
-  const parts = M==='home' ? [['top','👕 Tričko'],['bottom', p.gender==='f'?'👗 Sukně':'👖 Kalhoty']] : [['top','🧥 Tunika']];
+  const parts = M==='home' ? [['top','👕 Tričko'],['bottom', p.gender==='f'?'👗 Sukně':'👖 Kalhoty']] : [['top','🧥 Tunika'],['cape','🦸 Plášť']];
   const m=document.createElement('div'); m.className='modal';
   const draw=()=>{ const l=lookOf(p);
     m.innerHTML=`<div class="card center" style="max-width:520px"><h2 style="margin:4px 0">🎨 Barvy oblečení</h2>
       <div style="max-width:170px;margin:0 auto">${M==='home'?kidSVG(p):heroImg(p)}</div>
-      ${parts.map(([k,lab])=>`<div style="margin:10px 0"><b>${lab}</b><div class="swatches">${LOOK_COLORS.map(c=>`<button class="sw ${l[k]===c?'on':''}" data-part="${k}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}${k==='bottom'?`<button class="sw orig ${!l.bottom?'on':''}" data-part="bottom" data-c="" title="Původní">↺</button>`:''}</div></div>`).join('')}
-      ${M==='quest'?'<p class="muted" style="font-size:14px">Tuniku je vidět hlavně, dokud nemáš brnění.</p>':''}
+      ${parts.map(([k,lab])=>`<div style="margin:10px 0"><b>${lab}</b><div class="swatches">${LOOK_COLORS.map(c=>`<button class="sw ${l[k]===c?'on':''}" data-part="${k}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}${k!=='top'?`<button class="sw orig ${!l[k]?'on':''}" data-part="${k}" data-c="" title="Původní">↺</button>`:''}</div></div>`).join('')}
+      ${M==='quest'?'<p class="muted" style="font-size:14px">Tunika je vidět, dokud nemáš rytířské brnění. Pak se barví plášť.</p>':''}
       <button class="btn gold" id="lkok">Hotovo</button></div>`;
     m.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ p.look=p.look||{}; const part=b.dataset.part, c=b.dataset.c; if(c) p.look[part]=c; else delete p.look[part]; if(part==='top' && c) p.color=c; save(); draw(); });
     m.querySelector('#lkok').onclick=()=>{ m.remove(); render(); };
@@ -2954,10 +3009,10 @@ const _actLook=act;
 act=function(a){ if(a==='look') return lookOpen(); return _actLook(a); };
 const _funHeroLook=funHeroHTML;
 funHeroHTML=function(p){ const h=_funHeroLook(p); if(!p || p.mode==='pet') return h; return h.replace('<div class="funrow">','<div class="funrow"><button class="btn sec" data-act="look">🎨 Barvy oblečení</button>'); };
-// v domečku a u zvířátka se koupená věc rovnou použije (u výpravy se nasazuje ručně)
+// koupená věc se rovnou použije / nasadí (je vždy lepší než ta dosavadní)
 const _buyLook=buy;
 buy=function(slot){ const p=prof(view.pid); const before=(p.owned||{})[slot]||0; _buyLook(slot);
-  if(p && p.mode && p.mode!=='quest' && ((p.owned||{})[slot]||0)>before){ p.eq=p.eq||{}; p.eq[slot]=p.owned[slot]; if(p.newItem===slot+':'+p.owned[slot]) p.newItem=null; save(); render(); try{ toast(`🛍️ ${slotOf(p,slot).items[p.owned[slot]-1][0]} – koupeno a hned použito ✨`); }catch(e){} } };
+  if(p && ((p.owned||{})[slot]||0)>before && ((p.eq||{})[slot]||0)<p.owned[slot]){ p.eq=p.eq||{}; p.eq[slot]=p.owned[slot]; if(p.newItem===slot+':'+p.owned[slot]) p.newItem=null; save(); render(); try{ toast(`🛍️ ${slotOf(p,slot).items[p.owned[slot]-1][0]} – koupeno a hned použito ✨`); }catch(e){} } };
 // jednorázově: v domečku a u zvířátka nasadit koupené věci, které zůstaly ležet (dřív se musely nasazovat ručně)
 function autoEqOnce(p){ if(!p || !p.mode || p.mode==='quest') return; const f=fx(p); if(f.autoEq) return; f.autoEq=1; p.eq=p.eq||{};
   for(const [s,n] of Object.entries(p.owned||{})) if(n>0 && !p.eq[s]) p.eq[s]=n; save(); }

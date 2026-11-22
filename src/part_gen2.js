@@ -124,6 +124,35 @@ Object.assign(DEFAULT_CATS, {
   5:['mulall','rem','big','mulext','divext','order','fractions','round','seq4','units4','money4','word4']});
 const NEW_CATS_V2 = {1:['seq1','double1','money1'],2:['seq2','halfdouble2','money2','diff2','tens2'],3:['seq2','halfdouble2','money2','diff2','units4'],4:['seq4','units4','money4'],5:['seq4','units4','money4']};
 
+/* ---- 1. třída, lehčí obtížnost = začátek školního roku: čísla do 10, u sčítání obrázky na prstíky ---- */
+const PIC1=['🍎','⭐','🐟','🌸','🎈','🐥','🍓','🚗'];
+const grp=(n,e,gone=0)=>`<span class="grp">${Array(n).fill(0).map((_,i)=>`<span class="emo${i>=n-gone?' gone':''}">${e}</span>`).join('')}</span>`;
+const picAdd=(a,b,e)=>{ e=e||pick(PIC1); return `<div class="addpic">${grp(a,e)}<span class="op">+</span>${grp(b,e)}</div>`; };
+const picSub=(c,b,e)=>{ e=e||pick(PIC1); return `<div class="addpic">${grp(c,e,b)}</div>`; };
+Object.assign(EASY_GEN, {
+  add10(){ const c=ri(2,10), a=ri(1,c-1), b=c-a;
+    return R()<.6 ? {q:`${a} + ${b}`, a:c, pic:c<=10?picAdd(a,b):''} : {q:`${c} − ${b}`, a:a, pic:picSub(c,b)}; },
+  add20nb(){ const u=ri(1,9), k=ri(0,2);
+    if(k===0) return {q:`10 + ${u}`, a:10+u};
+    if(k===1) return u<9 ? {q:`1${u} + 1`, a:11+u} : {q:`10 + 9`, a:19};
+    return {q:`1${u} − ${u}`, a:10}; },
+  missing10(){ const c=ri(3,8), a=ri(1,c-1); return R()<.5 ? {q:`${a} + <u>&nbsp;?&nbsp;</u> = ${c}`, a:c-a} : {q:`<u>&nbsp;?&nbsp;</u> + ${c-a} = ${c}`, a:a}; },
+  compare20(){ const lv=ri(0,10), rv=R()<.2?lv:ri(0,10); return {q:`${lv} &nbsp;◯&nbsp; ${rv}`, type:'cmp', a: lv<rv?'<':lv>rv?'>':'='}; },
+  seq1(){ const start=ri(0,5), s=[0,1,2,3].map(i=>start+i); return {q:`Pokračuj v řadě: ${s.join(', ')}, ?`, a:start+4, small:true}; },
+  money1(){ let c; do{ c=[pick([1,2,5]),pick([1,2,5])]; }while(c[0]+c[1]>10); c.sort((x,y)=>y-x); return {q:`🪙 ${c.map(x=>x+' Kč').join(' + ')} = ? Kč`, a:c[0]+c[1], small:true}; },
+});
+const WORD1_EASY = [
+  (n,x)=>{ const a=ri(2,5), b=ri(1,4); return {q:`${n} měl${x} ${a} ${kus(a,'pastelku','pastelky','pastelek')} a dostal${x} ještě ${b}. Kolik pastelek má teď?`, a:a+b, pic:picAdd(a,b,'✏️')}; },
+  ()=>{ const a=ri(5,9), b=ri(1,4); return {q:`Na stromě sedělo ${a} ptáčků. ${kus(b,'Jeden ptáček odletěl','Odletěli '+b+' ptáčci','')}. Kolik ptáčků zůstalo na stromě?`, a:a-b, pic:picSub(a,b,'🐦')}; },
+  ()=>{ const a=ri(2,5), b=ri(1,4); return {q:`Na louce se pasou ${a} ${kus(a,'kravička','kravičky','kraviček')} a ${b} ${kus(b,'koník','koníci','koníků')}. Kolik zvířat je na louce?`, a:a+b}; },
+  ()=>{ const a=ri(5,9), b=ri(1,4); return {q:`Maminka upekla ${a} koláčů. Děti snědly ${b}. Kolik koláčů zbylo?`, a:a-b}; },
+  ()=>{ const a=ri(2,6), b=ri(1,4); return {q:`V akváriu ${kus(a,'plave','plavou','plave')} ${a} ${kus(a,'rybička','rybičky','rybiček')}. Přikoupili jsme ještě ${b}. Kolik rybiček je teď v akváriu?`, a:a+b}; },
+  (n,x)=>{ const a=ri(2,6), b=ri(1,4); return {q:`${n} má ${a} Kč a od babičky dostal${x} ${b} Kč. Kolik korun má teď?`, a:a+b}; },
+  (n,x)=>{ const a=ri(2,5), b=ri(1,4); return {q:`${n} ${x?'našla':'našel'} v lese ${a} ${kus(a,'houbu','houby','hub')} a tatínek ${b}. Kolik hub našli dohromady?`, a:a+b}; },
+  ()=>{ const a=ri(2,6); return {q:`Ve třídě sedí ${a} ${kus(a,'holčička','holčičky','holčiček')}. Kluků je o 2 víc. Kolik je ve třídě kluků?`, a:a+2}; },
+];
+CATS.word1.gen = ()=>fromBank(EASY && CUR_GRADE<=1 ? WORD1_EASY : WORD1);
+
 /* ---- Paměť proti opakování ---- */
 const SEEN_MAX = 400;
 function qKey(pr){ return hashStr(String(pr.key||pr.q)) % 1000000007; }
