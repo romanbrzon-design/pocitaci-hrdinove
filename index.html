@@ -1706,6 +1706,10 @@ roomSVG = function(p, opts={}){
   return `<div class="room ${opts.scene?'scene':''}">${s}</div>`;
 };
 kidSVG = function(p){ return `<div class="av"><img class="main" src="${A_}kid_${p.gender==='f'?'f':'m'}.webp" alt=""></div>`; };
+
+/* ---- návštěvy a pozadí soutěží (Gemini) ---- */
+guestSVG = function(i){ return `<div class="av"><img class="main" src="${A_}guest${i}.webp" alt=""></div>`; };
+contestScene = function(i){ return `<img class="scene" src="${A_}cbg${i}.webp" alt="">`; };
 /* ============ State ============ */
 const LS_KEY='pocitani-hrdinove-v1';
 function newId(){ return 'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
