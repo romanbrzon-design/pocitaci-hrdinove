@@ -2852,12 +2852,11 @@ function timedEndView(){
     <div class="row" style="justify-content:center"><button class="btn gold" data-act="timed">🔁 Znovu</button><button class="btn sec" data-act="hero">← Zpět</button></div></div>`;
 }
 
-/* ---- 5) souboj dvou hrdinů + žebříček týdne ---- */
+/* ---- 5) žebříček týdne (souboj dvou hrdinů je vypnutý – přání rodiče) ---- */
 function leaderboardHTML(){
   const hs=realHeroes(); if(hs.length<2) return '';
   const rows=hs.map(p=>({p, s:weekStats(p)})).sort((a,b)=>b.s.c-a.s.c);
-  return `<h3>📅 Žebříček týdne <span class="muted" style="font-size:14px">– správné odpovědi od pondělí</span></h3><div class="card"><table class="fame">${rows.map((r,i)=>`<tr><td style="width:36px">${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td>${esc(r.p.name)}</td><td>✅ ${r.s.c}</td><td>${r.s.duelsWon?`⚔️ ${r.s.duelsWon}`:''}</td></tr>`).join('')}</table>
-    <div class="row" style="margin-top:10px"><button class="btn red" data-act="duel">⚔️ Souboj dvou hrdinů</button></div></div>`;
+  return `<h3>📅 Žebříček týdne <span class="muted" style="font-size:14px">– správné odpovědi od pondělí</span></h3><div class="card"><table class="fame">${rows.map((r,i)=>`<tr><td style="width:36px">${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td>${esc(r.p.name)}</td><td>✅ ${r.s.c}</td></tr>`).join('')}</table></div>`;
 }
 function duelSetupView(){
   const hs=realHeroes(); const a=view.a||(hs[0]&&hs[0].id), b=view.b2||(hs[1]&&hs[1].id);
@@ -2939,7 +2938,7 @@ var INTRO=[
   ['🦸','Vytvoř si hrdinu','Klikni na „Nový hrdina“, napiš své jméno, vyber třídu a dobrodružství: ⚔️ výprava za drakem, 🏡 vlastní domeček, nebo 🐾 zvířátko, které roste.'],
   ['🎯','Úkol dne','Každý den tě čeká 10 úloh. Za správnou odpověď dostaneš ⭐ body, za splněný den truhlu s překvapením a zatočíš si kolem štěstí. Kdo hraje každý den, má sérii a lepší výhry!'],
   ['🛍️','Nakupuj a vyhrávej','Za body si kupuj meče, nábytek nebo hračky pro zvířátko – a nezapomeň si je nasadit. Pak poraz obludy, pozvi návštěvy nebo vyhraj soutěže. Na konci tě čeká odměna od rodičů!'],
-  ['📒','Ještě víc zábavy','Sbírej nálepky do alba, plň výzvy týdne, překonej rekord v časovce nebo vyzvi sourozence k souboji. 🔊 Když neumíš číst, zapni dole vlevo předčítání.'],
+  ['📒','Ještě víc zábavy','Sbírej nálepky do alba, plň výzvy týdne, nebo překonej rekord v časovce. 🔊 Když neumíš číst, zapni dole vlevo předčítání.'],
   ['👨‍👩‍👧','Pro rodiče','V sekci „Rodič“ (výchozí PIN 1234 – změňte si ho) nastavíte každému dítěti třídu, obtížnost a předměty, odměnu za dokončení, tajný kód a rodinný cíl. Najdete tam i týdenní zprávu, co dítěti jde a s čím má potíže.'],
 ];
 function introOpen(force){
@@ -2983,7 +2982,7 @@ const _probHTML=probHTML;
 probHTML=function(pr){ return (pr&&pr.review?'<div class="revtag">🔁 Opakování – minule to nevyšlo, zkus to teď!</div>':'')+_probHTML(pr); };
 const _act=act;
 act=function(a){
-  const F={ wheel:wheelOpen, album:()=>go({name:'album',pid:view.pid}), timed:timedStart, 't-go':timedGo, duel:()=>{ go({name:'duelSetup'}); }, 'duel-go':duelGo, 'duel-ready':duelReady, intro:()=>introOpen(true) };
+  const F={ wheel:wheelOpen, album:()=>go({name:'album',pid:view.pid}), timed:timedStart, 't-go':timedGo, duel:()=>{ go({name:'home'}); }, 'duel-go':duelGo, 'duel-ready':duelReady, intro:()=>introOpen(true) };
   if(F[a]) return F[a]();
   if(a==='savesettings'){ const fg=$('#s-fgoal'), fr=$('#s-freward'); if(fg){ const F2=familyCfg(); F2.goal=Math.max(0,parseInt(fg.value)||0); F2.reward=(fr.value||'').trim(); } }
   if(a==='hero' && (view.name==='timed'||view.name==='timedEnd'||view.name==='album')){ clearInterval(_tIv); return go({name:'hero',pid:view.pid}); }
@@ -2991,7 +2990,8 @@ act=function(a){
 };
 const _render=render;
 render=function(){
-  if(['album','timed','timedEnd','duelSetup','duel','duelEnd'].includes(view.name)){
+  if(['duelSetup','duel','duelEnd'].includes(view.name)) view={name:'home'};
+  if(['album','timed','timedEnd'].includes(view.name)){
     const V={album:albumView,timed:timedView,timedEnd:timedEndView,duelSetup:duelSetupView,duel:duelView,duelEnd:duelEndView}[view.name];
     $('#app').innerHTML=V(); bind(); updateSyncNote(); addReaders();
     if(view.name==='duelSetup'){ ['d-a','d-b'].forEach(id=>{ const s=$('#'+id); if(s) s.onchange=()=>{ view.a=$('#d-a').value; view.b2=$('#d-b').value; }; }); }
