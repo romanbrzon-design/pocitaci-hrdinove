@@ -1,0 +1,110 @@
+
+/* ============ Obrázky z Gemini (styl 3) ============ */
+const A_ = 'assets/';
+function heroStage(p){ const e=p.eq||{}; const s=(Math.min(7,e.weapon||0)/7+Math.min(5,e.shield||0)/5+Math.min(5,e.armor||0)/5+Math.min(5,e.head||0)/5)/4; return Math.max(0,Math.min(5,Math.round(s*5))); }
+function heroImg(p, opts={}){
+  const g=p.gender==='f'?'f':'m', comp=(p.eq||{}).pet;
+  return `<div class="av ${opts.glow?'glow':''}">${tintImg('hero_'+g+heroStage(p), 'hero_'+g, lookOf(p), 'class="main"')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
+}
+const _monsterSVG_old = monsterSVG, _sceneSVG_old = sceneSVG;
+monsterSVG = function(i){ return `<img class="monimg" src="${A_}mon${i}.webp" alt="${MONSTERS[i].name}" loading="lazy">`; };
+sceneSVG = function(i){ return `<img class="scene" src="${A_}bg${i}.webp" alt="" loading="lazy">`; };
+chestSVG = function(kind, open){ return `<img src="${A_}ui_chest_${kind==='gold'?'gold':'wood'}.webp" alt="" style="width:100%;${open?'filter:drop-shadow(0 0 16px #ffe066) brightness(1.12)':''}">`; };
+const ITEM_ICON = {weapon:9, shield:7, armor:7, head:7, boots:5, cape:5, pet:5, horse:4};
+function itemIcon(p, slot, tier){
+  if(((p&&p.mode)||'quest')==='quest' && ITEM_ICON[slot] && tier) return `<img src="${A_}i_${slot}${tier}.webp" alt="">`;
+  if(p && p.mode==='pet' && PET_ACC_IMG[slot] && tier) return `<img src="${A_}pa_${slot}${tier}.webp" alt="">`;
+  if(p && p.mode==='home' && HOME_IMG[slot] && tier) return `<img src="${A_}h_${slot}${tier}.webp" alt="">`;
+  return '';
+}
+// accessory images for pets / furniture for home — filled in once generated
+const PET_ACC_IMG = {toy:1,pbed:1,collar:1,phat:1,shoes:1,outfit:1,friend:1}, HOME_IMG = {bed:1,rug:1,wall:1,lamp:1,curtain:1,plant:1,hpet:1};
+const _petSVG_old = petSVG;
+const USE_PET_IMG = true; // zapne se, až budou doplňky zvířátek z Gemini
+// kotevní body zvířátek (zlomky šířky/výšky obrázku): x hlavy, temeno, šířka hlavy, krk, šířka krku, nohy y, nohy x, šířka nohou
+const PET_ANCH = {
+ cat_0:[.45,.10,.75,0.57,.45,.95,.42,.45], cat_1:[.42,.08,.60,0.45,.40,.95,.42,.40], dog_0:[.50,.08,.80,0.55,.45,.95,.48,.45], dog_1:[.45,.05,.70,0.45,.42,.95,.45,.45],
+ bunny_0:[.50,.30,.80,.62,.50,.95,.50,.50], bunny_1:[.47,.30,.70,.58,.45,.96,.47,.48], pony_0:[.45,.12,.55,0.6,.35,.92,.45,.45], pony_1:[.45,.07,.50,0.5,.30,.95,.45,.45],
+ rat_0:[.47,.12,.55,0.52,.35,.86,.45,.40], rat_1:[.42,.10,.50,0.48,.35,.86,.42,.40], hamster_0:[.50,.08,.85,.52,.70,.95,.50,.55], hamster_1:[.50,.07,.85,.48,.70,.95,.50,.55],
+ fox_0:[.45,.10,.70,.55,.40,.95,.42,.42], fox_1:[.42,.08,.60,.45,.35,.96,.40,.40], panda_0:[.50,.08,.75,0.52,.60,.90,.50,.60], panda_1:[.50,.06,.70,0.46,.55,.90,.50,.60],
+ owl_0:[.50,.05,.80,0.48,.60,.95,.50,.50], owl_1:[.50,.05,.70,0.43,.60,.95,.50,.50], dragon_0:[.50,.10,.55,0.5,.35,.95,.50,.45], dragon_1:[.50,.10,.50,.42,.30,.90,.50,.45]};
+const PET_DIM = {cat_0:[251,360],cat_1:[230,420],dog_0:[283,360],dog_1:[274,420],bunny_0:[186,360],bunny_1:[195,420],pony_0:[260,360],pony_1:[265,420],rat_0:[250,360],rat_1:[258,420],hamster_0:[248,360],hamster_1:[279,420],fox_0:[262,360],fox_1:[260,420],panda_0:[280,360],panda_1:[299,420],owl_0:[246,360],owl_1:[247,420],dragon_0:[300,360],dragon_1:[282,420]};
+const ov=(src,l,t,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;top:${(t*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
+const ovb=(src,l,b,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;bottom:${(b*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
+if(USE_PET_IMG) petSVG = function(p, opts={}){
+  const sp=p.species||'cat', st = opts.stage!==undefined ? opts.stage : petStage(p), k=sp+'_'+(st>=2?1:0);
+  const [hx,ht,hw,ny,nw,fy,fx,fw]=PET_ANCH[k]||PET_ANCH.cat_0, [W,H]=PET_DIM[k]||[250,360];
+  const e=p.eq||{}, sc=[0.62,0.76,0.86,0.98][st];
+  const ar=W/H; // poměr obrázku
+  let wrap=`<img class="main" src="${A_}pet_${k}.webp" alt="" style="z-index:3">`;
+  // vše v % šířky (left,width) a výšky (top) obalu zvířátka
+  if(e.outfit===3||e.outfit===5) wrap+=ov('pa_outfit'+e.outfit, hx-hw*.55, ny-.06, hw*1.1, 1);
+  if(e.outfit===2||e.outfit===4){ const w=nw*1.7; wrap+=ov('pa_outfit'+e.outfit, hx-w/2, ny-.03, w, 4); }
+  if(e.collar && e.outfit!==1){ const w=Math.min(.6,nw*1.05); wrap+=ov('pa_collarf'+e.collar, hx-w/2, ny-.035, w, 5); }
+  if(e.outfit===1){ const w=Math.min(.6,nw*1.15); wrap+=ov('pa_outfit1', hx-w/2, ny-w*ar*1.19*.15, w, 5); }
+  if(e.shoes){ const w=fw*.85; wrap+=ov('pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
+  if(e.phat){ const w=hw*.5; wrap+=ov('pa_phat'+e.phat, hx-w/2, ht-w*ar*.78*.72, w, 6); }
+  let out='';
+  if(e.pbed) out+=ovb('pa_pbed'+e.pbed, .12, 0, .76, 0);
+  if(e.toy) out+=ovb('pa_toy'+e.toy, opts.flip?.02:.74, .02, .2, 4);
+  if(e.friend) out+=ov('pa_friend'+e.friend, opts.flip?.72:.04, .04, .2, 4, 'animation:flut 2.6s ease-in-out infinite');
+  const h=(sc*(e.pbed?.84:.94)*100).toFixed(1);
+  return `<div class="av petav ${opts.glow?'glow':''}">${out}<div class="petwrap" style="height:${h}%;aspect-ratio:${W}/${H};bottom:${e.pbed?10:3}%;${opts.flip?'transform:translateX(-50%) scaleX(-1)':''}">${wrap}</div></div>`;
+};
+
+/* ---- Domeček ---- */
+roomSVG = function(p, opts={}){
+  const e=p.eq||{};
+  let s=`<img class="roombg" src="${A_}room${e.wall||0}.webp" alt="">`;
+  if(e.curtain) s+=ov('h_curtain'+e.curtain, .30, .13, .40, 2);
+  if(e.lamp>=4 && !opts.scene) s+=ov('h_lamp'+e.lamp, .14, -.01, .13, 3);
+  if(!opts.scene){
+    if(e.rug) s+=ovb('h_rug'+e.rug, .17, .01, .42, 2);
+    if(e.bed) s+=ovb('h_bed'+e.bed, .57, .03, .41, 3);
+    if(e.plant) s+=ovb('h_plant'+e.plant, .01, .06, .14, 3);
+    if(e.lamp && e.lamp<4) s+=ovb('h_lamp'+e.lamp, .16, .06, [0,.08,.1,.11][e.lamp], 3);
+    s+=tintImg('kid_'+(p.gender==='f'?'f':'m'), 'kid_'+(p.gender==='f'?'f':'m'), lookOf(p), 'class="ov" style="left:30%;bottom:4%;width:14%;z-index:5"');
+    if(e.hpet) s+=ovb('h_hpet'+e.hpet, .46, .02, .13, 6);
+  }
+  return `<div class="room ${opts.scene?'scene':''}">${s}</div>`;
+};
+kidSVG = function(p){ const g=p.gender==='f'?'f':'m'; return `<div class="av">${tintImg('kid_'+g,'kid_'+g,lookOf(p),'class="main"')}</div>`; };
+
+/* ---- návštěvy a pozadí soutěží (Gemini) ---- */
+guestSVG = function(i){ return `<div class="av"><img class="main" src="${A_}guest${i}.webp" alt=""></div>`; };
+contestScene = function(i){ return `<img class="scene" src="${A_}cbg${i}.webp" alt="">`; };
+
+/* ---- přebarvení oblečení (tričko / kalhoty-sukně / tunika) ---- */
+var TINT_CFG={
+ kid_m:{top:{h:[190,240],s:.25,y:[.36,.72]},bottom:{grey:1,v:[.35,.95],y:[.655,.935],x:[.15,.85]}},
+ kid_f:{top:{h:[35,70],s:.14,y:[.33,.56],x:[.2,.8]},bottom:{h:[315,360],h2:[0,10],s:.12,y:[.50,.74]}},
+ hero_m:{top:{h:[190,235],s:.2,y:[.30,.95]}},
+ hero_f:{top:{h:[318,360],h2:[0,12],s:.15,y:[.46,.95]}},
+};
+var _tintCache={}, _tintPend={};
+function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
+function tintImg(name, cfgKey, look, attrs){
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom)){ _tintPend[k]=1; const im=new Image();
+    im.onload=()=>{ try{ _tintCache[k]=doTint(im, TINT_CFG[cfgKey], look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
+    im.src=A_+name+'.webp'; }
+  return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
+}
+function doTint(im, cfg, look){
+  const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
+  for(const part of ['top','bottom']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+    const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
+    const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
+    for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue;
+      const r=a[i]/255, gg=a[i+1]/255, b=a[i+2]/255, mx=Math.max(r,gg,b), mn=Math.min(r,gg,b), s=mx>0?(mx-mn)/mx:0, dd=Math.max(mx-mn,1e-6);
+      let ok;
+      if(g.grey) ok = s<.14 && mx>=g.v[0] && mx<=g.v[1];
+      else { let h=mx===r?((gg-b)/dd)%6:mx===gg?(b-r)/dd+2:(r-gg)/dd+4; h*=60; if(h<0) h+=360;
+        ok = s>=g.s && mx>.25 && ((h>=g.h[0]&&h<=g.h[1]) || (g.h2 && h>=g.h2[0]&&h<=g.h2[1])); }
+      if(ok){ idx.push(i); vs.push(mx); } }
+    if(!idx.length) continue; const sv=vs.slice().sort((p,q)=>p-q), ref=sv[Math.floor(sv.length*.75)]||1;
+    for(let j=0;j<idx.length;j++){ const i=idx[j], f=Math.min(1.25, vs[j]/ref), ex=f>1?(f-1)*.8:0;
+      a[i]=Math.min(255,(t[0]*f+ex)*255); a[i+1]=Math.min(255,(t[1]*f+ex)*255); a[i+2]=Math.min(255,(t[2]*f+ex)*255); } }
+  x.putImageData(d,0,0); return c.toDataURL('image/png');
+}
