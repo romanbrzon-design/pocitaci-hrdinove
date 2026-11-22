@@ -2,9 +2,19 @@
 /* ============ Obrázky z Gemini (styl 3) ============ */
 const A_ = 'assets/';
 function heroStage(p){ const e=p.eq||{}; const s=(Math.min(7,e.weapon||0)/7+Math.min(5,e.shield||0)/5+Math.min(5,e.armor||0)/5+Math.min(5,e.head||0)/5)/4; return Math.max(0,Math.min(5,Math.round(s*5))); }
+// koupený plášť (za zády) a boty (na nohou) se kreslí přes obrázek hrdiny; [šířka obrázku, střed chodidel, šířka chodidel, levý a pravý okraj trupu] (zlomky šířky)
+const HERO_OV={m0:[234,.6,.585,.124,.85],m1:[250,.544,.552,.092,.952],m2:[230,.476,.613,.143,.965],m3:[226,.5,.611,.159,.987],m4:[205,.576,.615,.239,.917],m5:[269,.582,.509,.097,.944],f0:[220,.611,.605,.027,.845],f1:[250,.544,.552,.092,.948],f2:[233,.481,.609,0,.966],f3:[228,.526,.579,.092,.917],f4:[206,.575,.617,.087,.917],f5:[267,.581,.517,.064,.933]};
+function accImg(name, col, style, cfg){ return col ? tintImg(name,cfg||'__all',{all:col},`class="hacc" style="${style}"`) : `<img class="hacc" src="${A_}${name}.webp" alt="" style="${style}">`; }
+function heroFig(p, cls){
+  const g=p.gender==='f'?'f':'m', st=heroStage(p), k=g+st, [W,fc,fw,t0,t1]=HERO_OV[k]||HERO_OV.m0, e=p.eq||{}, l=lookOf(p), H=420;
+  let pre='', post='';
+  if(e.cape){ const cw=(t1-t0)*1.15; pre=accImg('i_cape'+e.cape, l.cape, `left:${((t0+t1)/2-cw/2)*100}%;top:30%;width:${cw*100}%;z-index:0`); }
+  if(e.boots){ const w=fw*1.08; post=accImg('i_boots'+e.boots, l.boots, `left:${(fc-w/2)*100}%;bottom:-.7%;width:${w*100}%;z-index:2`, '__allg'); }
+  return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${pre}${tintImg('hero_'+k, 'hero_'+g, l, 'class="hb"')}${post}</span>`;
+}
 function heroImg(p, opts={}){
   const g=p.gender==='f'?'f':'m', comp=(p.eq||{}).pet;
-  return `<div class="av ${opts.glow?'glow':''}">${tintImg('hero_'+g+heroStage(p), 'hero_'+g, lookOf(p), 'class="main"')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
+  return `<div class="av ${opts.glow?'glow':''}">${heroFig(p,'main')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
 }
 const _monsterSVG_old = monsterSVG, _sceneSVG_old = sceneSVG;
 monsterSVG = function(i){ return `<img class="monimg" src="${A_}mon${i}.webp" alt="${MONSTERS[i].name}" loading="lazy">`; };
@@ -31,22 +41,24 @@ const PET_ANCH = {
 const PET_DIM = {cat_0:[251,360],cat_1:[230,420],dog_0:[283,360],dog_1:[274,420],bunny_0:[186,360],bunny_1:[195,420],pony_0:[260,360],pony_1:[265,420],rat_0:[250,360],rat_1:[258,420],hamster_0:[248,360],hamster_1:[279,420],fox_0:[262,360],fox_1:[260,420],panda_0:[280,360],panda_1:[299,420],owl_0:[246,360],owl_1:[247,420],dragon_0:[300,360],dragon_1:[282,420]};
 const ov=(src,l,t,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;top:${(t*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
 const ovb=(src,l,b,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;bottom:${(b*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
-if(USE_PET_IMG) petSVG = function(p, opts={}){
+const ovc=(col,src,l,t,w,z,extra='')=>col?tintImg(src,'__all',{all:col},`class="ov" style="left:${(l*100).toFixed(1)}%;top:${(t*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}"`):ov(src,l,t,w,z,extra);
+const ovbc=(col,src,l,b,w,z,extra='')=>col?tintImg(src,'__all',{all:col},`class="ov" style="left:${(l*100).toFixed(1)}%;bottom:${(b*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}"`):ovb(src,l,b,w,z,extra);
+if(USE_PET_IMG) petSVG = function(p, opts={}){ const pl=p.look||{};
   const sp=p.species||'cat', st = opts.stage!==undefined ? opts.stage : petStage(p), k=sp+'_'+(st>=2?1:0);
   const [hx,ht,hw,ny,nw,fy,fx,fw]=PET_ANCH[k]||PET_ANCH.cat_0, [W,H]=PET_DIM[k]||[250,360];
   const e=p.eq||{}, sc=[0.62,0.76,0.86,0.98][st];
   const ar=W/H; // poměr obrázku
   let wrap=`<img class="main" src="${A_}pet_${k}.webp" alt="" style="z-index:3">`;
   // vše v % šířky (left,width) a výšky (top) obalu zvířátka
-  if(e.outfit===3||e.outfit===5) wrap+=ov('pa_outfit'+e.outfit, hx-hw*.55, ny-.06, hw*1.1, 1);
-  if(e.outfit===2||e.outfit===4){ const w=nw*1.7; wrap+=ov('pa_outfit'+e.outfit, hx-w/2, ny-.03, w, 4); }
-  if(e.collar && e.outfit!==1){ const w=Math.min(.6,nw*1.05); wrap+=ov('pa_collarf'+e.collar, hx-w/2, ny-.035, w, 5); }
-  if(e.outfit===1){ const w=Math.min(.6,nw*1.15); wrap+=ov('pa_outfit1', hx-w/2, ny-w*ar*1.19*.15, w, 5); }
-  if(e.shoes){ const w=fw*.85; wrap+=ov('pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
-  if(e.phat){ const w=hw*.5; wrap+=ov('pa_phat'+e.phat, hx-w/2, ht-w*ar*.78*.72, w, 6); }
+  if(e.outfit===3||e.outfit===5) wrap+=ovc(pl.p_outfit,'pa_outfit'+e.outfit, hx-hw*.55, ny-.06, hw*1.1, 1);
+  if(e.outfit===2||e.outfit===4){ const w=nw*1.7; wrap+=ovc(pl.p_outfit,'pa_outfit'+e.outfit, hx-w/2, ny-.03, w, 4); }
+  if(e.collar && e.outfit!==1){ const w=Math.min(.6,nw*1.05); wrap+=ovc(pl.p_collar,'pa_collarf'+e.collar, hx-w/2, ny-.035, w, 5); }
+  if(e.outfit===1){ const w=Math.min(.6,nw*1.15); wrap+=ovc(pl.p_outfit,'pa_outfit1', hx-w/2, ny-w*ar*1.19*.15, w, 5); }
+  if(e.shoes){ const w=fw*.85; wrap+=ovc(pl.p_shoes,'pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
+  if(e.phat){ const w=hw*.5; wrap+=ovc(pl.p_phat,'pa_phat'+e.phat, hx-w/2, ht-w*ar*.78*.72, w, 6); }
   let out='';
-  if(e.pbed) out+=ovb('pa_pbed'+e.pbed, .12, 0, .76, 0);
-  if(e.toy) out+=ovb('pa_toy'+e.toy, opts.flip?.02:.74, .02, .2, 4);
+  if(e.pbed) out+=ovbc(pl.p_pbed,'pa_pbed'+e.pbed, .12, 0, .76, 0);
+  if(e.toy) out+=ovbc(pl.p_toy,'pa_toy'+e.toy, opts.flip?.02:.74, .02, .2, 4);
   if(e.friend) out+=ov('pa_friend'+e.friend, opts.flip?.72:.04, .04, .2, 4, 'animation:flut 2.6s ease-in-out infinite');
   const h=(sc*(e.pbed?.84:.94)*100).toFixed(1);
   return `<div class="av petav ${opts.glow?'glow':''}">${out}<div class="petwrap" style="height:${h}%;aspect-ratio:${W}/${H};bottom:${e.pbed?10:3}%;${opts.flip?'transform:translateX(-50%) scaleX(-1)':''}">${wrap}</div></div>`;
@@ -85,11 +97,12 @@ var TINT_CFG={
  hero_m4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}}, hero_f4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}},
  hero_m5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}}, hero_f5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}},
 };
+TINT_CFG.__all={all:{h:[0,360],s:.18,y:[0,1]}}; TINT_CFG.__allg={all:{h:[0,360],s:0,y:[0,1]}};
 var _tintCache={}, _tintPend={};
 function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
 function tintImg(name, cfgKey, look, attrs){
-  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||''); const done=_tintCache[k];
-  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape)){ _tintPend[k]=1; const im=new Image();
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||'')+'|'+(look.all||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape||look.all)){ _tintPend[k]=1; const im=new Image();
     im.onload=()=>{ try{ _tintCache[k]=doTint(im, Object.assign({}, TINT_CFG[cfgKey], TINT_CFG[name]), look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
     im.src=A_+name+'.webp'; }
   return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
@@ -97,7 +110,7 @@ function tintImg(name, cfgKey, look, attrs){
 function doTint(im, cfg, look){
   const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
-  for(const part of ['top','bottom','cape']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+  for(const part of ['top','bottom','cape','all']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
     const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
     const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
     for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue; if(g.ex && xx>=g.ex[0]*W && xx<g.ex[1]*W && yy>=g.ex[2]*H && yy<g.ex[3]*H) continue;

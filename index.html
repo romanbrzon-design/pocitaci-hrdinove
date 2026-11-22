@@ -274,6 +274,10 @@ h3{color:#fff;text-shadow:0 2px 0 #5a3415,0 0 6px rgba(0,0,0,.35);font-size:24px
 /* images */
 .av{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;aspect-ratio:240/250;max-width:240px;margin:0 auto}
 .av img.main{max-height:96%;max-width:92%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25));position:relative;z-index:1}
+.av .hfig{position:relative;display:block;height:96%;max-width:92%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.av .hfig img.hb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1}
+.av .hfig img.hacc{position:absolute;height:auto}
+.anim .av .hfig.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .av img.comp{position:absolute;right:2%;bottom:2%;width:28%;z-index:2;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
 .av.glow::before{content:"";position:absolute;inset:5%;background:radial-gradient(circle,#fff6b0 0,transparent 65%);z-index:0}
 .anim .av img.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
@@ -363,12 +367,13 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
 .av.rider{align-items:flex-end;justify-content:flex-end}
 .av.rider img.horse{position:absolute;left:-4%;bottom:0;width:64%;max-height:72%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.av.rider img.riderimg{position:relative;max-height:96%;max-width:46%;margin-right:0;object-fit:contain;z-index:2;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.anim .av.rider img.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.av.rider .hfig.riderimg{position:relative;height:88%;margin-right:0;z-index:2}
+.anim .av.rider .hfig.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .av.rider img.comp{right:-2%;width:22%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}
 .addpic{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}.addpic .grp{display:grid;grid-template-columns:repeat(5,auto);gap:2px 3px;background:#fff7e6;border:2px dashed #e8c06a;border-radius:12px;padding:3px 5px}.addpic .emo{font-size:22px;line-height:1.15}.addpic .op{font:900 34px Nunito,sans-serif;color:#5a3412}
+.lkparts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 6px}.lkparts .btn{display:inline-flex;align-items:center;gap:4px}.lkdot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0003}
 
 </style>
 </head>
@@ -1716,9 +1721,19 @@ function feed(fid){
 /* ============ Obrázky z Gemini (styl 3) ============ */
 const A_ = 'assets/';
 function heroStage(p){ const e=p.eq||{}; const s=(Math.min(7,e.weapon||0)/7+Math.min(5,e.shield||0)/5+Math.min(5,e.armor||0)/5+Math.min(5,e.head||0)/5)/4; return Math.max(0,Math.min(5,Math.round(s*5))); }
+// koupený plášť (za zády) a boty (na nohou) se kreslí přes obrázek hrdiny; [šířka obrázku, střed chodidel, šířka chodidel, levý a pravý okraj trupu] (zlomky šířky)
+const HERO_OV={m0:[234,.6,.585,.124,.85],m1:[250,.544,.552,.092,.952],m2:[230,.476,.613,.143,.965],m3:[226,.5,.611,.159,.987],m4:[205,.576,.615,.239,.917],m5:[269,.582,.509,.097,.944],f0:[220,.611,.605,.027,.845],f1:[250,.544,.552,.092,.948],f2:[233,.481,.609,0,.966],f3:[228,.526,.579,.092,.917],f4:[206,.575,.617,.087,.917],f5:[267,.581,.517,.064,.933]};
+function accImg(name, col, style, cfg){ return col ? tintImg(name,cfg||'__all',{all:col},`class="hacc" style="${style}"`) : `<img class="hacc" src="${A_}${name}.webp" alt="" style="${style}">`; }
+function heroFig(p, cls){
+  const g=p.gender==='f'?'f':'m', st=heroStage(p), k=g+st, [W,fc,fw,t0,t1]=HERO_OV[k]||HERO_OV.m0, e=p.eq||{}, l=lookOf(p), H=420;
+  let pre='', post='';
+  if(e.cape){ const cw=(t1-t0)*1.15; pre=accImg('i_cape'+e.cape, l.cape, `left:${((t0+t1)/2-cw/2)*100}%;top:30%;width:${cw*100}%;z-index:0`); }
+  if(e.boots){ const w=fw*1.08; post=accImg('i_boots'+e.boots, l.boots, `left:${(fc-w/2)*100}%;bottom:-.7%;width:${w*100}%;z-index:2`, '__allg'); }
+  return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${pre}${tintImg('hero_'+k, 'hero_'+g, l, 'class="hb"')}${post}</span>`;
+}
 function heroImg(p, opts={}){
   const g=p.gender==='f'?'f':'m', comp=(p.eq||{}).pet;
-  return `<div class="av ${opts.glow?'glow':''}">${tintImg('hero_'+g+heroStage(p), 'hero_'+g, lookOf(p), 'class="main"')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
+  return `<div class="av ${opts.glow?'glow':''}">${heroFig(p,'main')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
 }
 const _monsterSVG_old = monsterSVG, _sceneSVG_old = sceneSVG;
 monsterSVG = function(i){ return `<img class="monimg" src="${A_}mon${i}.webp" alt="${MONSTERS[i].name}" loading="lazy">`; };
@@ -1745,22 +1760,24 @@ const PET_ANCH = {
 const PET_DIM = {cat_0:[251,360],cat_1:[230,420],dog_0:[283,360],dog_1:[274,420],bunny_0:[186,360],bunny_1:[195,420],pony_0:[260,360],pony_1:[265,420],rat_0:[250,360],rat_1:[258,420],hamster_0:[248,360],hamster_1:[279,420],fox_0:[262,360],fox_1:[260,420],panda_0:[280,360],panda_1:[299,420],owl_0:[246,360],owl_1:[247,420],dragon_0:[300,360],dragon_1:[282,420]};
 const ov=(src,l,t,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;top:${(t*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
 const ovb=(src,l,b,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;bottom:${(b*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
-if(USE_PET_IMG) petSVG = function(p, opts={}){
+const ovc=(col,src,l,t,w,z,extra='')=>col?tintImg(src,'__all',{all:col},`class="ov" style="left:${(l*100).toFixed(1)}%;top:${(t*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}"`):ov(src,l,t,w,z,extra);
+const ovbc=(col,src,l,b,w,z,extra='')=>col?tintImg(src,'__all',{all:col},`class="ov" style="left:${(l*100).toFixed(1)}%;bottom:${(b*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}"`):ovb(src,l,b,w,z,extra);
+if(USE_PET_IMG) petSVG = function(p, opts={}){ const pl=p.look||{};
   const sp=p.species||'cat', st = opts.stage!==undefined ? opts.stage : petStage(p), k=sp+'_'+(st>=2?1:0);
   const [hx,ht,hw,ny,nw,fy,fx,fw]=PET_ANCH[k]||PET_ANCH.cat_0, [W,H]=PET_DIM[k]||[250,360];
   const e=p.eq||{}, sc=[0.62,0.76,0.86,0.98][st];
   const ar=W/H; // poměr obrázku
   let wrap=`<img class="main" src="${A_}pet_${k}.webp" alt="" style="z-index:3">`;
   // vše v % šířky (left,width) a výšky (top) obalu zvířátka
-  if(e.outfit===3||e.outfit===5) wrap+=ov('pa_outfit'+e.outfit, hx-hw*.55, ny-.06, hw*1.1, 1);
-  if(e.outfit===2||e.outfit===4){ const w=nw*1.7; wrap+=ov('pa_outfit'+e.outfit, hx-w/2, ny-.03, w, 4); }
-  if(e.collar && e.outfit!==1){ const w=Math.min(.6,nw*1.05); wrap+=ov('pa_collarf'+e.collar, hx-w/2, ny-.035, w, 5); }
-  if(e.outfit===1){ const w=Math.min(.6,nw*1.15); wrap+=ov('pa_outfit1', hx-w/2, ny-w*ar*1.19*.15, w, 5); }
-  if(e.shoes){ const w=fw*.85; wrap+=ov('pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
-  if(e.phat){ const w=hw*.5; wrap+=ov('pa_phat'+e.phat, hx-w/2, ht-w*ar*.78*.72, w, 6); }
+  if(e.outfit===3||e.outfit===5) wrap+=ovc(pl.p_outfit,'pa_outfit'+e.outfit, hx-hw*.55, ny-.06, hw*1.1, 1);
+  if(e.outfit===2||e.outfit===4){ const w=nw*1.7; wrap+=ovc(pl.p_outfit,'pa_outfit'+e.outfit, hx-w/2, ny-.03, w, 4); }
+  if(e.collar && e.outfit!==1){ const w=Math.min(.6,nw*1.05); wrap+=ovc(pl.p_collar,'pa_collarf'+e.collar, hx-w/2, ny-.035, w, 5); }
+  if(e.outfit===1){ const w=Math.min(.6,nw*1.15); wrap+=ovc(pl.p_outfit,'pa_outfit1', hx-w/2, ny-w*ar*1.19*.15, w, 5); }
+  if(e.shoes){ const w=fw*.85; wrap+=ovc(pl.p_shoes,'pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
+  if(e.phat){ const w=hw*.5; wrap+=ovc(pl.p_phat,'pa_phat'+e.phat, hx-w/2, ht-w*ar*.78*.72, w, 6); }
   let out='';
-  if(e.pbed) out+=ovb('pa_pbed'+e.pbed, .12, 0, .76, 0);
-  if(e.toy) out+=ovb('pa_toy'+e.toy, opts.flip?.02:.74, .02, .2, 4);
+  if(e.pbed) out+=ovbc(pl.p_pbed,'pa_pbed'+e.pbed, .12, 0, .76, 0);
+  if(e.toy) out+=ovbc(pl.p_toy,'pa_toy'+e.toy, opts.flip?.02:.74, .02, .2, 4);
   if(e.friend) out+=ov('pa_friend'+e.friend, opts.flip?.72:.04, .04, .2, 4, 'animation:flut 2.6s ease-in-out infinite');
   const h=(sc*(e.pbed?.84:.94)*100).toFixed(1);
   return `<div class="av petav ${opts.glow?'glow':''}">${out}<div class="petwrap" style="height:${h}%;aspect-ratio:${W}/${H};bottom:${e.pbed?10:3}%;${opts.flip?'transform:translateX(-50%) scaleX(-1)':''}">${wrap}</div></div>`;
@@ -1799,11 +1816,12 @@ var TINT_CFG={
  hero_m4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}}, hero_f4:{top:null,cape:{h:[200,235],s:.35,y:[.3,1],ex:[.6,1,.3,.82]}},
  hero_m5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}}, hero_f5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}},
 };
+TINT_CFG.__all={all:{h:[0,360],s:.18,y:[0,1]}}; TINT_CFG.__allg={all:{h:[0,360],s:0,y:[0,1]}};
 var _tintCache={}, _tintPend={};
 function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
 function tintImg(name, cfgKey, look, attrs){
-  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||''); const done=_tintCache[k];
-  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape)){ _tintPend[k]=1; const im=new Image();
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||'')+'|'+(look.all||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape||look.all)){ _tintPend[k]=1; const im=new Image();
     im.onload=()=>{ try{ _tintCache[k]=doTint(im, Object.assign({}, TINT_CFG[cfgKey], TINT_CFG[name]), look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
     im.src=A_+name+'.webp'; }
   return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
@@ -1811,7 +1829,7 @@ function tintImg(name, cfgKey, look, attrs){
 function doTint(im, cfg, look){
   const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
-  for(const part of ['top','bottom','cape']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+  for(const part of ['top','bottom','cape','all']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
     const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
     const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
     for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue; if(g.ex && xx>=g.ex[0]*W && xx<g.ex[1]*W && yy>=g.ex[2]*H && yy<g.ex[3]*H) continue;
@@ -1875,7 +1893,7 @@ const _heroImg0=heroImg;
 heroImg=function(p,opts={}){
   const hz=(p.eq||{}).horse; if(!hz) return _heroImg0(p,opts);
   const g=p.gender==='f'?'f':'m', comp=(p.eq||{}).pet;
-  return `<div class="av rider ${opts.glow?'glow':''}"><img class="horse" src="${A_}horse${hz}.webp" alt="">${tintImg('hero_'+g+heroStage(p),'hero_'+g,lookOf(p),'class="riderimg"')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
+  return `<div class="av rider ${opts.glow?'glow':''}"><img class="horse" src="${A_}horse${hz}.webp" alt="">${heroFig(p,'riderimg')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
 };
 // parťák u zvířátka
 const _petSVG1=petSVG;
@@ -3019,16 +3037,22 @@ setTimeout(()=>{ if(view.name==='home') introOpen(false); }, 600);
 /* ============ 🎨 Barvy oblečení – dítě si je nastaví samo ============ */
 var LOOK_COLORS=['#e8435a','#ff7a45','#f2a900','#21b37a','#1fb5c9','#4f7cff','#c04cf5','#ff6fb5','#8a5a2b','#9a9aa8','#2b2b2b','#f5f0e6'];
 function lookOpen(){
-  const p=prof(view.pid); if(!p) return; const M=p.mode||'quest'; if(M==='pet') return;
-  const parts = M==='home' ? [['top','👕 Tričko'],['bottom', p.gender==='f'?'👗 Sukně':'👖 Kalhoty']] : [['top','🧥 Tunika'],['cape','🦸 Plášť']];
-  const m=document.createElement('div'); m.className='modal';
-  const draw=()=>{ const l=lookOf(p);
-    m.innerHTML=`<div class="card center" style="max-width:520px"><h2 style="margin:4px 0">🎨 Barvy oblečení</h2>
-      <div style="max-width:170px;margin:0 auto">${M==='home'?kidSVG(p):heroImg(p)}</div>
-      ${parts.map(([k,lab])=>`<div style="margin:10px 0"><b>${lab}</b><div class="swatches">${LOOK_COLORS.map(c=>`<button class="sw ${l[k]===c?'on':''}" data-part="${k}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}${k!=='top'?`<button class="sw orig ${!l[k]?'on':''}" data-part="${k}" data-c="" title="Původní">↺</button>`:''}</div></div>`).join('')}
-      ${M==='quest'?'<p class="muted" style="font-size:14px">Tunika je vidět, dokud nemáš rytířské brnění. Pak se barví plášť.</p>':''}
+  const p=prof(view.pid); if(!p) return; const M=p.mode||'quest', e=p.eq||{};
+  const PETC=[['outfit','👕'],['collar','📿'],['phat','🎀'],['shoes','👟'],['toy','🧸'],['pbed','🛏️']];
+  const parts = M==='home' ? [['top','👕 Tričko'],['bottom', p.gender==='f'?'👗 Sukně':'👖 Kalhoty']]
+    : M==='pet' ? PETC.filter(([s])=>e[s]).map(([s,ic])=>['p_'+s, ic+' '+((PET_SLOTS.find(x=>x.id===s).items[e[s]-1]||[PET_SLOTS.find(x=>x.id===s).name])[0])])
+    : [['top','🧥 Tunika'],['cape','🦸 Plášť'], ...(e.boots?[['boots','🥾 Boty']]:[])];
+  if(!parts.length){ toast('Nejdřív zvířátku něco kup v obchodě 🛍️'); return; }
+  const m=document.createElement('div'); m.className='modal'; let cur=parts[0][0];
+  const draw=()=>{ const l=lookOf(p); const k=cur;
+    m.innerHTML=`<div class="card center" style="max-width:520px"><h2 style="margin:4px 0">🎨 ${M==='pet'?'Barvy doplňků':'Barvy oblečení'}</h2>
+      <div style="max-width:170px;margin:0 auto">${M==='home'?kidSVG(p):M==='pet'?petSVG(p):heroImg(p)}</div>
+      <div class="lkparts">${parts.map(([pk,lab])=>`<button class="btn small ${pk===k?'':'sec'}" data-pk="${pk}">${l[pk]?`<span class="lkdot" style="background:${l[pk]}"></span>`:''}${lab}</button>`).join('')}</div>
+      <div class="swatches">${LOOK_COLORS.map(c=>`<button class="sw ${l[k]===c?'on':''}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}${k!=='top'?`<button class="sw orig ${!l[k]?'on':''}" data-c="" title="Původní barva">↺</button>`:''}</div>
+      ${M==='quest'?'<p class="muted" style="font-size:14px">Tunika je vidět, dokud nemáš rytířské brnění. Barva pláště platí pro rytířský i koupený plášť.</p>':''}
       <button class="btn gold" id="lkok">Hotovo</button></div>`;
-    m.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ p.look=p.look||{}; const part=b.dataset.part, c=b.dataset.c; if(c) p.look[part]=c; else delete p.look[part]; if(part==='top' && c) p.color=c; save(); draw(); });
+    m.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{ cur=b.dataset.pk; draw(); });
+    m.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ p.look=p.look||{}; const c=b.dataset.c; if(c) p.look[k]=c; else delete p.look[k]; if(k==='top' && c) p.color=c; save(); draw(); });
     m.querySelector('#lkok').onclick=()=>{ m.remove(); render(); };
   };
   draw(); document.body.appendChild(m);
@@ -3036,7 +3060,7 @@ function lookOpen(){
 const _actLook=act;
 act=function(a){ if(a==='look') return lookOpen(); return _actLook(a); };
 const _funHeroLook=funHeroHTML;
-funHeroHTML=function(p){ const h=_funHeroLook(p); if(!p || p.mode==='pet') return h; return h.replace('<div class="funrow">','<div class="funrow"><button class="btn sec" data-act="look">🎨 Barvy oblečení</button>'); };
+funHeroHTML=function(p){ const h=_funHeroLook(p); if(!p) return h; return h.replace('<div class="funrow">',`<div class="funrow"><button class="btn sec" data-act="look">🎨 ${p.mode==='pet'?'Barvy doplňků':'Barvy oblečení'}</button>`); };
 // koupená věc se rovnou použije / nasadí (je vždy lepší než ta dosavadní)
 const _buyLook=buy;
 buy=function(slot){ const p=prof(view.pid); const before=(p.owned||{})[slot]||0; _buyLook(slot);

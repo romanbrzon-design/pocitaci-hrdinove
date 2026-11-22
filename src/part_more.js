@@ -47,7 +47,7 @@ const _heroImg0=heroImg;
 heroImg=function(p,opts={}){
   const hz=(p.eq||{}).horse; if(!hz) return _heroImg0(p,opts);
   const g=p.gender==='f'?'f':'m', comp=(p.eq||{}).pet;
-  return `<div class="av rider ${opts.glow?'glow':''}"><img class="horse" src="${A_}horse${hz}.webp" alt="">${tintImg('hero_'+g+heroStage(p),'hero_'+g,lookOf(p),'class="riderimg"')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
+  return `<div class="av rider ${opts.glow?'glow':''}"><img class="horse" src="${A_}horse${hz}.webp" alt="">${heroFig(p,'riderimg')}${comp?`<img class="comp" src="${A_}i_pet${comp}.webp" alt="">`:''}</div>`;
 };
 // parťák u zvířátka
 const _petSVG1=petSVG;
