@@ -846,13 +846,13 @@ const EN_PIC = [ // [english, emoji, czech, min grade]
   ['orange','🍊','pomeranč',1],['strawberry','🍓','jahoda',1],['bread','🍞','chléb',1],['milk','🥛','mléko',1],['egg','🥚','vejce',1],['cake','🎂','dort',1],['book','📖','kniha',1],['bus','🚌','autobus',1],
   ['train','🚂','vlak',1],['moon','🌙','měsíc',1],['star','⭐','hvězda',1],['bike','🚲','kolo',2],['plane','✈️','letadlo',2],['boat','⛵','loď',2],['chair','🪑','židle',2],['bed','🛏️','postel',2],
   ['cheese','🧀','sýr',2],['carrot','🥕','mrkev',2],['tomato','🍅','rajče',2],['grapes','🍇','hroznové víno',2],['ice cream','🍦','zmrzlina',2],['pizza','🍕','pizza',2],['snake','🐍','had',2],['tiger','🐯','tygr',2],
-  ['chicken','🐔','slepice',2],['hat','🎩','klobouk',2],['shoe','👟','bota',2],['cup','☕','hrnek',2],['eye','👁️','oko',3],['ear','👂','ucho',3],['nose','👃','nos',3],['hand','✋','ruka',3],
+  ['hen','🐔','slepice',2],['hat','🎩','klobouk',2],['shoe','👟','bota',2],['cup','☕','hrnek',2],['eye','👁️','oko',3],['ear','👂','ucho',3],['nose','👃','nos',3],['hand','✋','ruka',3],
   ['clock','⏰','hodiny',3],['key','🔑','klíč',3],['umbrella','☂️','deštník',3],['pencil','✏️','tužka',3],['school','🏫','škola',3],['rainbow','🌈','duha',3],['snowman','⛄','sněhulák',3],['rocket','🚀','raketa',3],
   ['butterfly','🦋','motýl',4],['spider','🕷️','pavouk',4],['mushroom','🍄','houba',4],['candle','🕯️','svíčka',4],['scissors','✂️','nůžky',4],['computer','💻','počítač',4],['guitar','🎸','kytara',4],['castle','🏰','hrad',4],
 ];
 const EN_COLORS = [['red','#e8323c','červená'],['blue','#2f6fe0','modrá'],['green','#2fae4f','zelená'],['yellow','#f7d02c','žlutá'],['orange','#ff8c1a','oranžová'],['purple','#9b4dd6','fialová'],['pink','#ff8fc8','růžová'],['brown','#8a5a2b','hnědá'],['black','#2b2b2b','černá'],['white','#ffffff','bílá'],['grey','#9a9aa8','šedá']];
 const EN_WORDS = [ // reading: [english, czech, grade]
-  ['mother','maminka',2],['father','tatínek',2],['sister','sestra',2],['brother','bratr',2],['friend','kamarád',2],['teacher','učitel',2],['big','velký',2],['small','malý',2],['happy','veselý',2],['sad','smutný',2],
+  ['mother','matka',2],['father','otec',2],['sister','sestra',2],['brother','bratr',2],['friend','kamarád',2],['teacher','učitel',2],['big','velký',2],['small','malý',2],['happy','veselý',2],['sad','smutný',2],
   ['hot','horký',3],['cold','studený',3],['run','běhat',3],['swim','plavat',3],['jump','skákat',3],['eat','jíst',3],['sleep','spát',3],['read','číst',3],['write','psát',3],['sing','zpívat',3],['play','hrát si',3],['water','voda',3],
   ['Monday','pondělí',4],['Tuesday','úterý',4],['Wednesday','středa',4],['Thursday','čtvrtek',4],['Friday','pátek',4],['Saturday','sobota',4],['Sunday','neděle',4],['winter','zima',4],['summer','léto',4],['spring','jaro',4],['autumn','podzim',4],
   ['January','leden',5],['March','březen',5],['July','červenec',5],['December','prosinec',5],['beautiful','krásný',5],['strong','silný',5],['quick','rychlý',5],['slow','pomalý',5],['always','vždycky',5],['never','nikdy',5],['weather','počasí',5],['holiday','prázdniny',5],
@@ -879,22 +879,22 @@ function misspell(w){
 }
 Object.assign(CATS, {
   en_listen: {grade:0, subj:'en', label:'Poslech – najdi obrázek', gen(){
-    const pool=byGrade(EN_PIC,3); const n=CUR_GRADE===0?3:4; const opts=pickN(pool,n); const t=opts[ri(0,n-1)];
+    const pool=byGrade(EN_PIC,3); const n=CUR_GRADE===0?3:4; const t=pick(pool); const opts=shuffle([t,...pickN(pool.filter(x=>x!==t && !enClash(x[0],t[0])),n-1)]);
     return Object.assign(choice(`🎧 Poslouchej a najdi obrázek`, t[0], opts.map(o=>em(o[1],52)), opts.indexOf(t), '', 'enl|'+t[0]+'|'+opts.map(o=>o[0]).join()), {lang:'en-GB'});
   }},
   en_colors: {grade:0, subj:'en', label:'Poslech – barvy', gen(){
-    const opts=pickN(EN_COLORS.slice(0,CUR_GRADE<=1?8:11), CUR_GRADE===0?3:4); const t=opts[ri(0,opts.length-1)];
+    const opts=pickN(EN_COLORS.slice(0,CUR_GRADE<=1?10:11), CUR_GRADE===0?3:4); const t=opts[ri(0,opts.length-1)];
     return Object.assign(choice(`🎧 Jakou barvu slyšíš?`, t[0], opts.map(o=>blob(o[1])), opts.indexOf(t), '', 'enc|'+t[0]+'|'+opts.map(o=>o[0]).join()), {lang:'en-GB'});
   }},
   en_numbers: {grade:0, subj:'en', label:'Poslech – čísla', gen(){
-    const max=[5,10,20,50,100,100][Math.min(5,CUR_GRADE)]; const n=ri(1,max);
+    const max=[5,12,20,50,100,100][Math.min(5,CUR_GRADE)]; const n=ri(1,max);
     const set=new Set([n]); while(set.size<4){ const d=ri(1,max); set.add(d); } if(max>20 && n>20){ set.delete([...set].pop()); const sw=(n%10)*10+Math.floor(n/10); if(sw!==n&&sw>0&&sw<=100) set.add(sw); while(set.size<4) set.add(ri(1,max)); }
     const opts=shuffle([...set]);
     return Object.assign(choice(`🎧 Jaké číslo slyšíš?`, enNum(n), opts.map(x=>`<span class="num0">${x}</span>`), opts.indexOf(n), '', 'enn|'+n+'|'+opts.join()), {lang:'en-GB'});
   }},
   en_read: {grade:2, subj:'en', label:'Čtení – co slovo znamená', gen(){
     const pool=[...EN_WORDS, ...EN_PIC.filter(x=>x[3]>=1).map(x=>[x[0],x[2],x[3]+1])]; const p2=byGrade(pool,2);
-    const t=pick(p2); const others=pickN(pool.filter(x=>x[1]!==t[1]),3); const opts=shuffle([t,...others]);
+    const t=pick(p2); const others=pickN(pool.filter(x=>x[1]!==t[1] && !enClash(x[0],t[0])),3); const opts=shuffle([t,...others]);
     return Object.assign(choice(`Co znamená <b>${t[0]}</b>?`, t[0], opts.map(o=>txt(o[1])), opts.indexOf(t), '', 'enr|'+t[0]), {lang:'en-GB', sayOnly:true});
   }},
   en_write: {grade:3, subj:'en', label:'Psaní – správně napsané slovo', gen(){
@@ -908,6 +908,26 @@ Object.assign(CATS, {
     return Object.assign(choice(`🎧 <b>${t[0]}</b> – co to znamená?`, t[0], opts.map(o=>txt(o[1])), opts.indexOf(t), '', 'enp|'+t[0]), {lang:'en-GB'});
   }},
 });
+
+/* ---- Slovíčka z učebnice angličtiny pro 1. třídu (lekce Intro–9) – patří do běžné zásoby; jen slova s jednoznačným obrázkem ---- */
+const EN_BOOK1 = [ // [lekce, anglicky, obrázek, česky]
+  [0,'hello','👋','ahoj'],[0,'happy','😀','veselý'],[0,'sad','😢','smutný'],[0,'sleepy','😴','ospalý'],[0,'sick','🤒','nemocný'],
+  [1,'walk','🚶','chodit'],[1,'swim','🏊','plavat'],[1,'clap','👏','tleskat'],
+  [3,'pen','🖊️','pero'],[3,'pencil','✏️','tužka'],[3,'ruler','📏','pravítko'],[3,'book','📖','kniha'],[3,'bag','🎒','taška'],[3,'crayons','🖍️','pastelky'],[3,'scissors','✂️','nůžky'],
+  [4,'bridge','🌉','most'],[4,'goal','🥅','branka'],
+  [5,'arm','💪','paže'],[5,'leg','🦵','noha'],[5,'foot','🦶','chodidlo'],[5,'hand','✋','ruka'],[5,'eye','👁️','oko'],[5,'ear','👂','ucho'],[5,'mouth','👄','pusa'],[5,'nose','👃','nos'],
+  [6,'pizza','🍕','pizza'],[6,'spaghetti','🍝','špagety'],[6,'salad','🥗','salát'],[6,'hamburger','🍔','hamburger'],[6,'chicken','🍗','kuře'],[6,'fish','🐟','ryba'],[6,'chips','🍟','hranolky'],[6,'soup','🍲','polévka'],[6,'sandwich','🥪','sendvič'],
+  [7,'monkey','🐵','opice'],[7,'parrot','🦜','papoušek'],[7,'giraffe','🦒','žirafa'],[7,'zebra','🦓','zebra'],[7,'hippo','🦛','hroch'],[7,'lion','🦁','lev'],[7,'tiger','🐯','tygr'],[7,'snake','🐍','had'],[7,'crocodile','🐊','krokodýl'],[7,'elephant','🐘','slon'],
+  [8,'mum','👩','maminka'],[8,'dad','👨','tatínek'],[8,'brother','👦','bratr'],[8,'sister','👧','sestra'],[8,'baby','👶','miminko'],[8,'grandma','👵','babička'],[8,'grandad','👴','dědeček'],
+  [9,'gloves','🧤','rukavice'],[9,'scarf','🧣','šála'],[9,'boots','🥾','zimní boty'],[9,'socks','🧦','ponožky'],[9,'sandals','👡','sandály'],[9,'swimsuit','🩱','plavky'],[9,'sunglasses','🕶️','sluneční brýle'],[9,'cap','🧢','kšiltovka'],
+];
+// přidat do běžné zásoby jako slovíčka 1. třídy; slova, která tam už jsou, se přesunou do 1. třídy
+for(const w of EN_BOOK1){ const e=EN_PIC.find(x=>x[0]===w[1]); if(e) e[3]=Math.min(e[3],1); else if(!EN_PIC.some(x=>x[1]===w[2])) EN_PIC.push([w[1],w[2],w[3],1]); }
+// slova, která už jsou s obrázkem, se neopakují ve čtecím seznamu (jinak by mohla být dvakrát mezi odpověďmi)
+for(let i=EN_WORDS.length-1;i>=0;i--) if(EN_PIC.some(x=>x[0]===EN_WORDS[i][0])) EN_WORDS.splice(i,1);
+// skupiny, které se nesmí plést (obecné slovo × jeho druh, části těla) – nikdy nejsou spolu mezi odpověďmi
+const EN_GRP=[['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['hat','cap'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup']];
+const enClash=(a,b)=>EN_GRP.some(g=>g.includes(a)&&g.includes(b));
 
 /* ---- Přírodověda: [od třídy, do třídy, otázka, správně, [špatně], obrázek] ---- */
 const PR_BANK = [
