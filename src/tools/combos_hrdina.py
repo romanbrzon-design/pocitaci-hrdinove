@@ -10,7 +10,7 @@ SHEETS={
 }
 async def main():
   async with async_playwright() as p:
-    b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':1500,'height':900}); errs=[]
+    b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':1500,'height':900},device_scale_factor=2); errs=[]
     pg.on('pageerror',lambda e: errs.append(str(e)))
     await pg.add_init_script("localStorage.setItem('ph-intro','1');")
     await pg.route('**/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=''))

@@ -274,11 +274,11 @@ h3{color:#fff;text-shadow:0 2px 0 #5a3415,0 0 6px rgba(0,0,0,.35);font-size:24px
 /* images */
 .av{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;aspect-ratio:240/250;max-width:240px;margin:0 auto}
 .av img.main{max-height:96%;max-width:92%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25));position:relative;z-index:1}
-.av .hfig{position:relative;display:block;height:84%;align-self:flex-end;margin-bottom:3%;max-width:92%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.av .hfig{position:relative;display:block;height:78%;align-self:flex-end;margin-bottom:3%;max-width:70%;margin-right:24%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
 .av .hfig img.hb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1}
 .av .hfig img.hacc{position:absolute;height:auto}
 .anim .av .hfig.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
-.av img.comp{position:absolute;left:0;bottom:2%;width:24%;z-index:2;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
+.av img.comp{position:absolute;right:1%;left:auto;bottom:2%;width:20%;z-index:2;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
 .av.glow::before{content:"";position:absolute;inset:5%;background:radial-gradient(circle,#fff6b0 0,transparent 65%);z-index:0}
 .anim .av img.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .monimg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(0,0,0,.3))}
@@ -366,10 +366,10 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .sw{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #b88a4a;cursor:pointer;padding:0;font-size:18px}
 .sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
 .av.rider{align-items:flex-end;justify-content:flex-end}
-.av.rider img.horse{position:absolute;left:-7%;bottom:0;width:48%;max-height:60%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.av.rider .hfig.riderimg{position:relative;height:78%;margin-right:6%;z-index:2}
+.av.rider img.horse{position:absolute;left:-6%;bottom:0;width:42%;max-height:56%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.av.rider .hfig.riderimg{position:relative;height:76%;margin-right:23%;max-width:44%;z-index:2}
 .anim .av.rider .hfig.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
-.av.rider img.comp{left:27%;right:auto;width:18%;z-index:3}
+.av.rider img.comp{right:0;left:auto;width:17%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}
 .addpic{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}.addpic .grp{display:grid;grid-template-columns:repeat(5,auto);gap:2px 3px;background:#fff7e6;border:2px dashed #e8c06a;border-radius:12px;padding:3px 5px}.addpic .emo{font-size:22px;line-height:1.15}.addpic .op{font:900 34px Nunito,sans-serif;color:#5a3412}
@@ -1739,9 +1739,11 @@ m6:[148,316,.09,.684,.903,.689,.493,.676,.074,.912],m7:[149,316,.097,.682,.89,.6
   f0:[152,323,.083,.703,.825,.703,.457,.599,.14,.8],f1:[151,323,.083,.7,.824,.703,.454,.603,.14,.8],f2:[153,323,.083,.703,.825,.703,.454,.595,.14,.8],f3:[154,323,.083,.695,.833,.699,.458,.591,.12,.8],f4:[152,323,.083,.692,.831,.693,.461,.592,.1,.82],f5:[155,323,.083,.703,.833,.695,.465,.594,.11,.82]};
 const HEAD_GEO={m:[.235,.9],f:[.255,.86]}; // obočí (zlomek výšky), šířka pokrývky hlavy (zlomek šířky)
 const USE_LAYERS=true;
+const WGRIP={1:[.417,.842],2:[.48,.82],3:[.49,.829],4:[.492,.836],5:[.49,.836],6:[.51,.842],7:[.492,.805],8:[.487,.808],9:[.504,.751]};
 const BOOT_COL={1:'#7a4a22',2:'#8f99a6',3:'#e6edf7',4:'#c8321e',5:'#7fbfff'}; // kožené, rytířské (ocel), okřídlené (stříbrné), dračí, hvězdné
 // [šířka × šířka hlavy, posun spodní hrany nad obočí (zlomek výšky postavy)] – koruny jsou menší a sedí na vlasech
-const HEAD_FIT={4:[1.08,0],5:[.72,.035],7:[.74,.035]};
+// [šířka × šířka hlavy, posun spodní hrany nad obočí] – ploché koruny sedí pásem na vlasech nad čelem
+const HEAD_FIT={4:[1.08,0],5:[1.0,.03],7:[1.0,.03]};
 function heroFigLayers(p, cls){
   const g=p.gender==='f'?'f':'m', e=p.eq||{}, l=lookOf(p), ar=Math.max(0,Math.min(7,e.armor||0)), k=g+ar;
   const [W,H,lx,ly,rx,ry,fc,fw,t0,t1]=BODY[k], [brow,hw]=HEAD_GEO[g], cx=fc;
@@ -1749,7 +1751,8 @@ function heroFigLayers(p, cls){
   if(e.cape){ const cw=1.06; back+=accImg('i_cape'+e.cape, l.cape, `left:${(fc-cw/2)*100}%;top:36%;width:${cw*100}%;z-index:0`); }
   // boty: obarví se vlastní obuv postavy podle druhu bot (nic se nepřekrývá)
   const lb=Object.assign({}, l); if(e.boots) lb.boots=l.boots||BOOT_COL[e.boots]; else delete lb.boots;
-  if(e.weapon){ const wh=.5; front+=accImg('i_weapon'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-wh*.86)*100}%;height:${wh*100}%;width:auto;transform:translateX(-50%) rotate(-22deg);transform-origin:50% 86%;z-index:3`, '__allg'); }
+  // zbraň: svislá verze hwN, rukojeť [x,y] přesně v levé pěsti; zbraň je ZA tělem, takže pěst překrývá rukojeť
+  if(e.weapon){ const [gx,gy]=WGRIP[e.weapon]||[.5,.83], wh=.52; back+=accImg('hw'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-wh*gy)*100}%;height:${wh*100}%;width:auto;transform:translateX(${-gx*100}%) rotate(-14deg);transform-origin:${gx*100}% ${gy*100}%;z-index:1`, '__allg'); }
   if(e.shield){ front+=accImg('i_shield'+e.shield, l.shield, `left:${rx*100}%;top:${ry*100}%;width:62%;transform:translate(-42%,-58%);z-index:4`, '__allg'); }
   if(e.head){ const [hs,up]=HEAD_FIT[e.head]||[1,0], w=hw*hs; front+=accImg('hd'+e.head, l.head, `left:${cx*100}%;bottom:${(1-brow+up)*100}%;width:${w*100}%;transform:translateX(-50%);z-index:5`, '__allg'); }
   return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${back}${tintImg('body_'+k, 'body_'+g, lb, 'class="hb"')}${front}</span>`;
@@ -1787,6 +1790,10 @@ const PET_ANCH = {
  rat_0:[.47,.12,.55,0.52,.35,.86,.45,.40], rat_1:[.42,.10,.50,0.48,.35,.86,.42,.40], hamster_0:[.50,.08,.85,.52,.70,.95,.50,.55], hamster_1:[.50,.07,.85,.48,.70,.95,.50,.55],
  fox_0:[.45,.10,.70,.55,.40,.95,.42,.42], fox_1:[.42,.08,.60,.45,.35,.96,.40,.40], panda_0:[.50,.08,.75,0.52,.60,.90,.50,.60], panda_1:[.50,.06,.70,0.46,.55,.90,.50,.60],
  owl_0:[.50,.05,.80,0.48,.60,.95,.50,.50], owl_1:[.50,.05,.70,0.43,.60,.95,.50,.50], dragon_0:[.50,.10,.55,0.5,.35,.95,.50,.45], dragon_1:[.50,.10,.50,.42,.30,.90,.50,.45]};
+// přední tlapky a tělo zvířátek: [střed levé, střed pravé, šířka tlapky, spodek tlapek, levý a pravý okraj těla v 70 %] – ověřeno na zvětšených výřezech
+const PET_PAW={"cat_0":[.315,.563,.17,.997,.131,.757],"dog_0":[.338,.649,.17,.997,.191,.947],"bunny_0":[.371,.613,.17,.997,.183,.812],"pony_0":[.302,.517,.14,.997,.177,.65],"rat_0":[.22,.69,.17,.91,.144,.796],"hamster_0":[.18,.82,.17,.997,.036,.976],"fox_0":[.326,.553,.13,.997,.198,.687],"panda_0":[.17,.83,.16,.997,.139,.861],"owl_0":[.3,.68,.17,.994,.016,.98],"dragon_0":[.37,.61,.16,.997,.287,.707],
+ "cat_1":[.3,.57,.17,.935,.1,.78],"dog_1":[.252,.575,.17,.998,.066,.77],"bunny_1":[.349,.593,.18,.998,.128,.826],"pony_1":[.297,.523,.145,.998,.113,.709],"rat_1":[.16,.69,.16,.9,.031,.779],"hamster_1":[.17,.81,.165,.998,.011,.986],"fox_1":[.3,.523,.13,.995,.135,.69],"panda_1":[.184,.808,.17,.998,.09,.906],"owl_1":[.29,.69,.18,.998,.04,.955],"dragon_1":[.365,.6,.16,.91,.188,.791]};
+const PET_SHOE_DIM={1:[111,159,1],2:[110,159,1],3:[158,158,.66],4:[112,160,1],5:[113,163,1]}; // [šířka, výška, podíl samotné boty na šířce] jedné botičky pshN
 const PET_DIM = {cat_0:[251,360],cat_1:[230,420],dog_0:[283,360],dog_1:[274,420],bunny_0:[186,360],bunny_1:[195,420],pony_0:[260,360],pony_1:[265,420],rat_0:[250,360],rat_1:[258,420],hamster_0:[248,360],hamster_1:[279,420],fox_0:[262,360],fox_1:[260,420],panda_0:[280,360],panda_1:[299,420],owl_0:[246,360],owl_1:[247,420],dragon_0:[300,360],dragon_1:[282,420]};
 const ov=(src,l,t,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;top:${(t*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
 const ovb=(src,l,b,w,z,extra='')=>`<img class="ov" src="${A_}${src}.webp" alt="" style="left:${(l*100).toFixed(1)}%;bottom:${(b*100).toFixed(1)}%;width:${(w*100).toFixed(1)}%;z-index:${z};${extra}">`;
@@ -1799,11 +1806,17 @@ if(USE_PET_IMG) petSVG = function(p, opts={}){ const pl=p.look||{};
   const ar=W/H; // poměr obrázku
   let wrap=`<img class="main" src="${A_}pet_${k}.webp" alt="" style="z-index:3">`;
   // vše v % šířky (left,width) a výšky (top) obalu zvířátka
-  if(e.outfit===3||e.outfit===5) wrap+=ovc(pl.p_outfit,'pa_outfit'+e.outfit, hx-hw*.55, ny-.06, hw*1.1, 1);
+  // pláštíky (hrdinský i královský) vlají za zády a vykukují po obou stranách
+  { const pp=PET_PAW[k], half=pp?Math.min(hx-pp[4],pp[5]-hx):hw*.55;
+    if(e.outfit===3){ const w=half*2*1.62; wrap+=ovc(pl.p_outfit,'pa_outfit3', hx-w/2, ny-.07, w, 1); }
+    if(e.outfit===5){ const w=half*2*1.62; wrap+=ovc(pl.p_outfit,'pa_outfit5', hx-w/2, ny-.07, w, 1); } }
   if(e.outfit===2||e.outfit===4){ const w=nw*1.7; wrap+=ovc(pl.p_outfit,'pa_outfit'+e.outfit, hx-w/2, ny-.03, w, 4); }
   if(e.collar && e.outfit!==1){ const w=Math.min(.6,nw*1.05); wrap+=ovc(pl.p_collar,'pa_collarf'+e.collar, hx-w/2, ny-.035, w, 5); }
   if(e.outfit===1){ const w=Math.min(.6,nw*1.15); wrap+=ovc(pl.p_outfit,'pa_outfit1', hx-w/2, ny-w*ar*1.19*.15, w, 5); }
-  if(e.shoes){ const w=fw*.85; wrap+=ovc(pl.p_shoes,'pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
+  const pw=PET_PAW[k];
+  if(e.shoes && pw && PET_SHOE_DIM[e.shoes]){ const [sw,sh,bf]=PET_SHOE_DIM[e.shoes], w=pw[2]*1.3/bf, h=w*ar*sh/sw;
+    for(const [cxp,flip] of [[pw[0],1],[pw[1],0]]) wrap+=ovc(pl.p_shoes,'psh'+e.shoes, cxp-w/2, pw[3]-h*.97, w, 6, flip?'transform:scaleX(-1)':''); }
+  else if(e.shoes){ const w=fw*.85; wrap+=ovc(pl.p_shoes,'pa_shoes'+e.shoes, fx-w/2, fy-w*ar*.9*.8, w, 6); }
   if(e.phat){ const w=hw*.5; wrap+=ovc(pl.p_phat,'pa_phat'+e.phat, hx-w/2, ht-w*ar*.78*.72, w, 6); }
   let out='';
   if(e.pbed) out+=ovbc(pl.p_pbed,'pa_pbed'+e.pbed, .12, 0, .76, 0);
