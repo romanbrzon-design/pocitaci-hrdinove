@@ -75,7 +75,11 @@ h3{color:#fff;text-shadow:0 2px 0 #5a3415,0 0 6px rgba(0,0,0,.35);font-size:24px
 .av .hfig{position:relative;display:block;height:78%;align-self:flex-end;margin-bottom:3%;max-width:70%;margin-right:24%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
 .av .hfig img.hb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1}
 .av .hfig img.hacc{position:absolute;height:auto}
-.anim .av .hfig.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+/* celá postavička dýchá i s výbavou (ne jen tělo) */
+.av .hfig{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.hfig img.hb{animation:none}
+.petwrap .petanim{position:absolute;inset:0;animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+.petwrap .petanim img.main{animation:none!important}
 .av img.comp{position:absolute;right:1%;left:auto;bottom:2%;width:20%;z-index:2;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
 .av.glow::before{content:"";position:absolute;inset:5%;background:radial-gradient(circle,#fff6b0 0,transparent 65%);z-index:0}
 .anim .av img.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
@@ -166,7 +170,7 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .av.rider{align-items:flex-end;justify-content:flex-end}
 .av.rider img.horse{position:absolute;left:-6%;bottom:0;width:42%;max-height:56%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
 .av.rider .hfig.riderimg{position:relative;height:76%;margin-right:23%;max-width:44%;z-index:2}
-.anim .av.rider .hfig.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
+
 .av.rider img.comp{right:0;left:auto;width:17%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}

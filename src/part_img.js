@@ -98,7 +98,7 @@ if(USE_PET_IMG) petSVG = function(p, opts={}){ const pl=p.look||{};
   if(e.toy) out+=ovbc(pl.p_toy,'pa_toy'+e.toy, opts.flip?.02:.74, .02, .2, 4);
   if(e.friend) out+=ov('pa_friend'+e.friend, opts.flip?.72:.04, .04, .2, 4, 'animation:flut 2.6s ease-in-out infinite');
   const h=(sc*(e.pbed?.84:.94)*100).toFixed(1);
-  return `<div class="av petav ${opts.glow?'glow':''}">${out}<div class="petwrap" style="height:${h}%;aspect-ratio:${W}/${H};bottom:${e.pbed?10:3}%;${opts.flip?'transform:translateX(-50%) scaleX(-1)':''}">${wrap}</div></div>`;
+  return `<div class="av petav ${opts.glow?'glow':''}">${out}<div class="petwrap" style="height:${h}%;aspect-ratio:${W}/${H};bottom:${e.pbed?10:3}%;${opts.flip?'transform:translateX(-50%) scaleX(-1)':''}"><div class="petanim">${wrap}</div></div></div>`;
 };
 
 /* ---- Domeček ---- */
