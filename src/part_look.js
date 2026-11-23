@@ -5,15 +5,15 @@ function lookOpen(){
   const PETC=[['outfit','👕'],['collar','📿'],['phat','🎀'],['shoes','👟'],['toy','🧸'],['pbed','🛏️']];
   const parts = M==='home' ? [['top','👕 Tričko'],['bottom', p.gender==='f'?'👗 Sukně':'👖 Kalhoty']]
     : M==='pet' ? PETC.filter(([s])=>e[s]).map(([s,ic])=>['p_'+s, ic+' '+((PET_SLOTS.find(x=>x.id===s).items[e[s]-1]||[PET_SLOTS.find(x=>x.id===s).name])[0])])
-    : [['top','🧥 Tunika'],['cape','🦸 Plášť'], ...(e.boots?[['boots','🥾 Boty']]:[])];
-  if(!parts.length){ toast('Nejdřív zvířátku něco kup v obchodě 🛍️'); return; }
+    : [...((e.armor||0)<2?[['top','🧥 Tunika']]:[]), ...(e.cape?[['cape','🦸 Plášť']]:[]), ...(e.boots?[['boots','🥾 Boty']]:[]), ...(e.head?[['head','⛑️ Na hlavu']]:[]), ...(e.shield?[['shield','🛡️ Štít']]:[]), ...(e.weapon?[['weapon','⚔️ Zbraň']]:[])];
+  if(!parts.length){ toast(M==='pet'?'Nejdřív zvířátku něco kup v obchodě 🛍️':'Nejdřív si něco kup v obchodě 🛍️'); return; }
   const m=document.createElement('div'); m.className='modal'; let cur=parts[0][0];
   const draw=()=>{ const l=lookOf(p); const k=cur;
     m.innerHTML=`<div class="card center" style="max-width:520px"><h2 style="margin:4px 0">🎨 ${M==='pet'?'Barvy doplňků':'Barvy oblečení'}</h2>
       <div style="max-width:170px;margin:0 auto">${M==='home'?kidSVG(p):M==='pet'?petSVG(p):heroImg(p)}</div>
       <div class="lkparts">${parts.map(([pk,lab])=>`<button class="btn small ${pk===k?'':'sec'}" data-pk="${pk}">${l[pk]?`<span class="lkdot" style="background:${l[pk]}"></span>`:''}${lab}</button>`).join('')}</div>
       <div class="swatches">${LOOK_COLORS.map(c=>`<button class="sw ${l[k]===c?'on':''}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}${k!=='top'?`<button class="sw orig ${!l[k]?'on':''}" data-c="" title="Původní barva">↺</button>`:''}</div>
-      ${M==='quest'?'<p class="muted" style="font-size:14px">Tunika je vidět, dokud nemáš rytířské brnění. Barva pláště platí pro rytířský i koupený plášť.</p>':''}
+      ${M==='quest'?'<p class="muted" style="font-size:14px">Barvit jde všechno, co má hrdina na sobě. Tunika je vidět, dokud nemáš kroužkovou košili.</p>':''}
       <button class="btn gold" id="lkok">Hotovo</button></div>`;
     m.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{ cur=b.dataset.pk; draw(); });
     m.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ p.look=p.look||{}; const c=b.dataset.c; if(c) p.look[k]=c; else delete p.look[k]; if(k==='top' && c) p.color=c; save(); draw(); });

@@ -72,7 +72,7 @@ h3{color:#fff;text-shadow:0 2px 0 #5a3415,0 0 6px rgba(0,0,0,.35);font-size:24px
 /* images */
 .av{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;aspect-ratio:240/250;max-width:240px;margin:0 auto}
 .av img.main{max-height:96%;max-width:92%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25));position:relative;z-index:1}
-.av .hfig{position:relative;display:block;height:96%;max-width:92%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
+.av .hfig{position:relative;display:block;height:84%;align-self:flex-end;margin-bottom:3%;max-width:92%;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
 .av .hfig img.hb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1}
 .av .hfig img.hacc{position:absolute;height:auto}
 .anim .av .hfig.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
@@ -165,7 +165,7 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
 .av.rider{align-items:flex-end;justify-content:flex-end}
 .av.rider img.horse{position:absolute;left:-4%;bottom:0;width:64%;max-height:72%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.av.rider .hfig.riderimg{position:relative;height:88%;margin-right:0;z-index:2}
+.av.rider .hfig.riderimg{position:relative;height:80%;margin-right:0;z-index:2}
 .anim .av.rider .hfig.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .av.rider img.comp{right:-2%;width:22%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
