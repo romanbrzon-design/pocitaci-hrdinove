@@ -14,7 +14,8 @@ m6:[148,316,.09,.684,.903,.689,.493,.676,.074,.912],m7:[149,316,.097,.682,.89,.6
 const HEAD_GEO={m:[.235,.9],f:[.255,.86]}; // obočí (zlomek výšky), šířka pokrývky hlavy (zlomek šířky)
 const USE_LAYERS=true;
 const BOOT_COL={1:'#7a4a22',2:'#8f99a6',3:'#e6edf7',4:'#c8321e',5:'#7fbfff'}; // kožené, rytířské (ocel), okřídlené (stříbrné), dračí, hvězdné
-const HEAD_SCALE={4:1.08};
+// [šířka × šířka hlavy, posun spodní hrany nad obočí (zlomek výšky postavy)] – koruny jsou menší a sedí na vlasech
+const HEAD_FIT={4:[1.08,0],5:[.72,.035],7:[.74,.035]};
 function heroFigLayers(p, cls){
   const g=p.gender==='f'?'f':'m', e=p.eq||{}, l=lookOf(p), ar=Math.max(0,Math.min(7,e.armor||0)), k=g+ar;
   const [W,H,lx,ly,rx,ry,fc,fw,t0,t1]=BODY[k], [brow,hw]=HEAD_GEO[g], cx=fc;
@@ -24,7 +25,7 @@ function heroFigLayers(p, cls){
   const lb=Object.assign({}, l); if(e.boots) lb.boots=l.boots||BOOT_COL[e.boots]; else delete lb.boots;
   if(e.weapon){ const wh=.5; front+=accImg('i_weapon'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-wh*.86)*100}%;height:${wh*100}%;width:auto;transform:translateX(-50%) rotate(-22deg);transform-origin:50% 86%;z-index:3`, '__allg'); }
   if(e.shield){ front+=accImg('i_shield'+e.shield, l.shield, `left:${rx*100}%;top:${ry*100}%;width:62%;transform:translate(-42%,-58%);z-index:4`, '__allg'); }
-  if(e.head){ const w=hw*(HEAD_SCALE[e.head]||1); front+=accImg('hd'+e.head, l.head, `left:${cx*100}%;bottom:${(1-brow)*100}%;width:${w*100}%;transform:translateX(-50%);z-index:5`, '__allg'); }
+  if(e.head){ const [hs,up]=HEAD_FIT[e.head]||[1,0], w=hw*hs; front+=accImg('hd'+e.head, l.head, `left:${cx*100}%;bottom:${(1-brow+up)*100}%;width:${w*100}%;transform:translateX(-50%);z-index:5`, '__allg'); }
   return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${back}${tintImg('body_'+k, 'body_'+g, lb, 'class="hb"')}${front}</span>`;
 }
 function heroFig(p, cls){ if(USE_LAYERS) return heroFigLayers(p, cls);
