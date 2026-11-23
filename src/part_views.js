@@ -40,9 +40,9 @@ function addReaders(){
   });
   const top=document.querySelector('#app .top h1');
   document.querySelectorAll('#app .btn, #app .choice, #app .mcard, #app .chip, #app .card.profile, #app .top h1, #app .stat, #app .modebtn, #app .spbtn').forEach(el=>{
-    el.addEventListener('mouseenter',()=>{ clearTimeout(_hoverT); const pr=curProblem&&curProblem(); if(el.classList.contains('choice') && pr && pr.lang) return;
+    el.addEventListener('pointerenter',e=>{ if(e.pointerType!=='mouse') return; clearTimeout(_hoverT); const pr=curProblem&&curProblem(); if(el.classList.contains('choice') && pr && pr.lang) return;
       _hoverT=setTimeout(()=>speak(cleanSpeech(el.innerText||el.title)),500); });
-    el.addEventListener('mouseleave',()=>clearTimeout(_hoverT));
+    el.addEventListener('pointerleave',()=>clearTimeout(_hoverT)); el.addEventListener('pointerdown',()=>clearTimeout(_hoverT));
     // dotykový displej: podržení prstu přečte tlačítko (a klepnutí pak nic nespustí)
     if(TOUCH && !el.classList.contains('choice')){ let lt=null;
       el.addEventListener('pointerdown',()=>{ clearTimeout(lt); el._lp=false; lt=setTimeout(()=>{ el._lp=true; speak(cleanSpeech(el.innerText||el.title)); },450); });

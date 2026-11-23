@@ -80,6 +80,8 @@ function voiceNatural(){ return !!(csVoice && voiceScore(csVoice)>=50); }
 try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 function speak(text, lang){
   try{ if(!('speechSynthesis' in window) || !text) return;
+    // stejná věta znovu během chvilky = dvojí spuštění (koktání) → ignorovat
+    const now=Date.now(); if(speak._t===text && now-speak._at<1200) return; speak._t=text; speak._at=now;
     const go=()=>{ try{ const en=/^en/i.test(lang||'');
       if(!csVoice && !enVoice) pickVoice();
       const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95);
