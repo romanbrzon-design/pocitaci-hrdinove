@@ -26,11 +26,11 @@ function heroFigLayers(p, cls){
   // boty: obarví se vlastní obuv postavy podle druhu bot (nic se nepřekrývá)
   const lb=Object.assign({}, l); if(e.boots) lb.boots=l.boots||BOOT_COL[e.boots]; else delete lb.boots;
   // zbraň: svislá verze hwN, rukojeť [x,y] přesně v levé pěsti; zbraň je ZA tělem, takže pěst překrývá rukojeť
-  // zbraň PŘED tělem a přes rukojeť znovu pěst postavy (fist_*) → prsty obepínají rukojeť, čepel nad pěstí, hlavice pod ní
-  if(e.weapon){ const [gx,gy]=WGRIP[e.weapon]||[.5,.83], wh=.5; front+=accImg('hw'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-wh*gy)*100}%;height:${wh*100}%;width:auto;transform:translateX(${-gx*100}%) rotate(-10deg);transform-origin:${gx*100}% ${gy*100}%;z-index:3`, '__allg')+`<img class="hacc" src="${A_}fist_${k}.webp" alt="" style="left:0;top:0;width:100%;height:100%;z-index:3">`; }
+  // zbraň je celá PŘED rukou (přání rodiče); rukojeť leží přes střed pěsti
+  if(e.weapon){ const [gx,gy]=WGRIP[e.weapon]||[.5,.83], wh=.5; front+=accImg('hw'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-wh*gy)*100}%;height:${wh*100}%;width:auto;transform:translateX(${-gx*100}%) rotate(-10deg);transform-origin:${gx*100}% ${gy*100}%;z-index:4`, '__allg'); }
   if(e.shield){ front+=accImg('i_shield'+e.shield, l.shield, `left:${rx*100}%;top:${ry*100}%;width:62%;transform:translate(-42%,-58%);z-index:4`, '__allg'); }
   if(e.head){ const [hs,up]=HEAD_FIT[e.head]||[1,0], w=hw*hs; front+=accImg('hd'+e.head, l.head, `left:${cx*100}%;bottom:${(1-brow+up)*100}%;width:${w*100}%;transform:translateX(-50%);z-index:5`, '__allg'); }
-  return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${back}${tintImg('body_'+k, 'body_'+g, lb, 'class="hb"')}${front}</span>`;
+  return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${back}${tintImg('body_'+k+(g==='f'&&e.head?'_nb':''), 'body_'+g, lb, 'class="hb"')}${front}</span>`;
 }
 function heroFig(p, cls){ if(USE_LAYERS) return heroFigLayers(p, cls);
   const g=p.gender==='f'?'f':'m', st=heroStage(p), k=g+st, [W,fc,fw,t0,t1]=HERO_OV[k]||HERO_OV.m0, e=p.eq||{}, l=lookOf(p), H=420;
@@ -136,7 +136,7 @@ var TINT_CFG={
 };
 TINT_CFG.__all={all:{h:[0,360],s:.18,y:[0,1]}};
 TINT_CFG.body_m={top:{h:[190,235],s:.25,y:[.42,.76]},boots:{h:[0,360],s:0,y:[.86,1]}}; TINT_CFG.body_f={top:{h:[318,360],h2:[0,12],s:.15,y:[.44,.76],ex:[.74,1,.36,.64]},boots:{h:[0,360],s:0,y:[.86,1]}};
-for(const g of 'mf') for(let i=2;i<8;i++) TINT_CFG['body_'+g+i]={top:null}; TINT_CFG.__allg={all:{h:[0,360],s:0,y:[0,1]}};
+for(const g of 'mf') for(let i=2;i<8;i++) TINT_CFG['body_'+g+i]=TINT_CFG['body_'+g+i+'_nb']={top:null}; TINT_CFG.__allg={all:{h:[0,360],s:0,y:[0,1]}};
 var _tintCache={}, _tintPend={};
 function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
 function tintImg(name, cfgKey, look, attrs){

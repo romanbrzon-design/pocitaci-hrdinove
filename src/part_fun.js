@@ -344,6 +344,6 @@ function funSummaryHTML(p,s){
   if(!p||!s) return '';
   return `${s.stk&&s.stk.length?`<p style="font-size:20px">📒 ${s.stk.length>1?'Nové nálepky':'Nová nálepka'}: <span style="font-size:34px">${s.stk.join(' ')}</span></p>`:''}${canSpin(p)?`<div style="margin:8px 0"><button class="btn gold pulse" data-act="wheel" style="font-size:20px">🎡 Zatoč si kolem štěstí!</button></div>`:''}`;
 }
-function funHomeHTML(){ return familyHTML()+leaderboardHTML(); }
+function funHomeHTML(){ return familyHTML(); } // žebříček týdne odstraněn na přání rodiče
 setTimeout(()=>{ if(view.name==='home') introOpen(false); }, 600);
 
