@@ -90,6 +90,47 @@ render=function(){
   }
 };
 
+
+/* ---- týdenní zpráva e-mailem (volitelné) ----
+   Aplikace po každém dokončeném dni pošle na server aktuální podobu zprávy; server ji v nastavený den večer odešle e-mailem. */
+function repCfg(){ return (S.settings && S.settings.rep) || {}; }
+function emailReportHTML(){
+  const ws=weekStart(), pws=addDays(ws,-7), fmtD=k=>k.split('-').reverse().slice(0,2).map(x=>+x).join('. ')+'.';
+  const E=x=>String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const bar=(pc,col)=>`<span style="display:inline-block;width:120px;height:10px;background:#eee3cc;border-radius:5px;vertical-align:middle"><span style="display:block;width:${pc*1.2}px;height:10px;border-radius:5px;background:${col}"></span></span>`;
+  const heroes_=realHeroes();
+  let h=`<div style="font-family:Arial,Helvetica,sans-serif;color:#3b2a14;max-width:620px">
+    <h2 style="margin:0 0 4px">🧠 Chytrolínci – týdenní zpráva</h2>
+    <div style="color:#7a6448;margin-bottom:14px">Týden ${fmtD(ws)} – ${fmtD(addDays(ws,6))} (stav k ${new Date().toLocaleString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})})</div>`;
+  if(!heroes_.length) h+='<p>Zatím žádní hrdinové.</p>';
+  for(const p of heroes_){
+    const s=weekStats(p,ws), o=weekStats(p,pws), pc=s.n?Math.round(s.c/s.n*100):0, opc=o.n?Math.round(o.c/o.n*100):0;
+    const weak=weakCats(p,1).map(c=>CATS[c].label);
+    const subj=Object.entries(s.subj).map(([k,v])=>`${SUBJECTS[k]?SUBJECTS[k].icon+' '+SUBJECTS[k].name:k}: <b>${Math.round(v[0]/v[1]*100)} %</b> (${v[0]}/${v[1]})`).join(' &nbsp;·&nbsp; ');
+    const rows=Object.entries(p.cst||{}).filter(([c,r])=>CATS[c]&&r[1]>=3).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]);
+    h+=`<div style="border:2px solid #e3cf9f;border-radius:12px;padding:12px 14px;margin:0 0 14px;background:#fffaf0">
+      <h3 style="margin:0 0 6px">${E(p.name)} <span style="font-weight:normal;color:#7a6448;font-size:14px">· ${gl(p.grade)}</span></h3>
+      <div>📅 <b>${s.days}</b> ${plural(s.days,'den','dny','dní')} s úkolem${o.days!==s.days?` (minulý týden ${o.days})`:''}</div>
+      <div>✅ <b>${s.c}</b> správně z ${s.n} – úspěšnost <b>${pc} %</b>${o.n?` (minulý týden ${opc} %)`:''}</div>
+      <div>🔥 série ${streakAlive(p)?p.streak:0} ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} · ${modeOf(p).icon} ${p.beaten}/${FOE_N}</div>
+      ${subj?`<div style="margin-top:4px">${subj}</div>`:''}
+      <div style="margin-top:6px">${weak.length?`⚠️ <b>Potřebuje procvičit:</b> ${weak.map(E).join(', ')}`:(s.n?'👍 Žádné téma pod 75 %.':'')}</div>
+      ${s.n?'':`<div style="margin-top:6px;color:#a8322a">Tento týden zatím ${p.gender==='f'?'nehrála':'nehrál'}.</div>`}
+      ${rows.length?`<table style="border-collapse:collapse;margin-top:8px;font-size:14px">${rows.map(([c,r])=>{ const q=Math.round(r[0]/r[1]*100), col=q<75?'#e0614a':q>=90?'#3aa864':'#f0b429';
+        return `<tr><td style="padding:2px 8px 2px 0">${(SUBJECTS[subjOf(c)]||{}).icon||''} ${E(CATS[c].label)}</td><td style="padding:2px 6px">${bar(q,col)}</td><td style="padding:2px 0"><b>${q} %</b> <span style="color:#8a7656">z ${r[1]}</span></td></tr>`; }).join('')}</table>`:''}
+    </div>`;
+  }
+  h+=`<p style="color:#7a6448;font-size:13px">Podrobnosti najdete ve hře v Rodičovské sekci → Týdenní zpráva: <a href="${location.origin+location.pathname}">${location.host}${location.pathname}</a>.<br>Zprávy vypnete tamtéž v Nastavení.</p></div>`;
+  return h;
+}
+let _repPushed=0;
+async function pushReport(now, force){
+  const r=repCfg(); if(!HAS_GAS || !FAMILY) return null;
+  if(!r.on || !r.email){ if(force) try{ await gas('report',{email:''}); }catch(e){} return null; }
+  if(!now && !force && Date.now()-_repPushed<120000) return null; _repPushed=Date.now();
+  try{ return await gas('report', {email:r.email, day:r.day||6, html:emailReportHTML(), week:weekStart(), now:!!now}); }catch(e){ return null; }
+}
+const _finishRep=finish; finish=function(t){ const x=_finishRep(t); setTimeout(()=>pushReport(),1500); return x; };
 </script>
 </body>
 </html>

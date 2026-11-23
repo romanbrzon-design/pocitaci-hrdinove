@@ -178,7 +178,7 @@ h3{margin:22px 0 8px}
 /* parent */
 .field{display:flex;flex-direction:column;gap:4px;margin:10px 0}
 .field label{font-size:14px;color:var(--muted)}
-.field input[type=text],.field input[type=password],.field input[type=number],.field select,.field textarea{font-family:inherit;font-weight:700;font-size:16px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+.field input[type=text],.field input[type=email],.field input[type=password],.field input[type=number],.field select,.field textarea{font-family:inherit;font-weight:700;font-size:16px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
 .chk{display:flex;align-items:center;gap:8px;font-size:15px;padding:3px 0}
 .chk input{width:20px;height:20px}
 .tabs{display:flex;gap:8px;margin:6px 0 10px;flex-wrap:wrap}
@@ -2465,6 +2465,11 @@ function parentView(){
       <div class="field"><label>Nový rodičovský PIN (prázdné = beze změny)</label><input type="text" id="s-pin" inputmode="numeric" maxlength="8"></div>
       <div class="field"><label>👨‍👩‍👧‍👦 Rodinný cíl na měsíc – kolik správných odpovědí mají děti nasbírat dohromady (0 = vypnuto)</label><input type="number" id="s-fgoal" min="0" max="10000" value="${familyCfg().goal}"></div>
       <div class="field"><label>Odměna za rodinný cíl</label><input type="text" id="s-freward" value="${esc(familyCfg().reward||'')}"></div>
+      <div class="field repbox"><label class="chk" style="font-size:17px"><input type="checkbox" id="s-repon" ${repCfg().on?'checked':''}> <b>📧 Posílat týdenní zprávu e-mailem</b></label>
+        <div class="muted" style="font-size:14px;margin:2px 0 6px">Stejný přehled jako v záložce Týdenní zpráva (dny, úspěšnost, slabá témata). ${HAS_GAS&&FAMILY?'':'<b>Funguje jen s online ukládáním (rodinný kód).</b>'}</div>
+        <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
+        <select id="s-repday" style="flex:1">${[[6,'každou sobotu večer'],[7,'každou neděli večer'],[5,'každý pátek večer']].map(([v,l])=>`<option value="${v}" ${(+repCfg().day||6)===v?'selected':''}>${l}</option>`).join('')}</select></div>
+        ${repCfg().on&&repCfg().email&&HAS_GAS&&FAMILY?'<button class="btn sec small" data-act="reptest" style="margin-top:6px">📨 Poslat zkušební zprávu teď</button>':''}</div>
       <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
   } else if(parentTab==='heroes'){
     const hs=heroes(); if(!parentHero || !prof(parentHero) || prof(parentHero).deleted) parentHero = hs[0] && hs[0].id;
@@ -2767,7 +2772,11 @@ function act(a){
     S.settings.length=$('#s-len').value;
     S.settings.perDay=Math.max(5,Math.min(40,parseInt($('#s-per').value)||20));
     { const np=$('#s-pin').value.trim(); if(np) S.settings.pin=np; }
-    save(); toast('Uloženo ✓'); render(); break;
+    { const em=($('#s-repemail')||{}).value||'', on=!!($('#s-repon')||{}).checked;
+      if(on && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.trim())){ toast('Zadejte platný e-mail'); break; }
+      S.settings.rep={on, email:em.trim(), day:+(($('#s-repday')||{}).value||6)}; }
+    save(); toast('Uloženo ✓'); render(); setTimeout(()=>pushReport(false,true),300); break;
+  case 'reptest': pushReport(true).then(j=>toast(j&&j.sent?'Zpráva odeslána ✓ – zkontrolujte e-mail':j&&j.error==='limit'?'Zkušební zprávu lze poslat nejvýš 3× denně':'Odeslání se nepovedlo – zkuste to později')); break;
   case 'saveprofile': case 'defcats': case 'regen': {
     const h=prof(parentHero);
     h.name=$('#p-name').value.trim()||h.name;
@@ -3491,6 +3500,47 @@ render=function(){
   }
 };
 
+
+/* ---- týdenní zpráva e-mailem (volitelné) ----
+   Aplikace po každém dokončeném dni pošle na server aktuální podobu zprávy; server ji v nastavený den večer odešle e-mailem. */
+function repCfg(){ return (S.settings && S.settings.rep) || {}; }
+function emailReportHTML(){
+  const ws=weekStart(), pws=addDays(ws,-7), fmtD=k=>k.split('-').reverse().slice(0,2).map(x=>+x).join('. ')+'.';
+  const E=x=>String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const bar=(pc,col)=>`<span style="display:inline-block;width:120px;height:10px;background:#eee3cc;border-radius:5px;vertical-align:middle"><span style="display:block;width:${pc*1.2}px;height:10px;border-radius:5px;background:${col}"></span></span>`;
+  const heroes_=realHeroes();
+  let h=`<div style="font-family:Arial,Helvetica,sans-serif;color:#3b2a14;max-width:620px">
+    <h2 style="margin:0 0 4px">🧠 Chytrolínci – týdenní zpráva</h2>
+    <div style="color:#7a6448;margin-bottom:14px">Týden ${fmtD(ws)} – ${fmtD(addDays(ws,6))} (stav k ${new Date().toLocaleString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})})</div>`;
+  if(!heroes_.length) h+='<p>Zatím žádní hrdinové.</p>';
+  for(const p of heroes_){
+    const s=weekStats(p,ws), o=weekStats(p,pws), pc=s.n?Math.round(s.c/s.n*100):0, opc=o.n?Math.round(o.c/o.n*100):0;
+    const weak=weakCats(p,1).map(c=>CATS[c].label);
+    const subj=Object.entries(s.subj).map(([k,v])=>`${SUBJECTS[k]?SUBJECTS[k].icon+' '+SUBJECTS[k].name:k}: <b>${Math.round(v[0]/v[1]*100)} %</b> (${v[0]}/${v[1]})`).join(' &nbsp;·&nbsp; ');
+    const rows=Object.entries(p.cst||{}).filter(([c,r])=>CATS[c]&&r[1]>=3).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]);
+    h+=`<div style="border:2px solid #e3cf9f;border-radius:12px;padding:12px 14px;margin:0 0 14px;background:#fffaf0">
+      <h3 style="margin:0 0 6px">${E(p.name)} <span style="font-weight:normal;color:#7a6448;font-size:14px">· ${gl(p.grade)}</span></h3>
+      <div>📅 <b>${s.days}</b> ${plural(s.days,'den','dny','dní')} s úkolem${o.days!==s.days?` (minulý týden ${o.days})`:''}</div>
+      <div>✅ <b>${s.c}</b> správně z ${s.n} – úspěšnost <b>${pc} %</b>${o.n?` (minulý týden ${opc} %)`:''}</div>
+      <div>🔥 série ${streakAlive(p)?p.streak:0} ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} · ${modeOf(p).icon} ${p.beaten}/${FOE_N}</div>
+      ${subj?`<div style="margin-top:4px">${subj}</div>`:''}
+      <div style="margin-top:6px">${weak.length?`⚠️ <b>Potřebuje procvičit:</b> ${weak.map(E).join(', ')}`:(s.n?'👍 Žádné téma pod 75 %.':'')}</div>
+      ${s.n?'':`<div style="margin-top:6px;color:#a8322a">Tento týden zatím ${p.gender==='f'?'nehrála':'nehrál'}.</div>`}
+      ${rows.length?`<table style="border-collapse:collapse;margin-top:8px;font-size:14px">${rows.map(([c,r])=>{ const q=Math.round(r[0]/r[1]*100), col=q<75?'#e0614a':q>=90?'#3aa864':'#f0b429';
+        return `<tr><td style="padding:2px 8px 2px 0">${(SUBJECTS[subjOf(c)]||{}).icon||''} ${E(CATS[c].label)}</td><td style="padding:2px 6px">${bar(q,col)}</td><td style="padding:2px 0"><b>${q} %</b> <span style="color:#8a7656">z ${r[1]}</span></td></tr>`; }).join('')}</table>`:''}
+    </div>`;
+  }
+  h+=`<p style="color:#7a6448;font-size:13px">Podrobnosti najdete ve hře v Rodičovské sekci → Týdenní zpráva: <a href="${location.origin+location.pathname}">${location.host}${location.pathname}</a>.<br>Zprávy vypnete tamtéž v Nastavení.</p></div>`;
+  return h;
+}
+let _repPushed=0;
+async function pushReport(now, force){
+  const r=repCfg(); if(!HAS_GAS || !FAMILY) return null;
+  if(!r.on || !r.email){ if(force) try{ await gas('report',{email:''}); }catch(e){} return null; }
+  if(!now && !force && Date.now()-_repPushed<120000) return null; _repPushed=Date.now();
+  try{ return await gas('report', {email:r.email, day:r.day||6, html:emailReportHTML(), week:weekStart(), now:!!now}); }catch(e){ return null; }
+}
+const _finishRep=finish; finish=function(t){ const x=_finishRep(t); setTimeout(()=>pushReport(),1500); return x; };
 </script>
 </body>
 </html>

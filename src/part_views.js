@@ -336,6 +336,11 @@ function parentView(){
       <div class="field"><label>Nový rodičovský PIN (prázdné = beze změny)</label><input type="text" id="s-pin" inputmode="numeric" maxlength="8"></div>
       <div class="field"><label>👨‍👩‍👧‍👦 Rodinný cíl na měsíc – kolik správných odpovědí mají děti nasbírat dohromady (0 = vypnuto)</label><input type="number" id="s-fgoal" min="0" max="10000" value="${familyCfg().goal}"></div>
       <div class="field"><label>Odměna za rodinný cíl</label><input type="text" id="s-freward" value="${esc(familyCfg().reward||'')}"></div>
+      <div class="field repbox"><label class="chk" style="font-size:17px"><input type="checkbox" id="s-repon" ${repCfg().on?'checked':''}> <b>📧 Posílat týdenní zprávu e-mailem</b></label>
+        <div class="muted" style="font-size:14px;margin:2px 0 6px">Stejný přehled jako v záložce Týdenní zpráva (dny, úspěšnost, slabá témata). ${HAS_GAS&&FAMILY?'':'<b>Funguje jen s online ukládáním (rodinný kód).</b>'}</div>
+        <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
+        <select id="s-repday" style="flex:1">${[[6,'každou sobotu večer'],[7,'každou neděli večer'],[5,'každý pátek večer']].map(([v,l])=>`<option value="${v}" ${(+repCfg().day||6)===v?'selected':''}>${l}</option>`).join('')}</select></div>
+        ${repCfg().on&&repCfg().email&&HAS_GAS&&FAMILY?'<button class="btn sec small" data-act="reptest" style="margin-top:6px">📨 Poslat zkušební zprávu teď</button>':''}</div>
       <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
   } else if(parentTab==='heroes'){
     const hs=heroes(); if(!parentHero || !prof(parentHero) || prof(parentHero).deleted) parentHero = hs[0] && hs[0].id;
@@ -638,7 +643,11 @@ function act(a){
     S.settings.length=$('#s-len').value;
     S.settings.perDay=Math.max(5,Math.min(40,parseInt($('#s-per').value)||20));
     { const np=$('#s-pin').value.trim(); if(np) S.settings.pin=np; }
-    save(); toast('Uloženo ✓'); render(); break;
+    { const em=($('#s-repemail')||{}).value||'', on=!!($('#s-repon')||{}).checked;
+      if(on && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.trim())){ toast('Zadejte platný e-mail'); break; }
+      S.settings.rep={on, email:em.trim(), day:+(($('#s-repday')||{}).value||6)}; }
+    save(); toast('Uloženo ✓'); render(); setTimeout(()=>pushReport(false,true),300); break;
+  case 'reptest': pushReport(true).then(j=>toast(j&&j.sent?'Zpráva odeslána ✓ – zkontrolujte e-mail':j&&j.error==='limit'?'Zkušební zprávu lze poslat nejvýš 3× denně':'Odeslání se nepovedlo – zkuste to později')); break;
   case 'saveprofile': case 'defcats': case 'regen': {
     const h=prof(parentHero);
     h.name=$('#p-name').value.trim()||h.name;
