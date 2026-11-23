@@ -8,19 +8,24 @@ function accImg(name, col, style, cfg){ return col ? tintImg(name,cfg||'__all',{
 // hrdina z vrstev: postava podle brnění (body_g0–5) + plášť, boty, zbraň, štít a helma zvlášť
 // [šířka, výška, levá pěst x,y, pravá pěst x,y, střed a šířka chodidel, levý a pravý okraj trupu, obočí y, šířka hlavy]
 const BODY={m0:[148,316,.09,.698,.889,.69,.493,.676,.115,.865],m1:[148,316,.097,.685,.889,.691,.49,.682,.115,.872],m2:[148,316,.097,.685,.889,.685,.49,.682,.115,.865],m3:[149,316,.083,.688,.896,.688,.49,.671,.087,.893],m4:[148,316,.084,.688,.903,.687,.49,.682,.041,.939],m5:[150,317,.083,.685,.897,.686,.493,.68,.047,.933],
+m6:[148,316,.09,.684,.903,.689,.493,.676,.074,.912],m7:[149,316,.097,.682,.89,.684,.493,.678,.067,.919],
+  f6:[155,323,.083,.703,.833,.706,.461,.587,.12,.8],f7:[154,323,.083,.701,.826,.701,.458,.591,.12,.8],
   f0:[152,323,.083,.703,.825,.703,.457,.599,.14,.8],f1:[151,323,.083,.7,.824,.703,.454,.603,.14,.8],f2:[153,323,.083,.703,.825,.703,.454,.595,.14,.8],f3:[154,323,.083,.695,.833,.699,.458,.591,.12,.8],f4:[152,323,.083,.692,.831,.693,.461,.592,.1,.82],f5:[155,323,.083,.703,.833,.695,.465,.594,.11,.82]};
 const HEAD_GEO={m:[.235,.9],f:[.255,.86]}; // obočí (zlomek výšky), šířka pokrývky hlavy (zlomek šířky)
 const USE_LAYERS=true;
+const BOOT_COL={1:'#7a4a22',2:'#8f99a6',3:'#e6edf7',4:'#c8321e',5:'#7fbfff'}; // kožené, rytířské (ocel), okřídlené (stříbrné), dračí, hvězdné
+const HEAD_SCALE={4:1.08};
 function heroFigLayers(p, cls){
-  const g=p.gender==='f'?'f':'m', e=p.eq||{}, l=lookOf(p), ar=Math.max(0,Math.min(5,e.armor||0)), k=g+ar;
+  const g=p.gender==='f'?'f':'m', e=p.eq||{}, l=lookOf(p), ar=Math.max(0,Math.min(7,e.armor||0)), k=g+ar;
   const [W,H,lx,ly,rx,ry,fc,fw,t0,t1]=BODY[k], [brow,hw]=HEAD_GEO[g], cx=fc;
   let back='', front='';
-  if(e.cape){ const cw=(t1-t0)*1.2; back+=accImg('i_cape'+e.cape, l.cape, `left:${((t0+t1)/2-cw/2)*100}%;top:40%;width:${cw*100}%;z-index:0`); }
-  if(e.boots){ const w=fw*1.08; front+=accImg('i_boots'+e.boots, l.boots, `left:${(fc-w/2)*100}%;bottom:-.7%;width:${w*100}%;z-index:2`, '__allg'); }
-  if(e.weapon){ front+=accImg('i_weapon'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-.6*.86)*100}%;height:60%;width:auto;transform:translateX(-50%);z-index:3`, '__allg'); }
+  if(e.cape){ const cw=1.06; back+=accImg('i_cape'+e.cape, l.cape, `left:${(fc-cw/2)*100}%;top:36%;width:${cw*100}%;z-index:0`); }
+  // boty: obarví se vlastní obuv postavy podle druhu bot (nic se nepřekrývá)
+  const lb=Object.assign({}, l); if(e.boots) lb.boots=l.boots||BOOT_COL[e.boots]; else delete lb.boots;
+  if(e.weapon){ const wh=.5; front+=accImg('i_weapon'+e.weapon, l.weapon, `left:${lx*100}%;top:${(ly-wh*.86)*100}%;height:${wh*100}%;width:auto;transform:translateX(-50%) rotate(-22deg);transform-origin:50% 86%;z-index:3`, '__allg'); }
   if(e.shield){ front+=accImg('i_shield'+e.shield, l.shield, `left:${rx*100}%;top:${ry*100}%;width:62%;transform:translate(-42%,-58%);z-index:4`, '__allg'); }
-  if(e.head){ front+=accImg('hd'+e.head, l.head, `left:${cx*100}%;bottom:${(1-brow)*100}%;width:${hw*100}%;transform:translateX(-50%);z-index:5`, '__allg'); }
-  return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${back}${tintImg('body_'+k, 'body_'+g, l, 'class="hb"')}${front}</span>`;
+  if(e.head){ const w=hw*(HEAD_SCALE[e.head]||1); front+=accImg('hd'+e.head, l.head, `left:${cx*100}%;bottom:${(1-brow)*100}%;width:${w*100}%;transform:translateX(-50%);z-index:5`, '__allg'); }
+  return `<span class="hfig ${cls}" style="aspect-ratio:${W}/${H}">${back}${tintImg('body_'+k, 'body_'+g, lb, 'class="hb"')}${front}</span>`;
 }
 function heroFig(p, cls){ if(USE_LAYERS) return heroFigLayers(p, cls);
   const g=p.gender==='f'?'f':'m', st=heroStage(p), k=g+st, [W,fc,fw,t0,t1]=HERO_OV[k]||HERO_OV.m0, e=p.eq||{}, l=lookOf(p), H=420;
@@ -115,13 +120,13 @@ var TINT_CFG={
  hero_m5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}}, hero_f5:{top:null,cape:{h:[255,300],s:.25,y:[.25,1]}},
 };
 TINT_CFG.__all={all:{h:[0,360],s:.18,y:[0,1]}};
-TINT_CFG.body_m={top:{h:[190,235],s:.25,y:[.42,.76]}}; TINT_CFG.body_f={top:{h:[318,360],h2:[0,12],s:.15,y:[.44,.76]}};
-for(const g of 'mf') for(let i=2;i<6;i++) TINT_CFG['body_'+g+i]={top:null}; TINT_CFG.__allg={all:{h:[0,360],s:0,y:[0,1]}};
+TINT_CFG.body_m={top:{h:[190,235],s:.25,y:[.42,.76]},boots:{h:[0,360],s:0,y:[.86,1]}}; TINT_CFG.body_f={top:{h:[318,360],h2:[0,12],s:.15,y:[.44,.76],ex:[.74,1,.36,.64]},boots:{h:[0,360],s:0,y:[.86,1]}};
+for(const g of 'mf') for(let i=2;i<8;i++) TINT_CFG['body_'+g+i]={top:null}; TINT_CFG.__allg={all:{h:[0,360],s:0,y:[0,1]}};
 var _tintCache={}, _tintPend={};
 function lookOf(p){ const l=Object.assign({}, p&&p.look||{}); if(!l.top && p && p.color) l.top=p.color; return l; }
 function tintImg(name, cfgKey, look, attrs){
-  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||'')+'|'+(look.all||''); const done=_tintCache[k];
-  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape||look.all)){ _tintPend[k]=1; const im=new Image();
+  const k=name+'|'+(look.top||'')+'|'+(look.bottom||'')+'|'+(look.cape||'')+'|'+(look.all||'')+'|'+(look.boots||''); const done=_tintCache[k];
+  if(!done && !_tintPend[k] && (look.top||look.bottom||look.cape||look.all||look.boots)){ _tintPend[k]=1; const im=new Image();
     im.onload=()=>{ try{ _tintCache[k]=doTint(im, Object.assign({}, TINT_CFG[cfgKey], TINT_CFG[name]), look); document.querySelectorAll('img[data-tint]').forEach(e=>{ if(e.dataset.tint===k) e.src=_tintCache[k]; }); }catch(e){ _tintCache[k]=A_+name+'.webp'; } };
     im.src=A_+name+'.webp'; }
   return `<img ${attrs||''} data-tint="${k}" src="${done||A_+name+'.webp'}" alt="">`;
@@ -129,7 +134,7 @@ function tintImg(name, cfgKey, look, attrs){
 function doTint(im, cfg, look){
   const W=im.naturalWidth, H=im.naturalHeight, c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,W,H), a=d.data;
-  for(const part of ['top','bottom','cape','all']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
+  for(const part of ['top','bottom','cape','all','boots']){ const col=look[part], g=cfg&&cfg[part]; if(!col||!g) continue;
     const t=[1,3,5].map(i=>parseInt(col.substr(i,2),16)/255); const idx=[], vs=[];
     const y0=g.y[0]*H, y1=g.y[1]*H, x0=g.x?g.x[0]*W:0, x1=g.x?g.x[1]*W:W;
     for(let yy=Math.floor(y0); yy<Math.min(H,y1); yy++) for(let xx=Math.floor(x0); xx<Math.min(W,x1); xx++){ const i=(yy*W+xx)*4; if(a[i+3]<=60) continue; if(g.ex && xx>=g.ex[0]*W && xx<g.ex[1]*W && yy>=g.ex[2]*H && yy<g.ex[3]*H) continue;

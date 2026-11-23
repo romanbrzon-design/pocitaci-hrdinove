@@ -76,7 +76,7 @@ h3{color:#fff;text-shadow:0 2px 0 #5a3415,0 0 6px rgba(0,0,0,.35);font-size:24px
 .av .hfig img.hb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1}
 .av .hfig img.hacc{position:absolute;height:auto}
 .anim .av .hfig.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
-.av img.comp{position:absolute;right:2%;bottom:2%;width:28%;z-index:2;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
+.av img.comp{position:absolute;left:0;bottom:2%;width:24%;z-index:2;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
 .av.glow::before{content:"";position:absolute;inset:5%;background:radial-gradient(circle,#fff6b0 0,transparent 65%);z-index:0}
 .anim .av img.main{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
 .monimg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 4px rgba(0,0,0,.3))}
@@ -165,9 +165,9 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .sw.on{box-shadow:0 0 0 4px #e8323c;transform:scale(1.1)}.sw.orig{background:#fff7e6}
 .av.rider{align-items:flex-end;justify-content:flex-end}
 .av.rider img.horse{position:absolute;left:-4%;bottom:0;width:64%;max-height:72%;object-fit:contain;object-position:left bottom;z-index:1;filter:drop-shadow(0 6px 4px rgba(0,0,0,.25))}
-.av.rider .hfig.riderimg{position:relative;height:80%;margin-right:0;z-index:2}
+.av.rider .hfig.riderimg{position:relative;height:78%;margin-right:13%;z-index:2}
 .anim .av.rider .hfig.riderimg{animation:breath 3.2s ease-in-out infinite;transform-origin:50% 100%}
-.av.rider img.comp{right:-2%;width:22%;z-index:3}
+.av.rider img.comp{left:24%;right:auto;width:20%;z-index:3}
 .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}
 .addpic{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}.addpic .grp{display:grid;grid-template-columns:repeat(5,auto);gap:2px 3px;background:#fff7e6;border:2px dashed #e8c06a;border-radius:12px;padding:3px 5px}.addpic .emo{font-size:22px;line-height:1.15}.addpic .op{font:900 34px Nunito,sans-serif;color:#5a3412}
