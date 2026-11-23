@@ -105,7 +105,7 @@ img.ov{position:absolute;height:auto;pointer-events:none;filter:drop-shadow(0 2p
 .prestage .mon .av{height:210px;width:auto;max-width:none}
 .prestage .mon > svg{height:210px;width:auto;max-width:100%}
 
-#readtg{position:fixed;left:10px;bottom:10px;z-index:60;border:3px solid #8a5a2b;border-radius:999px;padding:8px 14px;font:800 15px Nunito,sans-serif;background:#fff7e6;color:#5a3412;box-shadow:0 3px 0 #8a5a2b;cursor:pointer}
+#readtg{position:fixed;left:8px;bottom:8px;z-index:60;width:50px;height:50px;display:flex;align-items:center;justify-content:center;border:3px solid #8a5a2b;border-radius:50%;padding:0;font:800 24px Nunito,sans-serif;background:#fff7e6;color:#5a3412;box-shadow:0 3px 0 #8a5a2b;cursor:pointer}
 #readtg.on{background:linear-gradient(#ffe27a,#f6b81d)}
 .card.hasrd{position:relative}
 .card .rd{position:absolute;top:6px;right:6px;z-index:5;width:38px;height:38px;border-radius:50%;border:2px solid #b88a4a;background:#fff7e6;font-size:19px;cursor:pointer;box-shadow:0 2px 0 #b88a4a;padding:0}
@@ -172,3 +172,5 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}
 .addpic{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}.addpic .grp{display:grid;grid-template-columns:repeat(5,auto);gap:2px 3px;background:#fff7e6;border:2px dashed #e8c06a;border-radius:12px;padding:3px 5px}.addpic .emo{font-size:22px;line-height:1.15}.addpic .op{font:900 34px Nunito,sans-serif;color:#5a3412}
 .lkparts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 6px}.lkparts .btn{display:inline-flex;align-items:center;gap:4px}.lkdot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0003}
+#app{padding-bottom:72px}
+.choice.armed{outline:4px solid #f6b81d;outline-offset:2px;animation:armp 1s ease-in-out infinite}@keyframes armp{50%{transform:scale(1.04)}}

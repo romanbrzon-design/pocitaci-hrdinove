@@ -307,7 +307,7 @@ img.ov{position:absolute;height:auto;pointer-events:none;filter:drop-shadow(0 2p
 .prestage .mon .av{height:210px;width:auto;max-width:none}
 .prestage .mon > svg{height:210px;width:auto;max-width:100%}
 
-#readtg{position:fixed;left:10px;bottom:10px;z-index:60;border:3px solid #8a5a2b;border-radius:999px;padding:8px 14px;font:800 15px Nunito,sans-serif;background:#fff7e6;color:#5a3412;box-shadow:0 3px 0 #8a5a2b;cursor:pointer}
+#readtg{position:fixed;left:8px;bottom:8px;z-index:60;width:50px;height:50px;display:flex;align-items:center;justify-content:center;border:3px solid #8a5a2b;border-radius:50%;padding:0;font:800 24px Nunito,sans-serif;background:#fff7e6;color:#5a3412;box-shadow:0 3px 0 #8a5a2b;cursor:pointer}
 #readtg.on{background:linear-gradient(#ffe27a,#f6b81d)}
 .card.hasrd{position:relative}
 .card .rd{position:absolute;top:6px;right:6px;z-index:5;width:38px;height:38px;border-radius:50%;border:2px solid #b88a4a;background:#fff7e6;font-size:19px;cursor:pointer;box-shadow:0 2px 0 #b88a4a;padding:0}
@@ -374,6 +374,8 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .emo.gone{opacity:.28;filter:grayscale(1);position:relative}.emo.gone::after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:3px solid #e8323c;transform:rotate(-30deg)}
 .addpic{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}.addpic .grp{display:grid;grid-template-columns:repeat(5,auto);gap:2px 3px;background:#fff7e6;border:2px dashed #e8c06a;border-radius:12px;padding:3px 5px}.addpic .emo{font-size:22px;line-height:1.15}.addpic .op{font:900 34px Nunito,sans-serif;color:#5a3412}
 .lkparts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 6px}.lkparts .btn{display:inline-flex;align-items:center;gap:4px}.lkdot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0003}
+#app{padding-bottom:72px}
+.choice.armed{outline:4px solid #f6b81d;outline-offset:2px;animation:armp 1s ease-in-out infinite}@keyframes armp{50%{transform:scale(1.04)}}
 
 </style>
 </head>
@@ -826,10 +828,19 @@ function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestV
 function voiceNatural(){ return !!(csVoice && voiceScore(csVoice)>=50); }
 try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 function speak(text, lang){
-  try{ if(!('speechSynthesis' in window) || !text) return; speechSynthesis.cancel();
-    const en=/^en/i.test(lang||'');
-    const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95); speechSynthesis.speak(u); }catch(e){}
+  try{ if(!('speechSynthesis' in window) || !text) return;
+    const go=()=>{ try{ const en=/^en/i.test(lang||'');
+      if(!csVoice && !enVoice) pickVoice();
+      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95);
+      speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} };
+    // Chrome v Androidu zahodí větu, která se spustí hned po cancel() – proto krátká pauza
+    if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(go,150); } else go();
+  }catch(e){}
 }
+// iPhone/iPad a některé Androidy pustí zvuk až po dotyku – při prvním dotyku hlas „odemkneme“
+(function(){ const unlock=()=>{ try{ pickVoice(); const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){} document.removeEventListener('pointerdown',unlock,true); document.removeEventListener('touchend',unlock,true); };
+  document.addEventListener('pointerdown',unlock,true); document.addEventListener('touchend',unlock,true); })();
+const TOUCH = matchMedia('(hover: none)').matches || matchMedia('(pointer: coarse)').matches;
 function sayText(pr){ if(pr.type==='choice') return pr.say || String(pr.q).replace(/<[^>]+>/g,' ');
   if(pr.type==='cmp'){ const n=String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').split('◯').map(s=>s.trim()); return `Porovnej. ${n[0]} a ${n[1]}. Je to větší, menší, nebo rovno? Vyber znaménko.`; } return pr.say || String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/·/g,' krát ').replace(/:/g,' děleno ').replace(/−/g,' mínus ').replace(/\?/g,' kolik? '); }
 
@@ -2114,8 +2125,8 @@ let _hoverT=null;
 function addReaders(){
   let tg=document.getElementById('readtg');
   if(!tg){ tg=document.createElement('button'); tg.id='readtg'; document.body.appendChild(tg);
-    tg.onclick=()=>{ const on=!readOn(); lsSet('ph-read',on); render(); if(on) speak('Předčítání je zapnuté. Klikni na reproduktor nebo najeď myší na tlačítko a já ti to přečtu.'); else speechSynthesis.cancel(); }; }
-  const on=readOn(); tg.className=on?'on':''; tg.innerHTML=on?'🔊 Předčítání zapnuto':'🔇 Předčítání'; tg.title='Zapnout nebo vypnout předčítání';
+    tg.onclick=()=>{ const on=!readOn(); lsSet('ph-read',on); render(); if(on) speak(TOUCH?'Předčítání je zapnuté. Klepni na odpověď a já ti ji přečtu, klepni znovu a vybereš ji. Když podržíš prst na tlačítku, taky ti ho přečtu.':'Předčítání je zapnuté. Klikni na reproduktor nebo najeď myší na tlačítko a já ti to přečtu.'); else speechSynthesis.cancel(); }; }
+  const on=readOn(); tg.className=on?'on':''; tg.innerHTML=on?'🔊':'🔇'; tg.title='Zapnout nebo vypnout předčítání';
   if(!on) return;
   document.querySelectorAll('#app .card').forEach(c=>{
     if(c.classList.contains('profile') || c.querySelector('[data-say]') || c.querySelector(':scope > .rd')) return;
@@ -2128,6 +2139,12 @@ function addReaders(){
     el.addEventListener('mouseenter',()=>{ clearTimeout(_hoverT); const pr=curProblem&&curProblem(); if(el.classList.contains('choice') && pr && pr.lang) return;
       _hoverT=setTimeout(()=>speak(cleanSpeech(el.innerText||el.title)),500); });
     el.addEventListener('mouseleave',()=>clearTimeout(_hoverT));
+    // dotykový displej: podržení prstu přečte tlačítko (a klepnutí pak nic nespustí)
+    if(TOUCH && !el.classList.contains('choice')){ let lt=null;
+      el.addEventListener('pointerdown',()=>{ clearTimeout(lt); el._lp=false; lt=setTimeout(()=>{ el._lp=true; speak(cleanSpeech(el.innerText||el.title)); },450); });
+      ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(lt)));
+      el.addEventListener('click',e=>{ if(el._lp){ el._lp=false; e.stopImmediatePropagation(); e.preventDefault(); } },true);
+      el.addEventListener('contextmenu',e=>e.preventDefault()); }
   });
 }
 function statsHTML(p){
@@ -2501,8 +2518,14 @@ function bind(){
   if(view.name==='play' || view.name==='battle' || view.name==='timed' || view.name==='duel'){
     document.querySelectorAll('[data-k]').forEach(el=>el.onclick=()=>key(el.dataset.k));
     document.querySelectorAll('[data-cmp]').forEach(el=>el.onclick=()=>submit(el.dataset.cmp));
-    document.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>{ if(el.disabled||busy) return; lastChoice=el; submit(+el.dataset.choice); });
+    document.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>{ if(el.disabled||busy) return;
+      // dotykový displej + předčítání: 1. klepnutí odpověď přečte, 2. klepnutí ji zvolí (u odpovědí se slovy)
+      const pr=curProblem(), txt=cleanSpeech(el.innerText);
+      if(TOUCH && readOn() && /[a-zá-ž]/i.test(txt) && !(pr&&pr.lang) && !el.classList.contains('armed')){ document.querySelectorAll('.choice.armed').forEach(x=>x.classList.remove('armed')); el.classList.add('armed'); speak(txt); return; }
+      lastChoice=el; submit(+el.dataset.choice); });
     document.querySelectorAll('[data-say]').forEach(el=>el.onclick=()=>{ const pr=curProblem(); if(pr) speak(sayText(pr), pr.lang); });
+    // klepnutí na zadání ho přečte (hlavně pro telefony a tablety)
+    document.querySelectorAll('#app .prob, #app .pic0').forEach(el=>{ el.style.cursor='pointer'; el.addEventListener('click',e=>{ if(e.target.closest('button,input')) return; const pr=curProblem(); if(pr) speak(sayText(pr), pr.lang); }); });
     { const pr=curProblem(), pp=prof(view.pid); if(pr && !pr.noAuto && ((pr.type==='choice' && pr.say && (pr.lang || (pp&&+pp.grade<=1))) || readOn()) && pr!==lastSpoken){ lastSpoken=pr; setTimeout(()=>speak(sayText(pr), pr.lang),250); } }
     document.querySelectorAll('.ans').forEach(el=>{
       el.onfocus=()=>{ document.querySelectorAll('.ans').forEach(x=>x.classList.remove('active')); el.classList.add('active'); };

@@ -29,8 +29,8 @@ let _hoverT=null;
 function addReaders(){
   let tg=document.getElementById('readtg');
   if(!tg){ tg=document.createElement('button'); tg.id='readtg'; document.body.appendChild(tg);
-    tg.onclick=()=>{ const on=!readOn(); lsSet('ph-read',on); render(); if(on) speak('Předčítání je zapnuté. Klikni na reproduktor nebo najeď myší na tlačítko a já ti to přečtu.'); else speechSynthesis.cancel(); }; }
-  const on=readOn(); tg.className=on?'on':''; tg.innerHTML=on?'🔊 Předčítání zapnuto':'🔇 Předčítání'; tg.title='Zapnout nebo vypnout předčítání';
+    tg.onclick=()=>{ const on=!readOn(); lsSet('ph-read',on); render(); if(on) speak(TOUCH?'Předčítání je zapnuté. Klepni na odpověď a já ti ji přečtu, klepni znovu a vybereš ji. Když podržíš prst na tlačítku, taky ti ho přečtu.':'Předčítání je zapnuté. Klikni na reproduktor nebo najeď myší na tlačítko a já ti to přečtu.'); else speechSynthesis.cancel(); }; }
+  const on=readOn(); tg.className=on?'on':''; tg.innerHTML=on?'🔊':'🔇'; tg.title='Zapnout nebo vypnout předčítání';
   if(!on) return;
   document.querySelectorAll('#app .card').forEach(c=>{
     if(c.classList.contains('profile') || c.querySelector('[data-say]') || c.querySelector(':scope > .rd')) return;
@@ -43,6 +43,12 @@ function addReaders(){
     el.addEventListener('mouseenter',()=>{ clearTimeout(_hoverT); const pr=curProblem&&curProblem(); if(el.classList.contains('choice') && pr && pr.lang) return;
       _hoverT=setTimeout(()=>speak(cleanSpeech(el.innerText||el.title)),500); });
     el.addEventListener('mouseleave',()=>clearTimeout(_hoverT));
+    // dotykový displej: podržení prstu přečte tlačítko (a klepnutí pak nic nespustí)
+    if(TOUCH && !el.classList.contains('choice')){ let lt=null;
+      el.addEventListener('pointerdown',()=>{ clearTimeout(lt); el._lp=false; lt=setTimeout(()=>{ el._lp=true; speak(cleanSpeech(el.innerText||el.title)); },450); });
+      ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(lt)));
+      el.addEventListener('click',e=>{ if(el._lp){ el._lp=false; e.stopImmediatePropagation(); e.preventDefault(); } },true);
+      el.addEventListener('contextmenu',e=>e.preventDefault()); }
   });
 }
 function statsHTML(p){
@@ -416,8 +422,14 @@ function bind(){
   if(view.name==='play' || view.name==='battle' || view.name==='timed' || view.name==='duel'){
     document.querySelectorAll('[data-k]').forEach(el=>el.onclick=()=>key(el.dataset.k));
     document.querySelectorAll('[data-cmp]').forEach(el=>el.onclick=()=>submit(el.dataset.cmp));
-    document.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>{ if(el.disabled||busy) return; lastChoice=el; submit(+el.dataset.choice); });
+    document.querySelectorAll('[data-choice]').forEach(el=>el.onclick=()=>{ if(el.disabled||busy) return;
+      // dotykový displej + předčítání: 1. klepnutí odpověď přečte, 2. klepnutí ji zvolí (u odpovědí se slovy)
+      const pr=curProblem(), txt=cleanSpeech(el.innerText);
+      if(TOUCH && readOn() && /[a-zá-ž]/i.test(txt) && !(pr&&pr.lang) && !el.classList.contains('armed')){ document.querySelectorAll('.choice.armed').forEach(x=>x.classList.remove('armed')); el.classList.add('armed'); speak(txt); return; }
+      lastChoice=el; submit(+el.dataset.choice); });
     document.querySelectorAll('[data-say]').forEach(el=>el.onclick=()=>{ const pr=curProblem(); if(pr) speak(sayText(pr), pr.lang); });
+    // klepnutí na zadání ho přečte (hlavně pro telefony a tablety)
+    document.querySelectorAll('#app .prob, #app .pic0').forEach(el=>{ el.style.cursor='pointer'; el.addEventListener('click',e=>{ if(e.target.closest('button,input')) return; const pr=curProblem(); if(pr) speak(sayText(pr), pr.lang); }); });
     { const pr=curProblem(), pp=prof(view.pid); if(pr && !pr.noAuto && ((pr.type==='choice' && pr.say && (pr.lang || (pp&&+pp.grade<=1))) || readOn()) && pr!==lastSpoken){ lastSpoken=pr; setTimeout(()=>speak(sayText(pr), pr.lang),250); } }
     document.querySelectorAll('.ans').forEach(el=>{
       el.onfocus=()=>{ document.querySelectorAll('.ans').forEach(x=>x.classList.remove('active')); el.classList.add('active'); };

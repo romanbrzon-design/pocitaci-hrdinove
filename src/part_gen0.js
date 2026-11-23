@@ -79,9 +79,18 @@ function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestV
 function voiceNatural(){ return !!(csVoice && voiceScore(csVoice)>=50); }
 try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 function speak(text, lang){
-  try{ if(!('speechSynthesis' in window) || !text) return; speechSynthesis.cancel();
-    const en=/^en/i.test(lang||'');
-    const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95); speechSynthesis.speak(u); }catch(e){}
+  try{ if(!('speechSynthesis' in window) || !text) return;
+    const go=()=>{ try{ const en=/^en/i.test(lang||'');
+      if(!csVoice && !enVoice) pickVoice();
+      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95);
+      speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} };
+    // Chrome v Androidu zahodí větu, která se spustí hned po cancel() – proto krátká pauza
+    if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(go,150); } else go();
+  }catch(e){}
 }
+// iPhone/iPad a některé Androidy pustí zvuk až po dotyku – při prvním dotyku hlas „odemkneme“
+(function(){ const unlock=()=>{ try{ pickVoice(); const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){} document.removeEventListener('pointerdown',unlock,true); document.removeEventListener('touchend',unlock,true); };
+  document.addEventListener('pointerdown',unlock,true); document.addEventListener('touchend',unlock,true); })();
+const TOUCH = matchMedia('(hover: none)').matches || matchMedia('(pointer: coarse)').matches;
 function sayText(pr){ if(pr.type==='choice') return pr.say || String(pr.q).replace(/<[^>]+>/g,' ');
   if(pr.type==='cmp'){ const n=String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').split('◯').map(s=>s.trim()); return `Porovnej. ${n[0]} a ${n[1]}. Je to větší, menší, nebo rovno? Vyber znaménko.`; } return pr.say || String(pr.q).replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/·/g,' krát ').replace(/:/g,' děleno ').replace(/−/g,' mínus ').replace(/\?/g,' kolik? '); }
