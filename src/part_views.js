@@ -336,6 +336,7 @@ function parentView(){
       <div class="field"><label>Nový rodičovský PIN (prázdné = beze změny)</label><input type="text" id="s-pin" inputmode="numeric" maxlength="8"></div>
       <div class="field"><label>👨‍👩‍👧‍👦 Rodinný cíl na měsíc – kolik správných odpovědí mají děti nasbírat dohromady (0 = vypnuto)</label><input type="number" id="s-fgoal" min="0" max="10000" value="${familyCfg().goal}"></div>
       <div class="field"><label>Odměna za rodinný cíl</label><input type="text" id="s-freward" value="${esc(familyCfg().reward||'')}"></div>
+      <label class="chk" style="font-size:16px;margin-bottom:12px"><input type="checkbox" id="s-miniafter" ${S.settings.miniAfter===false?'':'checked'}> 🧩 Minihry až po splnění dnešního úkolu</label>
       <div class="field"><label>🔔 Zvuky na tomto zařízení</label>
         <label class="chk"><input type="checkbox" data-sndset="ph-sfx" ${SND.on()?'checked':''}> Zvukové efekty (správně/chyba, souboj, oslavy, zvířátka)</label>
         <label class="chk"><input type="checkbox" data-sndset="ph-music" ${lsGet('ph-music',false)?'checked':''}> Hudba na pozadí (v menu a při souboji, ne při úkolech)</label>
@@ -648,6 +649,7 @@ function act(a){
     S.settings.length=$('#s-len').value;
     S.settings.perDay=Math.max(5,Math.min(40,parseInt($('#s-per').value)||20));
     { const np=$('#s-pin').value.trim(); if(np) S.settings.pin=np; }
+    { const ma=$('#s-miniafter'); if(ma) S.settings.miniAfter=ma.checked; }
     { const em=($('#s-repemail')||{}).value||'', on=!!($('#s-repon')||{}).checked;
       if(on && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.trim())){ toast('Zadejte platný e-mail'); break; }
       S.settings.rep={on, email:em.trim(), day:+(($('#s-repday')||{}).value||6)}; }
