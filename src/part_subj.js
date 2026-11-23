@@ -51,7 +51,7 @@ function misspell(w){
 Object.assign(CATS, {
   en_listen: {grade:0, subj:'en', label:'Poslech – najdi obrázek', gen(){
     const pool=byGrade(EN_PIC,3); const n=CUR_GRADE===0?3:4; const t=pick(pool); const opts=shuffle([t,...pickN(pool.filter(x=>x!==t && !enClash(x[0],t[0])),n-1)]);
-    return Object.assign(choice(`🎧 Poslouchej a najdi obrázek`, t[0], opts.map(o=>em(o[1],52)), opts.indexOf(t), '', 'enl|'+t[0]+'|'+opts.map(o=>o[0]).join()), {lang:'en-GB'});
+    return Object.assign(choice(`🎧 Poslouchej a najdi obrázek`, t[0], opts.map(o=>enPic(o[1],52)), opts.indexOf(t), '', 'enl|'+t[0]+'|'+opts.map(o=>o[0]).join()), {lang:'en-GB'});
   }},
   en_colors: {grade:0, subj:'en', label:'Poslech – barvy', gen(){
     const opts=pickN(EN_COLORS.slice(0,CUR_GRADE<=1?10:11), CUR_GRADE===0?3:4); const t=opts[ri(0,opts.length-1)];
@@ -72,7 +72,7 @@ Object.assign(CATS, {
     const pool=byGrade(EN_PIC.filter(x=>x[0].length>=3 && !x[0].includes(' ')),3); const t=pick(pool);
     const set=new Set([t[0]]); let g=0; while(set.size<4 && g++<30) set.add(misspell(t[0]));
     const opts=shuffle([...set]);
-    return Object.assign(choice(`Jak se anglicky napíše <b>${t[2]}</b>?`, '', opts.map(o=>txt(o)), opts.indexOf(t[0]), em(t[1],64), 'enw|'+t[0]), {lang:'en-GB', noAuto:true});
+    return Object.assign(choice(`Jak se anglicky napíše <b>${t[2]}</b>?`, '', opts.map(o=>txt(o)), opts.indexOf(t[0]), enPic(t[1],64), 'enw|'+t[0]), {lang:'en-GB', noAuto:true});
   }},
   en_phrase: {grade:2, subj:'en', label:'Fráze – co to znamená', gen(){
     const pool=byGrade(EN_PHRASES,2); const t=pick(pool); const others=pickN(EN_PHRASES.filter(x=>x!==t),3); const opts=shuffle([t,...others]);
@@ -80,6 +80,8 @@ Object.assign(CATS, {
   }},
 });
 
+// obrázek slovíčka: emoji, nebo vlastní obrázek 'img:název' (assets/název.webp)
+const enPic=(e,size)=>e.startsWith('img:')?`<img class="enimg" src="${A_}${e.slice(4)}.webp" alt="" style="height:${Math.round(size*1.35)}px;max-width:${Math.round(size*1.9)}px;object-fit:contain;vertical-align:middle">`:em(e,size);
 /* ---- Slovíčka z učebnice angličtiny pro 1. třídu (lekce Intro–9) – patří do běžné zásoby; jen slova s jednoznačným obrázkem ---- */
 const EN_BOOK1 = [ // [lekce, anglicky, obrázek, česky]
   [0,'hello','👋','ahoj'],[0,'happy','😀','veselý'],[0,'sad','😢','smutný'],[0,'sleepy','😴','ospalý'],[0,'sick','🤒','nemocný'],
@@ -90,14 +92,19 @@ const EN_BOOK1 = [ // [lekce, anglicky, obrázek, česky]
   [6,'pizza','🍕','pizza'],[6,'spaghetti','🍝','špagety'],[6,'salad','🥗','salát'],[6,'hamburger','🍔','hamburger'],[6,'chicken','🍗','kuře'],[6,'fish','🐟','ryba'],[6,'chips','🍟','hranolky'],[6,'soup','🍲','polévka'],[6,'sandwich','🥪','sendvič'],
   [7,'monkey','🐵','opice'],[7,'parrot','🦜','papoušek'],[7,'giraffe','🦒','žirafa'],[7,'zebra','🦓','zebra'],[7,'hippo','🦛','hroch'],[7,'lion','🦁','lev'],[7,'tiger','🐯','tygr'],[7,'snake','🐍','had'],[7,'crocodile','🐊','krokodýl'],[7,'elephant','🐘','slon'],
   [8,'mum','👩','maminka'],[8,'dad','👨','tatínek'],[8,'brother','👦','bratr'],[8,'sister','👧','sestra'],[8,'baby','👶','miminko'],[8,'grandma','👵','babička'],[8,'grandad','👴','dědeček'],
-  [9,'gloves','🧤','rukavice'],[9,'scarf','🧣','šála'],[9,'boots','🥾','zimní boty'],[9,'socks','🧦','ponožky'],[9,'sandals','👡','sandály'],[9,'swimsuit','🩱','plavky'],[9,'sunglasses','🕶️','sluneční brýle'],[9,'cap','🧢','kšiltovka'],
+  [1,'hop','img:en_hop','skákat po jedné noze'],[1,'jump','img:en_jump','skákat'],
+  [3,'pencil sharpener','img:en_sharpener','ořezávátko'],[3,'rubber','img:en_rubber','guma'],[3,'glue stick','img:en_gluestick','lepidlo'],
+  [4,'slide','img:en_slide','skluzavka'],[4,'roundabout','img:en_roundabout','kolotoč'],[4,'swing','img:en_swing','houpačka'],[4,'climbing frame','img:en_climbing','prolézačka'],
+  [4,'sandpit','img:en_sandpit','pískoviště'],[4,'zip line','img:en_zipline','lanovka'],[4,'tunnel','img:en_tunnel','tunel'],[4,'tree house','img:en_treehouse','domek na stromě'],
+  [5,'head','img:en_head','hlava'],[5,'hair','img:en_hair','vlasy'],[6,'mashed potato','img:en_mash','bramborová kaše'],[0,'goodbye','img:en_goodbye','na shledanou'],
+  [9,'woolly hat','img:en_woollyhat','zimní čepice'],[9,'gloves','🧤','rukavice'],[9,'scarf','🧣','šála'],[9,'boots','🥾','zimní boty'],[9,'socks','🧦','ponožky'],[9,'sandals','👡','sandály'],[9,'swimsuit','🩱','plavky'],[9,'sunglasses','🕶️','sluneční brýle'],[9,'cap','🧢','kšiltovka'],
 ];
 // přidat do běžné zásoby jako slovíčka 1. třídy; slova, která tam už jsou, se přesunou do 1. třídy
 for(const w of EN_BOOK1){ const e=EN_PIC.find(x=>x[0]===w[1]); if(e) e[3]=Math.min(e[3],1); else if(!EN_PIC.some(x=>x[1]===w[2])) EN_PIC.push([w[1],w[2],w[3],1]); }
 // slova, která už jsou s obrázkem, se neopakují ve čtecím seznamu (jinak by mohla být dvakrát mezi odpověďmi)
 for(let i=EN_WORDS.length-1;i>=0;i--) if(EN_PIC.some(x=>x[0]===EN_WORDS[i][0])) EN_WORDS.splice(i,1);
 // skupiny, které se nesmí plést (obecné slovo × jeho druh, části těla) – nikdy nejsou spolu mezi odpověďmi
-const EN_GRP=[['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['hat','cap'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup']];
+const EN_GRP=[['hop','jump'],['head','hair'],['head','happy'],['head','sad'],['head','sleepy'],['head','sick'],['hello','goodbye'],['goodbye','walk'],['hat','cap','woolly hat'],['swing','zip line'],['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup']];
 const enClash=(a,b)=>EN_GRP.some(g=>g.includes(a)&&g.includes(b));
 
 /* ---- Přírodověda: [od třídy, do třídy, otázka, správně, [špatně], obrázek] ---- */
