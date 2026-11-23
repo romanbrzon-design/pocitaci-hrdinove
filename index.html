@@ -1096,6 +1096,268 @@ const HALF1_SKIP = {1:['add20nb','money1','double1','cj_opp'], 2:['mul2','halfdo
 function defaultCats(grade, subjects, half){ let c=[]; for(const s of subjects){ if(s==='m') c=c.concat(DEFAULT_CATS[grade]||DEFAULT_CATS[2]); else c=c.concat((SUBJ_DEFAULTS[s]||{})[grade]||[]); }
   c=[...new Set(c)]; if(half===1){ const sk=HALF1_SKIP[grade]||[], f=c.filter(x=>!sk.includes(x)); if(f.length) c=f; } return c; }
 function subjectsOf(p){ const s=new Set(catsOf(p).map(subjOf)); return ['m','en','pr','cj'].filter(x=>s.has(x)); }
+
+/* ---- Prvouka po tématech (1.–3. třída podle tematických plánů učebnic) ----
+   Řádek: [od ročníku, do ročníku, otázka, správná odpověď, [špatné odpovědi], obrázek]
+   Ke každému tématu se přidají i související otázky z původní banky PR_BANK (podle `old`). */
+const PR_TOPICS = {
+  pr_cas: {label:'Čas – dny, měsíce, roční období, hodiny', grade:1, icon:'📅', old:/sníh|listí|koupat|kytičk|dní má týden|měsíců|ročních období/, bank:[
+    [0,2,'Které roční období je po zimě?','jaro',['léto','podzim','Vánoce'],'🌷'],[0,2,'Které roční období je po létě?','podzim',['jaro','zima','prázdniny'],'🍂'],
+    [1,3,'Který den je po pondělí?','úterý',['středa','neděle','pátek'],'📅'],[1,3,'Který den je před pátkem?','čtvrtek',['středa','sobota','pondělí'],'📅'],
+    [1,3,'Který den je po neděli?','pondělí',['sobota','úterý','středa'],'📅'],[1,3,'Které dny jsou víkend?','sobota a neděle',['pondělí a úterý','středa a čtvrtek','úterý a pátek'],'🛝'],
+    [1,3,'Dnes je úterý. Jaký den byl včera?','pondělí',['středa','neděle','čtvrtek'],'📅'],[1,3,'Dnes je pátek. Jaký den bude zítra?','sobota',['čtvrtek','neděle','pondělí'],'📅'],
+    [1,3,'Který měsíc je v roce první?','leden',['prosinec','březen','září'],'🗓️'],[1,3,'Který měsíc je v roce poslední?','prosinec',['leden','listopad','říjen'],'🗓️'],
+    [1,3,'Ve kterém měsíci jsou Vánoce?','v prosinci',['v listopadu','v lednu','v březnu'],'🎄'],[1,3,'Ve kterém měsíci začíná škola?','v září',['v srpnu','v lednu','v červnu'],'🏫'],
+    [1,3,'Který měsíc je po lednu?','únor',['březen','prosinec','duben'],'🗓️'],[2,3,'Který měsíc je před květnem?','duben',['červen','březen','srpen'],'🗓️'],
+    [2,3,'Který měsíc je nejkratší?','únor',['leden','srpen','prosinec'],'🗓️'],[1,3,'Ve kterých měsících jsou letní prázdniny?','v červenci a srpnu',['v prosinci a lednu','v září a říjnu','v březnu a dubnu'],'☀️'],
+    [1,3,'Kdy obvykle snídáme?','ráno',['večer','v noci','odpoledne'],'🥣'],[1,3,'Co je po odpoledni?','večer',['ráno','dopoledne','poledne'],'🌇'],
+    [2,3,'Kolik hodin má celý den i s nocí?','24',['12','10','60'],'🕛'],[2,3,'Kolik minut má jedna hodina?','60',['100','24','30'],'⏰'],
+    [2,3,'Co ukazuje na hodinách malá ručička?','hodiny',['minuty','dny','měsíce'],'🕒'],[3,3,'Kolik dní má rok, který není přestupný?','365',['100','300','52'],'🗓️'],
+    [1,3,'Kdy dozrávají jablka a padá listí?','na podzim',['na jaře','v zimě','v létě'],'🍎'],[1,3,'Kdy je nejtepleji a jezdíme k vodě?','v létě',['v zimě','na podzim','na jaře'],'🏖️'],
+  ]},
+  pr_telo: {label:'Lidské tělo a smysly', grade:1, icon:'🧍', old:/Čím vidíme|Čím slyšíme|vůni|smysl máme|pumpuje krev|Čím dýcháme|oporu těla/, bank:[
+    [0,2,'Čím ochutnáváme jídlo?','jazykem',['ušima','kolenem','očima'],'👅'],[0,2,'Čím čicháme?','nosem',['ušima','očima','loktem'],'👃'],
+    [1,3,'Čím poznáme, jestli je věc teplá, nebo studená?','kůží (hmatem)',['ušima','nosem','vlasy'],'✋'],[1,3,'Kolik smyslů má člověk?','5',['3','8','10'],'🧠'],
+    [0,2,'Kolik prstů máme na jedné ruce?','5',['4','6','10'],'🖐️'],[1,3,'Kde máme loket?','na ruce',['na noze','na hlavě','na zádech'],'💪'],
+    [1,3,'Kde máme koleno?','na noze',['na ruce','na hlavě','na krku'],'🦵'],[1,3,'Kde máme obočí?','nad očima',['pod nosem','na bradě','na krku'],'🙂'],
+    [1,3,'Co spojuje hlavu s tělem?','krk',['loket','koleno','pata'],'🧍'],[1,3,'Jak se jmenuje vnitřní strana ruky?','dlaň',['chodidlo','pata','loket'],'✋'],
+    [1,3,'Na které části nohy stojíme?','na chodidle',['na dlani','na lokti','na rameni'],'🦶'],[2,3,'Kolik mléčných zubů mají malé děti?','20',['32','10','5'],'🦷'],
+    [3,3,'Kolik zubů má dospělý člověk?','32',['20','10','50'],'🦷'],[2,3,'Kde se tráví jídlo?','v žaludku',['v plicích','v srdci','v mozku'],'🍽️'],
+    [2,3,'Čím přemýšlíme?','mozkem',['žaludkem','loktem','plícemi'],'🧠'],[2,3,'Co pohybuje našimi kostmi?','svaly',['vlasy','nehty','zuby'],'💪'],
+    [2,3,'Kde máme plíce?','v hrudníku',['v hlavě','v noze','v ruce'],'🫁'],[1,3,'Co nám chrání mozek?','lebka',['koleno','loket','žaludek'],'🧠'],
+  ]},
+  pr_zdravi: {label:'Zdraví a bezpečí (doprava, tísňová čísla)', grade:1, icon:'🚑', old:/čistit zuby/, bank:[
+    [1,3,'Jaké telefonní číslo má záchranná služba?','155',['150','158','100'],'🚑'],[1,3,'Jaké telefonní číslo mají hasiči?','150',['155','158','123'],'🚒'],
+    [1,3,'Jaké telefonní číslo má policie?','158',['150','155','100'],'🚓'],[2,3,'Které číslo tísňového volání platí v celé Evropě?','112',['158','150','911'],'☎️'],
+    [0,2,'Na jakou barvu semaforu smí chodec přejít?','na zelenou',['na červenou','na oranžovou','na modrou'],'🚦'],[0,2,'Co udělá chodec, když svítí červená?','stojí a čeká',['běží přes silnici','tancuje','jde pomalu přes silnici'],'🚦'],
+    [1,3,'Kde nejbezpečněji přejdeme silnici?','na přechodu pro chodce',['za zatáčkou','mezi zaparkovanými auty','kde se nám líbí'],'🚸'],
+    [1,3,'Kam se podíváme, než přejdeme silnici?','vlevo, vpravo a znovu vlevo',['jen nahoru','nikam','jen za sebe'],'👀'],
+    [1,3,'Co si nasadíme, když jedeme na kole?','přilbu',['kšiltovku','sluchátka','nic'],'🚲'],[1,3,'Co nás na silnici zviditelní ve tmě?','reflexní prvky',['černé oblečení','sluneční brýle','deštník'],'🌙'],
+    [0,2,'Kdy si myjeme ruce?','před jídlem a po záchodě',['jen v neděli','jen když je horko','nikdy'],'🧼'],
+    [1,3,'Neznámý člověk tě láká do auta. Co uděláš?','odmítnu a řeknu to rodičům',['nasednu','půjdu s ním pro bonbony','nikomu nic neřeknu'],'🙅'],
+    [2,3,'Kam se při bouřce venku NEschováváme?','pod osamělý strom',['do budovy','do auta','do domu'],'⛈️'],
+    [0,2,'Co je zdravá svačina?','jablko',['bonbony','chipsy','limonáda'],'🍎'],[1,3,'Co je nejlepší pít, když máme žízeň?','vodu',['kolu','limonádu','sirup bez vody'],'💧'],
+    [1,3,'Kde čekáme na autobus?','na zastávce',['uprostřed silnice','na přechodu','na křižovatce'],'🚌'],
+    [1,3,'Proč je důležité dost spát?','tělo i mozek si odpočinou',['abychom zapomněli úkoly','aby rostly vlasy','abychom měli hlad'],'😴'],
+    [2,3,'Co uděláme, když se spálíme o horký hrnec?','dáme ruku pod studenou vodu',['namažeme ji máslem','nic','dáme ji na topení'],'🚰'],
+  ]},
+  pr_rodina: {label:'Rodina a domov', grade:1, icon:'👨‍👩‍👧', bank:[
+    [0,2,'Maminka mé maminky je moje…','babička',['teta','sestra','sestřenice'],'👵'],[0,2,'Tatínek mého tatínka je můj…','dědeček',['strýc','bratr','bratranec'],'👴'],
+    [1,3,'Bratr mé maminky je můj…','strýc',['dědeček','bratranec','synovec'],'👨'],[1,3,'Sestra mého tatínka je moje…','teta',['babička','sestřenice','neteř'],'👩'],
+    [1,3,'Syn mého strýce je můj…','bratranec',['bratr','synovec','dědeček'],'👦'],[1,3,'Dcera mé tety je moje…','sestřenice',['sestra','neteř','babička'],'👧'],
+    [1,3,'Jak se jmenují děti stejných rodičů?','sourozenci',['bratranci','sousedé','prarodiče'],'👫'],[1,3,'Babička a dědeček se dohromady nazývají…','prarodiče',['sourozenci','vnoučata','sousedé'],'👵'],
+    [1,3,'Kým jsem pro svou babičku?','vnuk nebo vnučka',['syn nebo dcera','strýc nebo teta','bratranec nebo sestřenice'],'👵'],[0,2,'Maminka a tatínek jsou moji…','rodiče',['prarodiče','sourozenci','sousedé'],'👨‍👩‍👧'],
+    [3,3,'Syn mého bratra je můj…','synovec',['bratranec','strýc','vnuk'],'👦'],[0,2,'Ve které místnosti se vaří?','v kuchyni',['v ložnici','v koupelně','v předsíni'],'🍳'],
+    [0,2,'Kde se doma myjeme?','v koupelně',['v kuchyni','v ložnici','na půdě'],'🛁'],[0,2,'Kde doma spíme?','v ložnici',['v koupelně','ve sklepě','v předsíni'],'🛏️'],
+    [1,3,'Co patří do adresy?','ulice a číslo domu',['barva očí','oblíbené jídlo','jméno psa'],'🏠'],[1,3,'Jak můžeme doma pomáhat?','uklidit si hračky',['rozházet věci','křičet','nic'],'🧸'],
+  ]},
+  pr_zvirata: {label:'Zvířata a jejich mláďata', grade:0, icon:'🐾', old:/mládě|Kde žije ryba|včely|krtek|pták mláďata|králík|Co jí kráva|divoké|domácí|nohou má|savec|pták\?|Netopýr|Velryba|Žába je|Had je|sova|zimním spánkem|odlétá/, bank:[
+    [0,2,'Jak se jmenuje mládě kozy?','kůzle',['sele','kuře','tele'],'🐐'],[0,2,'Jak se jmenuje mládě kachny?','káčátko',['kuře','jehně','sele'],'🦆'],
+    [1,3,'Jak se jmenuje mládě husy?','house',['kuře','tele','hříbě'],'🪿'],[1,3,'Jak se jmenuje mládě medvěda?','medvídě',['kotě','štěně','hříbě'],'🐻'],
+    [0,2,'Které zvíře nám dává vlnu?','ovce',['kráva','slepice','prase'],'🐑'],[0,2,'Které zvíře snáší vejce?','slepice',['kráva','koza','kůň'],'🐔'],
+    [0,2,'Které zvíře nám dává nejvíc mléka?','kráva',['slepice','kachna','králík'],'🐄'],[0,2,'Kolik nohou má pták?','2',['4','6','8'],'🐦'],
+    [0,2,'Kolik nohou má pes?','4',['2','6','8'],'🐕'],[1,3,'Čím je pokryté tělo ptáka?','peřím',['srstí','šupinami','bodlinami'],'🪶'],
+    [1,3,'Čím je pokryté tělo ryby?','šupinami',['peřím','srstí','bodlinami'],'🐟'],[0,2,'Co má ježek na zádech?','bodliny',['peří','šupiny','krunýř'],'🦔'],
+    [0,2,'Které zvíře má krunýř?','želva',['žába','kočka','sova'],'🐢'],[2,3,'Čím dýchá ryba?','žábrami',['nosem','ušima','ploutvemi'],'🐟'],
+    [1,3,'Které zvíře je hmyz?','včela',['pavouk','šnek','žížala'],'🐝'],[2,3,'Čím savci krmí svá mláďata?','mlékem',['semínky','trávou','mravenci'],'🍼'],
+    [1,3,'Co se líhne z žabího vajíčka?','pulec',['housenka','kuře','štěně'],'🐸'],[1,3,'Co se stane z housenky?','motýl',['včela','žížala','pavouk'],'🦋'],
+    [1,3,'Které zvíře je vzhůru hlavně v noci?','sova',['slepice','kráva','veverka'],'🦉'],[1,3,'Které zvíře žije v lese?','jelen',['kráva','slepice','velbloud'],'🦌'],
+    [1,3,'Které zvíře žije v moři?','delfín',['veverka','kráva','krtek'],'🐬'],[2,3,'Které zvíře žije v Africe?','žirafa',['srna','ježek','veverka'],'🦒'],
+    [0,1,'Pes štěká a kočka…','mňouká',['bučí','kokrhá','bečí'],'🐱'],[0,1,'Kráva…','bučí',['mňouká','štěká','kváká'],'🐄'],
+    [0,1,'Kohout…','kokrhá',['bučí','kváká','štěká'],'🐓'],[0,1,'Žába…','kváká',['štěká','bučí','kokrhá'],'🐸'],
+    [0,1,'Ovce…','bečí',['kokrhá','štěká','kváká'],'🐑'],[0,2,'Kůň…','řehtá',['bučí','kváká','mňouká'],'🐴'],
+  ]},
+  pr_rostliny: {label:'Rostliny, stromy, ovoce a zelenina', grade:1, icon:'🌳', old:/strom|šišk|Kaštan|kaštan|žalud|bukvic|ořech|jehličí|ovoce|zelenin|rostliny|nosánk|lípa|jabloně|kůru/, bank:[
+    [1,3,'Z čeho vyroste nová rostlina?','ze semínka',['z kamene','z písku','z vody'],'🌱'],[0,2,'Která z těchto věcí je zelenina?','mrkev',['jahoda','hruška','švestka'],'🥕'],
+    [0,2,'Které z toho je ovoce?','hruška',['mrkev','cibule','brambora'],'🍐'],[1,3,'Z čeho se mele mouka?','z obilí',['z brambor','z jablek','ze dřeva'],'🌾'],
+    [1,3,'Které z toho je obilí?','pšenice',['mrkev','jahoda','růže'],'🌾'],[0,2,'Která květina kvete žlutě a pak má bílé chmýří?','pampeliška',['růže','tulipán','sněženka'],'🌼'],
+    [1,3,'Která květina kvete jako jedna z prvních na jaře?','sněženka',['slunečnice','růže','mák'],'❄️'],[0,2,'Která květina má na stonku trny?','růže',['tulipán','pampeliška','sněženka'],'🌹'],
+    [1,3,'Kde rostou brambory?','v zemi',['na stromě','na keři','ve vodě'],'🥔'],[1,3,'Na kterém stromě rostou třešně?','na třešni',['na smrku','na dubu','na bříze'],'🍒'],
+    [2,3,'Která část rostliny nese listy a květy?','stonek',['kořen','semínko','plod'],'🌿'],[2,3,'Která část rostliny saje vodu ze země?','kořen',['květ','list','plod'],'🌱'],
+    [1,3,'Co rostlina potřebuje, aby rostla?','vodu a světlo',['tmu a sůl','jen písek','cukr a mléko'],'🪴'],[1,3,'Ze kterého stromu je jablko?','z jabloně',['z hrušně','ze smrku','z lípy'],'🍎'],
+  ]},
+  pr_priroda: {label:'Les, louka, pole a voda', grade:2, icon:'🌲', old:/Kde žije ryba|včely|krtek|veverka/, bank:[
+    [1,3,'Kde žije kapr?','v rybníce',['v lese','na louce','v poli'],'🐟'],[1,3,'Který pták tluče zobákem do kmene stromu?','datel',['vrabec','kos','čáp'],'🐦'],
+    [1,3,'Kdo staví mraveniště?','mravenci',['včely','ježci','sovy'],'🐜'],[0,2,'Kdo vyrábí med?','včely',['mouchy','mravenci','vosy'],'🍯'],
+    [1,3,'Které zvíře bydlí v noře?','liška',['veverka','sova','datel'],'🦊'],[1,3,'Kde má veverka hnízdo?','na stromě',['v rybníce','pod zemí','v poli'],'🐿️'],
+    [1,3,'Který pták žije u vody?','kachna',['datel','sýkora','vrabec'],'🦆'],[1,3,'Co roste v lese?','houby',['kukuřice','pšenice','vinná réva'],'🍄'],
+    [1,3,'Co roste na louce?','tráva a květiny',['palmy','kaktusy','korály'],'🌼'],[1,3,'Kdo přenáší pyl z květu na květ?','včely',['ryby','krtci','žížaly'],'🐝'],
+    [1,3,'Které zvíře žije na poli?','zajíc',['kapr','veverka','datel'],'🐇'],[1,3,'Které zvíře přespí celou zimu?','ježek',['zajíc','srnka','vrabec'],'🦔'],
+    [1,3,'Kam odlétají vlaštovky na zimu?','do teplých krajin',['na severní pól','do sklepa','na půdu'],'🐦'],
+    [1,3,'Jak pomáháme v zimě ptáčkům?','dáváme jim zrní do krmítka',['budíme je','rozbíjíme hnízda','házíme po nich sníh'],'🪺'],
+    [0,2,'Co do lesa nepatří?','odpadky',['houby','stromy','mech'],'🗑️'],[2,3,'Kde žije pstruh?','v čistém potoce',['v poušti','na stromě','v hlíně'],'🐟'],
+  ]},
+  pr_vlast: {label:'Naše vlast – Česko', grade:2, icon:'🇨🇿', old:/Nejvyšší hora|Nejdelší řeka/, bank:[
+    [1,3,'Jak se jmenuje hlavní město Česka?','Praha',['Brno','Ostrava','Plzeň'],'🏰'],[1,3,'Jak se jmenuje náš stát?','Česká republika',['Slovenská republika','Rakousko','Polsko'],'🇨🇿'],
+    [3,5,'Které je druhé největší město Česka?','Brno',['Kolín','Tábor','Písek'],'🏙️'],[1,3,'Jaké barvy má česká vlajka?','bílou, červenou a modrou',['zelenou a žlutou','černou a oranžovou','růžovou a fialovou'],'🚩'],
+    [2,3,'Které zvíře je na českém státním znaku?','lev',['medvěd','kůň','drak'],'🦁'],[2,3,'Jak se jmenuje česká hymna?','Kde domov můj',['Pec nám spadla','Skákal pes','Kočka leze dírou'],'🎵'],
+    [2,3,'Která řeka teče Prahou?','Vltava',['Morava','Odra','Dunaj'],'🌊'],[2,3,'Se kterým státem Česko sousedí?','s Německem',['s Francií','s Itálií','se Španělskem'],'🗺️'],
+    [2,3,'Se kterým státem Česko sousedí?','se Slovenskem',['s Maďarskem','s Chorvatskem','se Švédskem'],'🗺️'],[3,4,'S kolika státy Česko sousedí?','4',['2','6','8'],'🗺️'],
+    [1,3,'Čím platíme v Česku?','korunami',['eury','dolary','librami'],'🪙'],[2,3,'Kdo vede obec nebo město?','starosta',['ředitel školy','pošťák','hasič'],'🏛️'],
+    [2,3,'Kde sídlí prezident?','na Pražském hradě',['v Brně','na Sněžce','v Ostravě'],'🏰'],[2,3,'Kde pracuje starosta?','na radnici (obecním úřadě)',['v nemocnici','na poště','v pekárně'],'🏛️'],
+  ]},
+  pr_povolani: {label:'Povolání a řemesla', grade:1, icon:'🧑‍🔧', bank:[
+    [0,2,'Kdo léčí nemocné lidi?','lékař',['pekař','zedník','kominík'],'🩺'],[0,2,'Kdo peče chleba a rohlíky?','pekař',['hasič','řidič','zahradník'],'🥖'],
+    [0,2,'Kdo hasí požáry?','hasič',['kuchař','učitel','prodavač'],'🚒'],[0,2,'Kdo učí děti ve škole?','učitel',['zubař','kominík','zedník'],'👩‍🏫'],
+    [1,3,'Kdo opravuje auta?','automechanik',['pekař','švadlena','kuchař'],'🔧'],[0,2,'Kdo prodává v obchodě?','prodavač',['pilot','hasič','zubař'],'🛒'],
+    [0,2,'Kdo řídí autobus?','řidič',['kuchař','zahradník','lékař'],'🚌'],[0,2,'Kdo se stará o zuby?','zubař',['pekař','zedník','pošťák'],'🦷'],
+    [1,3,'Kdo čistí komíny?','kominík',['kuchař','pilot','zubař'],'🎩'],[1,3,'Kdo staví domy ze zdí?','zedník',['zubař','pošťák','kadeřník'],'🧱'],
+    [1,3,'Kdo nosí dopisy a balíky?','pošťák',['pekař','zubař','hasič'],'✉️'],[0,2,'Kdo vaří v restauraci?','kuchař',['pilot','kominík','zedník'],'👨‍🍳'],
+    [1,3,'Kdo vyrábí nábytek ze dřeva?','truhlář',['zubař','pošťák','kuchař'],'🪚'],[1,3,'Kdo léčí zvířata?','veterinář',['zedník','pekař','pilot'],'🐾'],
+    [1,3,'Kdo řídí letadlo?','pilot',['kuchař','kominík','zubař'],'✈️'],[1,3,'Kdo stříhá vlasy?','kadeřník',['pekař','zedník','pošťák'],'💇'],
+    [1,3,'Kdo chytá zloděje?','policista',['zahradník','kuchař','pekař'],'👮'],[1,3,'Kdo pěstuje zeleninu a květiny?','zahradník',['pilot','zubař','pošťák'],'🧑‍🌾'],
+  ]},
+  pr_neziva: {label:'Neživá příroda, voda a vesmír', grade:3, icon:'🌍', old:/vodou v mrazu|°C|kontejner|planeta|Slunce je|Měsíc|potravního/, bank:[
+    [2,4,'Na které planetě žijeme?','na Zemi',['na Marsu','na Měsíci','na Slunci'],'🌍'],[3,5,'Kolem čeho obíhá Země?','kolem Slunce',['kolem Měsíce','kolem Marsu','kolem ničeho'],'☀️'],
+    [3,5,'Proč se střídá den a noc?','Země se otáčí',['Slunce zhasíná','Měsíc zakrývá Slunce','kvůli mrakům'],'🌗'],[2,4,'Kde je voda slaná?','v moři',['v rybníce','v potoce','ve studánce'],'🌊'],
+    [2,4,'Co se stane s vodou, když ji vaříme?','mění se v páru',['mění se v led','zezelená','ztvrdne'],'♨️'],[2,4,'Co patří do živé přírody?','strom',['kámen','voda','vzduch'],'🌳'],
+    [2,4,'Co patří do neživé přírody?','kámen',['pes','strom','houba'],'🪨'],[3,5,'Co přitáhne magnet?','železný hřebík',['dřevěnou kostku','papír','gumu'],'🧲'],
+    [2,4,'Odkud padá déšť?','z mraků',['ze stromů','z kopců','z Měsíce'],'🌧️'],[3,5,'Co potřebujeme k dýchání?','vzduch',['písek','vodu','světlo'],'💨'],
+  ]},
+};
+(function(){
+  const pool=(t)=>{ const own=t.bank, keys=new Set(own.map(r=>r[2])); return own.concat((t.old?PR_BANK.filter(r=>t.old.test(r[2])&&!keys.has(r[2])):[])); };
+  for(const [k,t] of Object.entries(PR_TOPICS)){
+    const all=pool(t);
+    CATS[k]={grade:t.grade, subj:'pr', label:t.label, gen(){
+      const g=CUR_GRADE; let p=all.filter(q=>q[0]<=g && q[1]>=g); if(p.length<6) p=all.filter(q=>q[0]<=g); if(p.length<4) p=all.filter(q=>q[0]<=Math.max(g,t.grade)+1); if(!p.length) p=all;
+      const q=pick(p); const opts=shuffle([q[3], ...q[4]]);
+      return choice(q[2], q[2], opts.map(o=>txt(o)), opts.indexOf(q[3]), em(q[5]||t.icon,60), k+'|'+q[2]+'|'+q[3]); }};
+  }
+  // „mix“ ze všech témat (původní volba; mají ji uloženou stávající hrdinové)
+  const seen=new Set(PR_BANK.map(r=>r[2]+'|'+r[3])); for(const t of Object.values(PR_TOPICS)) for(const r of t.bank){ const kk=r[2]+'|'+r[3]; if(!seen.has(kk)){ seen.add(kk); PR_BANK.push(r); } }
+  CATS.pr_quiz.label='Prvouka – mix ze všech témat';
+  SUBJ_DEFAULTS.pr={0:['pr_zvirata','pr_cas','pr_povolani'],1:['pr_cas','pr_telo','pr_zdravi','pr_rodina','pr_zvirata','pr_rostliny','pr_povolani'],
+    2:['pr_cas','pr_telo','pr_zdravi','pr_rodina','pr_zvirata','pr_rostliny','pr_priroda','pr_vlast','pr_povolani'],
+    3:['pr_cas','pr_telo','pr_zdravi','pr_zvirata','pr_rostliny','pr_priroda','pr_vlast','pr_neziva'],4:['pr_quiz','pr_vlast','pr_neziva'],5:['pr_quiz','pr_vlast','pr_neziva']};
+})();
+
+/* ---- Čeština – další okruhy 1.–3. třídy (podle tematických plánů učebnic) ---- */
+const gapQ = w => `Doplň: <b>${w.replace('_','<u>&nbsp;?&nbsp;</u>')}</b>`;
+const letterOpt = o => `<span class="num0">${o}</span>`;
+// 1. třída – první písmeno slova podle obrázku (slovo se jen čte nahlas, nepíše se)
+const CJ_FIRST = [['auto','🚗'],['ananas','🍍'],['banán','🍌'],['balónek','🎈'],['citron','🍋'],['cibule','🧅'],['čokoláda','🍫'],['dům','🏠'],['dort','🎂'],
+  ['hruška','🍐'],['jablko','🍎'],['jahoda','🍓'],['kočka','🐱'],['kolo','🚲'],['lev','🦁'],['lízátko','🍭'],['myš','🐭'],['mrkev','🥕'],['měsíc','🌙'],['nůžky','✂️'],
+  ['ovce','🐑'],['pes','🐶'],['prase','🐷'],['ryba','🐟'],['raketa','🚀'],['slon','🐘'],['slunce','☀️'],['šnek','🐌'],['šála','🧣'],['traktor','🚜'],['ucho','👂'],
+  ['veverka','🐿️'],['velryba','🐳'],['zebra','🦓'],['zmrzlina','🍦'],['žába','🐸'],['žirafa','🦒']];
+// 1. třída – krátká, nebo dlouhá samohláska
+const CJ_LONG = [['k_lo','o','ó'],['pt_k','á','a'],['m_k','á','a'],['r_ba','y','ý'],['s_r','ý','y'],['b_lý','í','i'],['m_š','y','ý'],
+  ['n_s','o','ó'],['dr_k','a','á'],['ž_ba','á','a'],['tr_va','á','a'],['k_va','á','a'],['l_pa','í','i'],['m_d','e','é'],
+  ['ml_ko','é','e'],['l_to','é','e'],['l_s','e','é'],['h_ra','o','ó'],['m_lo','á','a'],['s_va','o','ó'],['sl_n','o','ó'],['k_za','o','ó'],['ř_ka','e','é'],['kl_č','í','i'],['m_č','í','i'],['r_ma','ý','y']];
+// velké písmeno: vlastní jména × obecná slova (vše psáno malými)
+const CJ_NAMES = ['petr','eva','jana','tomáš','praha','brno','vltava','sněžka','alík','micka','ostrava','karel','lucie','ondra','labe','plzeň'];
+const CJ_COMMON = ['pes','kočka','město','řeka','hora','strom','stůl','okno','kluk','holka','auto','kolo','dům','škola','kniha','míč'];
+// 2. třída – druhy vět (věta je i se znaménkem, otázka je na smysl)
+const CJ_SENT = [['Pes leží na dvoře.','oznamovací'],['Dnes prší.','oznamovací'],['Babička peče buchty.','oznamovací'],['Na stromě sedí kos.','oznamovací'],['Venku svítí sluníčko.','oznamovací'],
+  ['Kdy přijdeš domů?','tázací'],['Máš rád jahody?','tázací'],['Kolik je hodin?','tázací'],['Kde je moje taška?','tázací'],['Půjdeš ven?','tázací'],
+  ['Zavři okno!','rozkazovací'],['Pojď sem!','rozkazovací'],['Ukliď si pokoj!','rozkazovací'],['Buď potichu!','rozkazovací'],['Podej mi tužku!','rozkazovací'],
+  ['Kéž by už byly prázdniny!','přací'],['Ať se ti daří!','přací'],['Kéž by zítra svítilo slunce!','přací'],['Ať jsi brzy zdravý!','přací']];
+// 2. třída – dě/tě/ně, bě/pě/vě (× bje/pje/vje), mě (× mně)
+const CJ_DTN = [['d_ti','ě','e'],['t_lo','ě','e'],['n_co','ě','e'],['kot_','ě','e'],['v_ž','ě','je'],['ob_d','ě','je'],['p_t','ě','je'],['v_trník','ě','je'],['v_ci','ě','je'],
+  ['b_žet','ě','je'],['p_na','ě','je'],['p_kný','ě','je'],['ob_dnat','je','ě'],['v_zd','je','ě'],['m_sto','ě','ně'],['m_síc','ě','ně'],['zm_na','ě','ně'],['pam_ť','ě','ně'],['nám_stí','ě','ně'],
+  ['d_da','ě','e'],['t_sto','ě','e'],['n_kdo','ě','e']];
+// 2.–3. třída – ú, nebo ů
+const CJ_UU = [['d_m','ů'],['_terý','ú'],['k_ň','ů'],['st_l','ů'],['_kol','ú'],['r_že','ů'],['kr_ta','ů'],['p_l','ů'],['m_j','ů'],['_l','ú'],['_směv','ú'],
+  ['h_l','ů'],['l_žko','ů'],['_nor','ú'],['dom_','ů'],['v_z','ů'],['_hel','ú'],['_klid','ú'],['dv_r','ů']];
+// 2. třída – slova nadřazená a podřazená
+const CJ_GROUPS = [['ovoce',['jablko','hruška','švestka','banán']],['zelenina',['mrkev','cibule','okurka','paprika']],['nábytek',['stůl','židle','skříň','postel']],
+  ['ptáci',['vrabec','sýkora','kos','čáp']],['oblečení',['tričko','kalhoty','sukně','svetr']],['nádobí',['hrnec','talíř','hrnek','pánev']],['nářadí',['kladivo','pila','šroubovák','kleště']],
+  ['hračky',['panenka','míč','kostky','medvídek']],['květiny',['růže','tulipán','sedmikráska','pampeliška']],['stromy',['dub','buk','smrk','bříza']],
+  ['dopravní prostředky',['auto','vlak','autobus','tramvaj']],['hudební nástroje',['kytara','housle','buben','flétna']]];
+// 2. třída – podstatná jména a slovesa
+const CJ_NOUN = ['pes','stůl','škola','kniha','jablko','auto','strom','sestra','okno','míč','kočka','město'];
+const CJ_VERB = ['běží','zpívá','skáče','čte','píše','spí','maluje','plave','vaří','tancuje','kreslí','staví'];
+const CJ_ADJ = ['velký','zelený','rychlý','veselý','malý','modrý','starý','hodný'];
+// 3. třída – slova příbuzná [slovo, příbuzná, nepříbuzná]
+const CJ_REL = [['les',['lesník','lesní','lesík'],['lev','list','pes']],['voda',['vodník','vodní','vodička'],['vosa','koza','váza']],['hrad',['hradní','hradby'],['hrách','had','hrát']],
+  ['škola',['školní','školák'],['kola','skála','škoda']],['kniha',['knihovna','knížka'],['knoflík','kmín','kníže']],['ryba',['rybník','rybář'],['rýže','rýma','ruka']],
+  ['sníh',['sněhulák','sněžit','sněhový'],['snít','sen','nit']],['dům',['domov','domek','domácí'],['dub','dým','kůň']],['mléko',['mlékárna','mléčný'],['mlok','mlýn','mlha']],
+  ['zahrada',['zahradník','zahrádka'],['zábava','záhada','zahrát']],['pes',['psí','pejsek'],['pec','les','pás']],['hora',['horský','horolezec'],['hra','hrom','noha']]];
+// 3. třída – slovesa: [neurčitek, minulý (on), přítomný (on), 1. os. j. č., 2. os. j. č., 3. os. mn. č. (nebo null)]
+const CJ_VERBS = [['zpívat','zpíval','zpívá','zpívám','zpíváš','zpívají'],['skákat','skákal','skáče','skáču','skáčeš','skáčou'],['psát','psal','píše','píšu','píšeš','píšou'],
+  ['číst','četl','čte','čtu','čteš','čtou'],['malovat','maloval','maluje','maluju','maluješ','malují'],['hrát','hrál','hraje','hraju','hraješ','hrají'],['běhat','běhal','běhá','běhám','běháš','běhají'],
+  ['spát','spal','spí','spím','spíš',null],['plavat','plaval','plave','plavu','plaveš','plavou'],['vařit','vařil','vaří','vařím','vaříš',null],['kreslit','kreslil','kreslí','kreslím','kreslíš',null],
+  ['stavět','stavěl','staví','stavím','stavíš',null],['tancovat','tancoval','tancuje','tancuju','tancuješ','tancují']];
+// 3. třída – věta jednoduchá × souvětí
+const CJ_VS = [['Pes štěká na kočku.','věta jednoduchá'],['Maminka peče dort.','věta jednoduchá'],['Na louce rostou květiny.','věta jednoduchá'],['Děti si hrají na hřišti.','věta jednoduchá'],
+  ['Ráno jsme šli do školy.','věta jednoduchá'],['Dědeček čte noviny.','věta jednoduchá'],['Pes štěká a kočka utíká.','souvětí'],['Když prší, bereme si deštník.','souvětí'],
+  ['Petr čte a Eva maluje.','souvětí'],['Šli jsme ven, ale začalo pršet.','souvětí'],['Maminka peče dort, protože má Ondra narozeniny.','souvětí'],['Vím, že zítra bude hezky.','souvětí']];
+const cjFirst = w => /^ch/i.test(w) ? 'CH' : w[0].toUpperCase();
+const cjAbcIdx = w => ABC.indexOf(cjFirst(w));
+
+Object.assign(CATS, {
+  cj_first: {grade:0, subj:'cj', label:'Na jaké písmeno slovo začíná (podle obrázku)', gen(){
+    const w=pick(CJ_FIRST), right=cjFirst(w[0]);
+    const near=ABC.filter(x=>x!==right && x!=='CH' && x!=='Q' && x!=='W' && x!=='X' && x!=='Ď' && x!=='Ť' && x!=='Ň');
+    const opts=shuffle([right, ...pickN(near,3)]);
+    return choice('Na jaké písmeno začíná slovo na obrázku?', `Na jaké písmeno začíná slovo ${w[0]}?`, opts.map(letterOpt), opts.indexOf(right), em(w[1],72), 'first|'+w[0]);
+  }},
+  cj_long: {grade:1, subj:'cj', label:'Krátká, nebo dlouhá samohláska', gen(){
+    const w=pick(CJ_LONG), opts=shuffle([w[1],w[2]]);
+    return choice(gapQ(w[0]), '', opts.map(letterOpt), opts.indexOf(w[1]), '', 'long|'+w[0]);
+  }},
+  cj_big: {grade:1, subj:'cj', label:'Velké písmeno – jména lidí, zvířat, měst a řek', gen(){
+    const n=pick(CJ_NAMES), opts=shuffle([n, ...pickN(CJ_COMMON,3)]);
+    return choice('Které slovo se píše s <b>velkým</b> písmenem?', 'Které slovo se píše s velkým písmenem?', opts.map(o=>txt(o)), opts.indexOf(n), '', 'big|'+n+'|'+opts.join(','));
+  }},
+  cj_sort: {grade:2, subj:'cj', label:'Řazení slov podle abecedy', gen(){
+    let words=[]; const pool=shuffle(CJ_FIRST.map(x=>x[0]).concat(CJ_COMMON, CJ_NOUN));
+    for(const w of pool){ if(words.length>=4) break; if(cjAbcIdx(w)>=0 && !words.some(x=>cjFirst(x)===cjFirst(w))) words.push(w); }
+    const sorted=words.slice().sort((a,b)=>cjAbcIdx(a)-cjAbcIdx(b)), last=R()<.35, right=last?sorted[3]:sorted[0], opts=shuffle(words);
+    const q=`Které slovo bude v abecedě <b>${last?'poslední':'první'}</b>?`;
+    return choice(q, q.replace(/<[^>]+>/g,''), opts.map(o=>txt(o)), opts.indexOf(right), '', 'sort|'+(last?'L':'F')+'|'+sorted.join(','));
+  }},
+  cj_kinds: {grade:2, subj:'cj', label:'Druhy vět (oznamovací, tázací, rozkazovací, přací)', gen(){
+    const s=pick(CJ_SENT), opts=['oznamovací','tázací','rozkazovací','přací'];
+    return choice(`Jaká je to věta?<br><b>${s[0]}</b>`, `Jaká je to věta? ${s[0]}`, opts.map(o=>txt(o)), opts.indexOf(s[1]), '', 'kinds|'+s[0]);
+  }},
+  cj_dtn: {grade:2, subj:'cj', label:'dě, tě, ně, bě, pě, vě, mě', gen(){
+    const w=pick(CJ_DTN), opts=shuffle([w[1],w[2]]);
+    return choice(gapQ(w[0]), '', opts.map(letterOpt), opts.indexOf(w[1]), '', 'dtn|'+w[0]);
+  }},
+  cj_uu: {grade:2, subj:'cj', label:'ú, nebo ů', gen(){
+    const w=pick(CJ_UU), opts=['ú','ů'];
+    return choice(gapQ(w[0]), '', opts.map(letterOpt), opts.indexOf(w[1]), '', 'uu|'+w[0]);
+  }},
+  cj_group: {grade:2, subj:'cj', label:'Slova nadřazená a podřazená', gen(){
+    // hračky se nemíchají s nástroji a dopravou (buben nebo auto může být i hračka)
+    const clash=(a,b)=>{ const s=new Set([a,b]); return s.has('hračky') && (s.has('hudební nástroje')||s.has('dopravní prostředky')); };
+    const g=pick(CJ_GROUPS), others=CJ_GROUPS.filter(x=>x!==g && !clash(x[0],g[0]));
+    if(R()<.5){ const three=pickN(g[1],3), opts=shuffle([g[0], ...pickN(others,3).map(x=>x[0])]);
+      return choice(`Jak se jedním slovem nazývá: <b>${three.join(', ')}</b>?`, `Jak se jedním slovem nazývá: ${three.join(', ')}?`, opts.map(o=>txt(o)), opts.indexOf(g[0]), '', 'grp1|'+g[0]+'|'+three.join(',')); }
+    const three=pickN(g[1],3), odd=pick(pick(others)[1]), opts=shuffle([...three, odd]);
+    return choice('Které slovo nepatří mezi ostatní?', 'Které slovo nepatří mezi ostatní?', opts.map(o=>txt(o)), opts.indexOf(odd), '', 'grp2|'+opts.join(','));
+  }},
+  cj_nv: {grade:2, subj:'cj', label:'Podstatná jména a slovesa', gen(){
+    const verb=R()<.5;
+    if(verb){ const v=pick(CJ_VERB), opts=shuffle([v, ...pickN(CJ_NOUN.concat(CJ_ADJ),3)]);
+      return choice('Které slovo je <b>sloveso</b> (co kdo dělá)?', 'Které slovo je sloveso? Co kdo dělá?', opts.map(o=>txt(o)), opts.indexOf(v), '', 'nv|v|'+opts.join(',')); }
+    const n=pick(CJ_NOUN), opts=shuffle([n, ...pickN(CJ_VERB.concat(CJ_ADJ),3)]);
+    return choice('Které slovo je <b>podstatné jméno</b> (kdo nebo co)?', 'Které slovo je podstatné jméno? Kdo nebo co?', opts.map(o=>txt(o)), opts.indexOf(n), '', 'nv|n|'+opts.join(','));
+  }},
+  cj_rel: {grade:3, subj:'cj', label:'Slova příbuzná', gen(){
+    const r=pick(CJ_REL), right=pick(r[1]), opts=shuffle([right, ...r[2]]);
+    return choice(`Které slovo je příbuzné se slovem <b>${r[0]}</b>?`, `Které slovo je příbuzné se slovem ${r[0]}?`, opts.map(o=>txt(o)), opts.indexOf(right), '', 'rel|'+r[0]+'|'+right);
+  }},
+  cj_verb: {grade:3, subj:'cj', label:'Slovesa – osoba, číslo a čas', gen(){
+    const v=pick(CJ_VERBS), k=R();
+    if(k<.4){ const forms=[[v[1],'minulý'],[v[2],'přítomný'],['bude '+v[0],'budoucí']], f=pick(forms), opts=['minulý','přítomný','budoucí'];
+      return choice(`V jakém čase je sloveso <b>${f[0]}</b>?`, `V jakém čase je sloveso ${f[0]}?`, opts.map(o=>txt(o)), opts.indexOf(f[1]), '', 'vt|'+f[0]); }
+    if(k<.75){ const forms=[[v[3],'1. osoba'],[v[4],'2. osoba'],[v[2],'3. osoba']], f=pick(forms), opts=['1. osoba','2. osoba','3. osoba'];
+      return choice(`V jaké osobě je sloveso <b>${f[0]}</b>?`, `V jaké osobě je sloveso ${f[0]}?`, opts.map(o=>txt(o)), opts.indexOf(f[1]), '', 'vo|'+f[0]); }
+    const vv=v[5]?v:pick(CJ_VERBS.filter(x=>x[5])), pl=R()<.5, f=pl?vv[5]:vv[2], opts=['jednotné','množné'];
+    return choice(`V jakém čísle je sloveso <b>${f}</b>?`, `V jakém čísle je sloveso ${f}?`, opts.map(o=>txt(o)), pl?1:0, '', 'vc|'+f);
+  }},
+  cj_vs: {grade:3, subj:'cj', label:'Věta jednoduchá a souvětí', gen(){
+    const s=pick(CJ_VS), opts=['věta jednoduchá','souvětí'];
+    return choice(`Je to věta jednoduchá, nebo souvětí?<br><b>${s[0]}</b>`, `Je to věta jednoduchá, nebo souvětí? ${s[0]}`, opts.map(o=>txt(o)), opts.indexOf(s[1]), '', 'vs|'+s[0]);
+  }},
+});
+SUBJ_DEFAULTS.cj = {0:['cj_opp','cj_first'], 1:['cj_abc','cj_opp','cj_first','cj_long','cj_big'],
+  2:['cj_abc','cj_opp','cj_iy','cj_end','cj_sort','cj_kinds','cj_dtn','cj_uu','cj_group','cj_nv','cj_big'],
+  3:['cj_iy','cj_vyj','cj_end','cj_pos','cj_gen','cj_rel','cj_verb','cj_vs','cj_uu','cj_dtn'],
+  4:['cj_vyj','cj_end','cj_pos','cj_gen','cj_rel','cj_verb','cj_vs'], 5:['cj_vyj','cj_end','cj_pos','cj_gen','cj_rel','cj_verb','cj_vs']};
+Object.assign(HALF1_SKIP, {1:HALF1_SKIP[1].concat(['cj_long','cj_big']), 2:HALF1_SKIP[2].concat(['cj_nv','cj_big','cj_uu']), 3:HALF1_SKIP[3].concat(['cj_verb','cj_vs'])});
 /* ============ RPG data ============ */
 // item: [name, attack, defense, hp, base price]
 const SLOTS = [
@@ -2024,7 +2286,7 @@ const LS_KEY='pocitani-hrdinove-v1';
 function newId(){ return 'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function newProfile(o={}){
   const grade=(o.grade!==undefined&&o.grade!==null&&o.grade!=='')?+o.grade:2;
-  return Object.assign({id:newId(), name:'Hrdina', grade, gender:'m', mode:'quest', color:'#4f7cff', cats:defaultCats(grade, ['m']), catsV:2, pin:'', reward:'',
+  return Object.assign({id:newId(), name:'Hrdina', grade, gender:'m', mode:'quest', color:'#4f7cff', cats:defaultCats(grade, ['m']), catsV:3, pin:'', reward:'',
     points:0, xp:0, owned:{}, eq:{}, beaten:0, chests:[], rewardClaimed:false, season:1, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0, created:Date.now()}, o);
 }
 function defaultState(){
@@ -2042,6 +2304,11 @@ function migrate(p){
   if(!p.created) p.created=1;
   if(!p.chests) p.chests=[];
   if((p.catsV||1)<2){ if(p.cats && p.cats.length){ const add=(NEW_CATS_V2[p.grade]||[]).filter(c=>!p.cats.includes(c)); p.cats=p.cats.concat(add); } p.catsV=2; }
+  // v3: prvouka po tématech a nové okruhy češtiny – kdo měl předmět zapnutý, dostane doporučená témata pro ročník a pololetí
+  if((p.catsV||1)<3){ if(p.cats && p.cats.length){ let c=p.cats.slice();
+      if(c.includes('pr_quiz') && !c.some(x=>/^pr_/.test(x)&&x!=='pr_quiz')){ const d=defaultCats(+p.grade||0,['pr'],halfOf(p)); if(+p.grade<=3) c=c.filter(x=>x!=='pr_quiz'); c=c.concat(d.filter(x=>!c.includes(x))); }
+      if(c.some(x=>/^cj_/.test(x))){ const d=defaultCats(+p.grade||0,['cj'],halfOf(p)); c=c.concat(d.filter(x=>!c.includes(x))); }
+      p.cats=c; } p.catsV=3; }
   return p;
 }
 function migrateSettings(){ if(!S.settings.ver || S.settings.ver<3){ S.settings.perDay=10; S.settings.ver=3; } }

@@ -21,7 +21,7 @@ JS = r"""
        if(!(pr.a>=0 && pr.a<pr.options.length)) err(c,g,ez,pr,'answer idx out of range');
        if(new Set(pr.options).size!==pr.options.length) err(c,g,ez,pr,'duplicate options '+pr.options.map(strip).join('|'));
        const key=c+'|'+q+' || '+pr.options.map(strip).join(' / ')+' => '+strip(pr.options[pr.a]);
-       if(['pr_quiz','cj_abc','cj_opp','cj_iy','cj_vyj','cj_end','cj_pos','cj_gen','en_read','en_phrase','en_write','odd0','colors0','animals0','shapes0'].includes(c)){
+       if(/^(pr_|cj_)/.test(c) || ['pr_quiz','cj_abc','cj_opp','cj_iy','cj_vyj','cj_end','cj_pos','cj_gen','en_read','en_phrase','en_write','odd0','colors0','animals0','shapes0'].includes(c)){
          const k2=c+'|'+q+' => '+(strip(pr.options[pr.a])||pr.say||'');
          out.texts[k2]=1; }
        continue;

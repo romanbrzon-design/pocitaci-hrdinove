@@ -1,5 +1,5 @@
 // Chytrolínci – offline cache (stránka vždy čerstvá ze sítě, obrázky z cache)
-const C='chytrolinci-v10';
+const C='chytrolinci-v11';
 self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./config.js','./manifest.webmanifest','./icon-192.png']).catch(()=>{}))); });
 self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
 self.addEventListener('fetch', e=>{
