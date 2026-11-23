@@ -17,7 +17,7 @@ const WGRIP={1:[.417,.842],2:[.48,.82],3:[.49,.829],4:[.492,.836],5:[.49,.836],6
 const BOOT_COL={1:'#7a4a22',2:'#8f99a6',3:'#e6edf7',4:'#c8321e',5:'#7fbfff'}; // kožené, rytířské (ocel), okřídlené (stříbrné), dračí, hvězdné
 // [šířka × šířka hlavy, posun spodní hrany nad obočí (zlomek výšky postavy)] – koruny jsou menší a sedí na vlasech
 // [šířka × šířka hlavy, posun spodní hrany nad obočí] – ploché koruny sedí pásem na vlasech nad čelem
-const HEAD_FIT={4:[1.08,0],5:[1.0,.03],7:[1.0,.03]};
+const HEAD_FIT={1:[1.0,.01],2:[1.0,.01],3:[1.0,.01],4:[1.02,.01],5:[1.0,.03],6:[1.06,.0],7:[1.0,.03]};
 function heroFigLayers(p, cls){
   const g=p.gender==='f'?'f':'m', e=p.eq||{}, l=lookOf(p), ar=Math.max(0,Math.min(7,e.armor||0)), k=g+ar;
   const [W,H,lx,ly,rx,ry,fc,fw,t0,t1]=BODY[k], [brow,hw]=HEAD_GEO[g], cx=fc;
