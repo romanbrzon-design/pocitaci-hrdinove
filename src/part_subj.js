@@ -208,5 +208,8 @@ const SUBJ_DEFAULTS = {
   pr: {0:['pr_quiz'],1:['pr_quiz'],2:['pr_quiz'],3:['pr_quiz'],4:['pr_quiz'],5:['pr_quiz']},
   cj: {0:['cj_opp'],1:['cj_abc','cj_opp'],2:['cj_abc','cj_opp','cj_iy','cj_end'],3:['cj_iy','cj_vyj','cj_end','cj_pos','cj_gen'],4:['cj_vyj','cj_end','cj_pos','cj_gen'],5:['cj_vyj','cj_end','cj_pos','cj_gen']},
 };
-function defaultCats(grade, subjects){ let c=[]; for(const s of subjects){ if(s==='m') c=c.concat(DEFAULT_CATS[grade]||DEFAULT_CATS[2]); else c=c.concat((SUBJ_DEFAULTS[s]||{})[grade]||[]); } return [...new Set(c)]; }
+// v 1. pololetí se tato témata ještě neprobírají (dle běžných tematických plánů učebnic)
+const HALF1_SKIP = {1:['add20nb','money1','double1','cj_opp'], 2:['mul2','halfdouble2','cj_end'], 3:['divext','cj_gen']};
+function defaultCats(grade, subjects, half){ let c=[]; for(const s of subjects){ if(s==='m') c=c.concat(DEFAULT_CATS[grade]||DEFAULT_CATS[2]); else c=c.concat((SUBJ_DEFAULTS[s]||{})[grade]||[]); }
+  c=[...new Set(c)]; if(half===1){ const sk=HALF1_SKIP[grade]||[], f=c.filter(x=>!sk.includes(x)); if(f.length) c=f; } return c; }
 function subjectsOf(p){ const s=new Set(catsOf(p).map(subjOf)); return ['m','en','pr','cj'].filter(x=>s.has(x)); }

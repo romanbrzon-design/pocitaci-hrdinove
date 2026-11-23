@@ -178,3 +178,13 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .lkparts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 6px}.lkparts .btn{display:inline-flex;align-items:center;gap:4px}.lkdot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0003}
 #app{padding-bottom:72px}
 .choice.armed{outline:4px solid #f6b81d;outline-offset:2px;animation:armp 1s ease-in-out infinite}@keyframes armp{50%{transform:scale(1.04)}}
+
+/* rodičovské volby: témata po ročnících, úspěšnost */
+.cgrp{font-size:13px;font-weight:800;color:#8a6a3a;margin:8px 0 2px;text-transform:uppercase;letter-spacing:.03em}
+.crec{font-size:13px}
+.cstat{font-size:12px;font-weight:700;background:#efe6d2;border-radius:8px;padding:1px 6px;margin-left:4px;color:#6b5330}
+.cstat.weak{background:#fde3dc;color:#a8322a}.cstat.good{background:#dff3e4;color:#1d7a43}
+.ttab{margin-top:8px}.ttab summary{cursor:pointer;font-weight:700}
+.ttab table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}.ttab td{padding:3px 4px;border-bottom:1px solid #eadfc8;vertical-align:middle}
+.ttab td.tb{width:30%}.ttab td.tb i{display:block;height:10px;border-radius:5px;background:#f0b429}.ttab td.tb i.w{background:#e0614a}.ttab td.tb i.g{background:#3aa864}
+.cgrpd summary{cursor:pointer;list-style:revert}.cstat{white-space:nowrap}

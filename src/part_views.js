@@ -278,21 +278,36 @@ function battleEndView(){
 
 /* ---- parent ---- */
 function heroEditHTML(p){
-  const mySubs=subjectsOf(p);
-  const cats=Object.entries(SUBJECTS).map(([sk,S_])=>`<div class="subjbox"><label class="chk" style="font-size:17px"><input type="checkbox" data-subjon="${sk}" ${mySubs.includes(sk)?'checked':''}> <b>${S_.icon} ${S_.name}</b></label>
-    <div style="padding-left:26px">${Object.entries(CATS).filter(([k,c])=>(c.subj||'m')===sk).map(([k,c])=>`<label class="chk"><input type="checkbox" data-cat="${k}" ${(p.cats||[]).includes(k)?'checked':''}> ${c.label} <span class="muted" style="font-size:13px">(od ${gs(c.grade)})</span></label>`).join('')}</div></div>`).join('');
+  const mySubs=subjectsOf(p), half=halfOf(p), mix=p.mix||{}, weak=weakCats(p,1);
+  const rateTag=k=>{ const r=(p.cst||{})[k]; if(!r||r[1]<3) return ''; const pc=Math.round(r[0]/r[1]*100);
+    return ` <span class="cstat ${weak.includes(k)?'weak':pc>=90?'good':''}" title="úspěšnost napoprvé">${weak.includes(k)?'⚠️ ':pc>=90?'✅ ':''}${pc} %</span>`; };
+  const cats=Object.entries(SUBJECTS).map(([sk,S_])=>{
+    const rec=defaultCats(+p.grade||0,[sk],half);
+    const list=Object.entries(CATS).filter(([k,c])=>(c.subj||'m')===sk).sort((a,b)=>(a[1].grade||0)-(b[1].grade||0));
+    const grp={}; for(const [k,c] of list){ const g=Math.min(4,c.grade||0); (grp[g]=grp[g]||[]).push([k,c]); }
+    let rows='';
+    for(const g of Object.keys(grp).map(Number).sort((a,b)=>a-b)){ const items=grp[g], open=items.some(([k])=>(p.cats||[]).includes(k)||rec.includes(k)) || g===Math.min(4,+p.grade||0);
+      rows+=`<details class="cgrpd" ${open?'open':''}><summary class="cgrp">${g===0?'Předškoláci a všichni':g>=4?'Od 4. třídy':g+'. třída'} <span class="muted">(${items.length})</span></summary>`+
+        items.map(([k,c])=>`<label class="chk"><input type="checkbox" data-cat="${k}" ${(p.cats||[]).includes(k)?'checked':''}> ${c.label}${rec.includes(k)?' <span class="crec" title="doporučeno pro ročník a pololetí">⭐</span>':''}${rateTag(k)}</label>`).join('')+`</details>`; }
+    return `<div class="subjbox"><div class="row" style="align-items:center;justify-content:space-between;gap:6px"><label class="chk" style="font-size:17px"><input type="checkbox" data-subjon="${sk}" ${mySubs.includes(sk)?'checked':''}> <b>${S_.icon} ${S_.name}</b></label>
+      <select data-mix="${sk}" title="kolik otázek z tohoto předmětu" style="font-size:14px">${[[1,'méně otázek'],[2,'normálně'],[3,'víc otázek']].map(([v,l])=>`<option value="${v}" ${(+mix[sk]||2)===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div style="padding-left:26px">${rows}</div></div>`; }).join('');
   return `<div class="grid2"><div>
     <div class="field"><label>Jméno</label><input type="text" id="p-name" value="${esc(p.name)}"></div>
     <div class="row"><div class="field" style="flex:1"><label>Ročník</label><select id="p-grade">${[0,1,2,3,4,5].map(g=>`<option value="${g}" ${p.grade==g?'selected':''}>${gl(g)}</option>`).join('')}</select></div>
       <div class="field" style="flex:1"><label>Postava</label><select id="p-gender"><option value="m" ${p.gender!=='f'?'selected':''}>Hrdina</option><option value="f" ${p.gender==='f'?'selected':''}>Hrdinka</option></select></div></div>
-    <div class="field"><label>Obtížnost příkladů</label><select id="p-diff"><option value="easy" ${p.diff!=='normal'?'selected':''}>Lehčí (doporučeno; v 1. třídě čísla do 10 – začátek roku)</option><option value="normal" ${p.diff==='normal'?'selected':''}>Normální (v 1. třídě do 20 – druhé pololetí)</option></select></div>
+    <div class="field"><label>Pololetí (určuje obtížnost a doporučená témata ⭐)</label><select id="p-diff">
+      <option value="auto" ${p.diff!=='easy'&&p.diff!=='normal'?'selected':''}>Automaticky podle data (teď ${halfOf({})}. pololetí)</option>
+      <option value="easy" ${p.diff==='easy'?'selected':''}>1. pololetí (září–leden) – lehčí, v 1. třídě čísla do 10</option>
+      <option value="normal" ${p.diff==='normal'?'selected':''}>2. pololetí (únor–červen) – v 1. třídě čísla do 20</option></select></div>
+    <label class="chk" style="margin:-4px 0 10px"><input type="checkbox" id="p-weak" ${p.weakOff?'':'checked'}> Častěji procvičovat témata, ve kterých dělá chyby (pod 75 % ⚠️)</label>
     <div class="field"><label>Barva oblečku</label><div class="row colors">${TUNICS.map(c=>`<button data-color="${c}" style="background:${c};border:${p.color===c?'4px solid #2b2340':'2px solid #fff'}"></button>`).join('')}</div></div>
     <div class="field"><label>Tajný kód hrdiny (prázdné = bez kódu)</label><input type="text" id="p-pin" inputmode="numeric" maxlength="4" value="${esc(p.pin||'')}"></div>
     <div class="field"><label>Dobrodružství (změna vynuluje body a postup)</label><select id="p-mode">${Object.values(MODES).map(M=>`<option value="${M.key}" ${(p.mode||'quest')===M.key?'selected':''}>${M.icon} ${M.title}</option>`).join('')}</select></div>
     ${p.mode==='pet'?`<div class="row"><div class="field" style="flex:1"><label>Zvířátko</label><select id="p-species">${SPECIES.map(s=>`<option value="${s.id}" ${p.species===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div><div class="field" style="flex:1"><label>Jméno zvířátka</label><input type="text" id="p-petname" value="${esc(p.petName||'')}"></div></div>`:''}
     <div class="field"><label>Odměna za splnění celého dobrodružství (prázdné = výchozí: „${esc(S.settings.reward)}“)</label><input type="text" id="p-reward" value="${esc(p.reward||'')}"></div>
-    <div class="field"><label>Typy příkladů (změna platí od zítřka, nebo hned po „Vygenerovat dnešek znovu“)</label>${cats}</div>
-    <div class="row"><button class="btn ok small" data-act="saveprofile">Uložit</button><button class="btn sec small" data-act="defcats">Výchozí pro ročník</button><button class="btn sec small" data-act="regen">Vygenerovat dnešek znovu</button></div>
+    <div class="field"><label>Co procvičovat (⭐ = probírá se v tomto ročníku a pololetí podle učebnic, % = úspěšnost napoprvé). Změna platí od zítřka, nebo hned po „Vygenerovat dnešek znovu“.</label>${cats}</div>
+    <div class="row"><button class="btn ok small" data-act="saveprofile">Uložit</button><button class="btn sec small" data-act="defcats">⭐ Podle ročníku a pololetí</button><button class="btn sec small" data-act="regen">Vygenerovat dnešek znovu</button></div>
   </div><div>
     <div class="card center" style="padding:10px"><div class="stage">${avatarSVG(p)}</div><div>⭐ ${p.points} · úroveň ${level(p)} · ${modeOf(p).icon} ${p.beaten}/${FOE_N}</div></div>
     <div class="field"><label>Přidat / ubrat body (např. bonus za úkol)</label><div class="row"><input type="number" id="p-bonus" value="20" style="width:110px"><button class="btn small" data-act="bonus">Připsat</button></div></div>
@@ -412,7 +427,7 @@ function bind(){
   document.querySelectorAll('[data-gender]').forEach(el=>el.onclick=()=>{ readDraft(); draft.gender=el.dataset.gender; render(); });
   document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{ readDraft(); draft.mode=el.dataset.mode; render(); });
   document.querySelectorAll('[data-species]').forEach(el=>el.onclick=()=>{ readDraft(); draft.species=el.dataset.species; render(); });
-  document.querySelectorAll('[data-subjon]').forEach(el=>el.onchange=()=>{ const box=el.closest('.subjbox'); if(!box) return; const cs=[...box.querySelectorAll('[data-cat]')]; if(!el.checked) cs.forEach(x=>x.checked=false); else if(!cs.some(x=>x.checked)){ const d=defaultCats(+($('#p-grade')||{}).value||0,[el.dataset.subjon]); cs.forEach(x=>x.checked=d.includes(x.dataset.cat)); } });
+  document.querySelectorAll('[data-subjon]').forEach(el=>el.onchange=()=>{ const box=el.closest('.subjbox'); if(!box) return; const cs=[...box.querySelectorAll('[data-cat]')]; if(!el.checked) cs.forEach(x=>x.checked=false); else if(!cs.some(x=>x.checked)){ const dv=($('#p-diff')||{}).value; const d=defaultCats(+($('#p-grade')||{}).value||0,[el.dataset.subjon], halfOf({diff:dv})); cs.forEach(x=>x.checked=d.includes(x.dataset.cat)); } });
   document.querySelectorAll('.subjbox [data-cat]').forEach(el=>el.onchange=()=>{ const sb=el.closest('.subjbox').querySelector('[data-subjon]'); const any=[...el.closest('.subjbox').querySelectorAll('[data-cat]')].some(x=>x.checked); sb.checked=any; });
   document.querySelectorAll('[data-playsubj]').forEach(el=>el.onclick=()=>startExtra(el.dataset.playsubj));
   document.querySelectorAll('[data-subj]').forEach(el=>el.onclick=()=>{ readDraft(); const s=el.dataset.subj; draft.subjects=draft.subjects||['m']; if(draft.subjects.includes(s)){ if(draft.subjects.length>1) draft.subjects=draft.subjects.filter(x=>x!==s); } else draft.subjects.push(s); render(); });
@@ -596,7 +611,7 @@ function act(a){
     if(!name){ toast('Napiš své jméno 🙂'); $('#c-name').focus(); return; }
     if(draft.pin && !/^\d{4}$/.test(draft.pin)){ toast('Tajný kód musí mít 4 číslice (nebo nech prázdné).'); return; }
     if(draft.mode==='pet' && !(draft.petName||'').trim()){ toast('Vymysli jméno pro zvířátko 🐾'); return; }
-    const np=newProfile({name, grade:draft.grade, gender:draft.gender, color:draft.color, pin:draft.pin, reward:(draft.reward||'').trim(), mode:draft.mode, species:draft.species, petName:(draft.petName||'').trim(), cats:defaultCats(draft.grade, draft.subjects||['m'])});
+    const np=newProfile({name, grade:draft.grade, gender:draft.gender, color:draft.color, pin:draft.pin, reward:(draft.reward||'').trim(), mode:draft.mode, species:draft.species, petName:(draft.petName||'').trim(), cats:defaultCats(draft.grade, draft.subjects||['m'], halfOf({}))});
     S.profiles.push(np); unlock(np.id); save(); draft=null;
     toast(`Vítej, ${np.name}! ${modeOf(np).icon}`); go({name:'hero',pid:np.id}); break; }
   case 'hero': case 'back': go({name:'hero',pid:view.pid}); break;
@@ -627,7 +642,9 @@ function act(a){
   case 'saveprofile': case 'defcats': case 'regen': {
     const h=prof(parentHero);
     h.name=$('#p-name').value.trim()||h.name;
-    h.gender=$('#p-gender').value; h.diff=$('#p-diff').value;
+    h.gender=$('#p-gender').value; { const dv=$('#p-diff').value; if(dv==='auto') delete h.diff; else h.diff=dv; }
+    { const w=$('#p-weak'); if(w){ if(w.checked) delete h.weakOff; else h.weakOff=true; } }
+    { const mx={}; document.querySelectorAll('[data-mix]').forEach(x=>{ if(+x.value!==2) mx[x.dataset.mix]=+x.value; }); if(Object.keys(mx).length) h.mix=mx; else delete h.mix; }
     if($('#p-species')) h.species=$('#p-species').value; if($('#p-petname')) h.petName=$('#p-petname').value.trim();
     const nm=$('#p-mode').value;
     if(nm!==(h.mode||'quest')){ confirmBox(`Změnit dobrodružství na „${MODES[nm].title}“? Body, věci a postup se vynulují.`, ()=>{ Object.assign(h,{mode:nm,points:0,xp:0,owned:{},eq:{},beaten:0,rewardClaimed:false,newItem:null,species:h.species||'cat',petName:h.petName||'Mazlíček'}); save(); render(); toast('Dobrodružství změněno'); }); return; }
@@ -635,11 +652,11 @@ function act(a){
     h.reward=$('#p-reward').value.trim();
     const g=+$('#p-grade').value;
     const subsOn=[...new Set([...document.querySelectorAll('[data-subjon]')].filter(x=>x.checked).map(x=>x.dataset.subjon).concat([...document.querySelectorAll('[data-cat]')].filter(x=>x.checked).map(x=>subjOf(x.dataset.cat))))]; if(!subsOn.length) subsOn.push('m');
-    if(a==='defcats' || g!==+h.grade){ h.grade=g; h.cats=defaultCats(g, subsOn); }
+    if(a==='defcats' || g!==+h.grade){ h.grade=g; h.cats=defaultCats(g, subsOn, halfOf(h)); }
     else {
       let c=[...document.querySelectorAll('[data-cat]')].filter(x=>x.checked).map(x=>x.dataset.cat);
       c=c.filter(k=>subsOn.includes(subjOf(k)));
-      for(const s of subsOn){ if(!c.some(k=>subjOf(k)===s)) c=c.concat(defaultCats(h.grade,[s])); }
+      for(const s of subsOn){ if(!c.some(k=>subjOf(k)===s)) c=c.concat(defaultCats(h.grade,[s],halfOf(h))); }
       h.cats=c.length?c:defaultCats(h.grade,['m']);
     }
     if(a==='regen'){

@@ -148,11 +148,25 @@ const DEFAULT_CATS = {1:['add10','add20nb','missing10','compare20','word1'],
   3:['addsub100','mulall','missing','compare','divext','word2'],
   4:['mulall','rem','big','mulext','divext','order','fractions','round','word4'],
   5:['mulall','rem','big','mulext','divext','order','fractions','round','word4']};
+/* ---- rodičovské volby: pololetí, poměr předmětů, slabá témata ---- */
+// pololetí: 'easy' = 1. pololetí, 'normal' = 2. pololetí, jinak automaticky podle data (září–leden = 1. pololetí)
+function halfOf(p){ if(p && p.diff==='easy') return 1; if(p && p.diff==='normal') return 2; const m=new Date().getMonth()+1; return (m>=9||m<=1)?1:2; }
+function isEasy(p){ return halfOf(p)===1; }
+// váha předmětu 1 = méně, 2 = normálně, 3 = více → pořadí, ve kterém se předměty střídají
+function subjSeq(p, subs){ const mix=(p&&p.mix)||{}, slots=[];
+  subs.forEach(s=>{ const w=Math.max(1,Math.min(3,+mix[s]||2)); for(let i=0;i<w;i++) slots.push([(i+.5)/w, s]); });
+  slots.sort((a,b)=>a[0]-b[0] || subs.indexOf(a[1])-subs.indexOf(b[1])); return slots.length?slots.map(x=>x[1]):subs; }
+// úspěšnost v tématech: p.cst[cat] = [správně napoprvé, pokusů]
+function catTrack(p, cat, ok){ if(!p || !cat || !CATS[cat]) return; p.cst=p.cst||{}; const r=p.cst[cat]||[0,0]; r[1]++; if(ok) r[0]++;
+  if(r[1]>=60){ r[0]=Math.round(r[0]/2); r[1]=30; } p.cst[cat]=r; }
+function catRate(p, cat){ const r=(p&&p.cst||{})[cat]; return r&&r[1]?r[0]/r[1]:null; }
+// slabé téma: aspoň 6 pokusů a méně než 75 % napoprvé → dostává dvojnásobný prostor (lze vypnout)
+function weakCats(p, any){ if(!p || (p.weakOff && !any)) return []; return Object.entries(p.cst||{}).filter(([c,r])=>CATS[c] && r[1]>=6 && r[0]/r[1]<.75).map(([c])=>c); }
 function catsOf(p){ let c=(p.cats&&p.cats.length)?p.cats.filter(x=>CATS[x]):(DEFAULT_CATS[p.grade]||DEFAULT_CATS[2]); return c.length?c:DEFAULT_CATS[2]; }
 function battleProblem(p){
   R=Math.random; let cats=catsOf(p).filter(c=>!CATS[c].word); if(!cats.length) cats=['add20'];
-  EASY = p.diff!=='normal'; CUR_GRADE = +p.grade||0;
-  { const subs=[...new Set(cats.map(subjOf))]; const sj=pick(subs); const f=cats.filter(c=>subjOf(c)===sj); if(f.length) cats=f; }
+  EASY = isEasy(p); CUR_GRADE = +p.grade||0;
+  { const subs=[...new Set(cats.map(subjOf))]; const seq=subjSeq(p,subs); const sj=seq[Math.floor(Math.random()*seq.length)]; const f=cats.filter(c=>subjOf(c)===sj); if(f.length) cats=f.concat(f.filter(c=>weakCats(p).includes(c))); }
   const blocked=new Set(p.seen||[]);
   let pr, c;
   for(let i=0;i<60;i++){ c=pick(cats); pr=genOne(c); if(!blocked.has(qKey(pr))) break; }
@@ -160,18 +174,18 @@ function battleProblem(p){
 }
 
 function genDaily(profile, dateKey, count=20, onlySubj){
-  EASY = profile.diff!=='normal'; CUR_GRADE = +profile.grade||0;
-  R = mulberry(hashStr(profile.id + '|' + dateKey + '|' + (profile.cats||[]).join(',') + (EASY?'e':'') + (onlySubj||'')));
+  EASY = isEasy(profile); CUR_GRADE = +profile.grade||0;
+  R = mulberry(hashStr(profile.id + '|' + dateKey + '|' + (profile.cats||[]).join(',') + (EASY?'e':'') + (onlySubj||'') + JSON.stringify(profile.mix||'')));
   let cats = catsOf(profile);
   if(onlySubj){ const f=cats.filter(c=>subjOf(c)===onlySubj); if(f.length) cats=f; }
   // subjects take turns so every chosen subject gets its share; inside a subject categories take turns too
   const bySubj={}; for(const c of cats){ (bySubj[subjOf(c)]=bySubj[subjOf(c)]||[]).push(c); }
-  const subjOrder=['m','en','pr','cj'].filter(x=>bySubj[x]);
+  const subjOrder=subjSeq(profile, ['m','en','pr','cj'].filter(x=>bySubj[x])), weak=weakCats(profile);
   const decks={};
   const out=[], seen=new Set(), blocked=new Set(profile.seen||[]); let guard=0, wordCount=0, turn=0;
   while(out.length<count && guard++<900){
     const sj=subjOrder[turn%subjOrder.length];
-    if(!decks[sj]||!decks[sj].length){ decks[sj]=bySubj[sj].slice(); for(let i=decks[sj].length-1;i>0;i--){const j=Math.floor(R()*(i+1)); [decks[sj][i],decks[sj][j]]=[decks[sj][j],decks[sj][i]];} }
+    if(!decks[sj]||!decks[sj].length){ decks[sj]=bySubj[sj].concat(bySubj[sj].filter(c=>weak.includes(c))); for(let i=decks[sj].length-1;i>0;i--){const j=Math.floor(R()*(i+1)); [decks[sj][i],decks[sj][j]]=[decks[sj][j],decks[sj][i]];} }
     const c=decks[sj].pop(), cat=CATS[c];
     if(cat.word && wordCount>=3) continue;
     const p=genOne(c); p.cat=c; p.type=p.type||'num'; if(cat.word) p.word=true;

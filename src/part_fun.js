@@ -247,19 +247,29 @@ function familyHTML(){
 }
 
 /* ---- 8) týdenní zpráva pro rodiče ---- */
+// přehled úspěšnosti po tématech (napoprvé správně / pokusů)
+function topicTableHTML(p){
+  const weak=weakCats(p,1), rows=Object.entries(p.cst||{}).filter(([c,r])=>CATS[c]&&r[1]>=3)
+    .sort((a,b)=>['m','cj','en','pr'].indexOf(subjOf(a[0]))-['m','cj','en','pr'].indexOf(subjOf(b[0])) || a[1][0]/a[1][1]-b[1][0]/b[1][1]);
+  if(!rows.length) return '';
+  return `<details class="ttab"><summary>📚 Přehled po tématech (${rows.length})</summary><table>${rows.map(([c,r])=>{ const pc=Math.round(r[0]/r[1]*100), S_=SUBJECTS[subjOf(c)]||{};
+    return `<tr><td>${S_.icon||''} ${CATS[c].label}</td><td class="tb"><i class="${weak.includes(c)?'w':pc>=90?'g':''}" style="width:${pc}%"></i></td><td><b>${pc} %</b> <span class="muted">z ${r[1]}</span>${weak.includes(c)?' ⚠️':''}</td></tr>`; }).join('')}</table>
+    <div class="muted" style="font-size:13px">⚠️ = pod 75 % – ${p.weakOff?'opakování slabých témat je vypnuté':'hra mu teď dává tato témata častěji'}.</div></details>`;
+}
 function reportHTML(){
   const ws=weekStart(), pws=addDays(ws,-7), fmtD=k=>k.split('-').reverse().slice(0,2).map(x=>+x).join('. ')+'.';
   return `<p class="muted">Týden ${fmtD(ws)} – ${fmtD(addDays(ws,6))} Porovnání s minulým týdnem je v závorce.</p>`+realHeroes().map(p=>{
     const s=weekStats(p,ws), o=weekStats(p,pws), pc=s.n?Math.round(s.c/s.n*100):0, opc=o.n?Math.round(o.c/o.n*100):0;
     const cats={}; Object.entries(p.history||{}).filter(([k])=>k>=addDays(todayKey(),-14)).forEach(([k,h])=>(h.wrongCats||[]).forEach(c=>cats[c]=(cats[c]||0)+1));
     fx(p).rev.forEach(r=>{ if(r.pr.cat) cats[r.pr.cat]=(cats[r.pr.cat]||0)+(r.miss||1); });
-    const weak=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c])=>CATS[c]?CATS[c].label:c);
+    weakCats(p,1).forEach(c=>cats[c]=(cats[c]||0)+5); const weak=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c])=>CATS[c]?CATS[c].label:c);
     const subj=Object.entries(s.subj).map(([k,v])=>`${SUBJECTS[k]?SUBJECTS[k].icon+' '+SUBJECTS[k].name:k}: ${v[0]}/${v[1]} (${Math.round(v[0]/v[1]*100)} %)`).join(' · ');
     const d=(a,b)=>a===b?'':` <span class="${a>b?'up':'down'}">(${a>b?'▲':'▼'} ${Math.abs(a-b)})</span>`;
     return `<div class="rep"><h3 style="margin:6px 0">${esc(p.name)} <span class="muted" style="font-size:14px">· ${gl(p.grade)} · ${modeOf(p).icon} ${p.beaten}/${FOE_N}</span></h3>
       <div class="repgrid"><div><b>${s.days}</b> ${plural(s.days,'den','dny','dní')} s úkolem${d(s.days,o.days)}</div><div><b>${s.c}</b> správně z ${s.n}${d(s.c,o.c)}</div><div>úspěšnost <b>${pc} %</b>${o.n?` (minule ${opc} %)`:''}</div><div>🔥 série ${streakAlive(p)?p.streak:0} · 📒 ${stickerCount(p)}/${STK_TOTAL} · ⏱️ rekord ${fx(p).tbestAll||0}</div></div>
       ${subj?`<div class="muted" style="margin-top:4px">${subj}</div>`:''}
       <div style="margin-top:4px">${weak.length?`⚠️ <b>S čím má potíže:</b> ${weak.join(', ')}`:'✅ Žádné opakované potíže.'}</div>
+      ${topicTableHTML(p)}
       ${fx(p).rev.length?`<div class="muted" style="font-size:14px">🔁 Na opakování čeká ${fx(p).rev.length} ${plural(fx(p).rev.length,'úloha','úlohy','úloh')} – hra je bude dávat znovu, dokud je nezvládne.</div>`:''}</div>`; }).join('') || '<p>Zatím žádní hrdinové.</p>';
 }
 
@@ -295,8 +305,10 @@ answer=function(val){
   const p=prof(view.pid), t=view.practice||p.today, pr=t&&t.problems[t.idx];
   const ok=pr?isCorrect(pr,val):false, firstTry=t&&!t.tries;
   _answer(val);
-  try{ reviewTrack(p, pr, ok, firstTry); if(ok && firstTry && Math.random()<0.05) setTimeout(()=>dropSticker(p),500); save(); }catch(e){}
+  try{ if(firstTry && pr && !pr.review) catTrack(p, pr.cat, ok); reviewTrack(p, pr, ok, firstTry); if(ok && firstTry && Math.random()<0.05) setTimeout(()=>dropSticker(p),500); save(); }catch(e){}
 };
+const _battleAnswer=battleAnswer;
+battleAnswer=function(val){ try{ if(!busy && view.b && view.b.pr){ catTrack(prof(view.pid), view.b.pr.cat, isCorrect(view.b.pr,val)); } }catch(e){} return _battleAnswer(val); };
 const _finish=finish;
 finish=function(t){
   const p=prof(view.pid), practice=!!view.practice, perfect=t.res.every(r=>r===2);
