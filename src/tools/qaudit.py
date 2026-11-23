@@ -21,7 +21,7 @@ JS = r"""
        if(!(pr.a>=0 && pr.a<pr.options.length)) err(c,g,ez,pr,'answer idx out of range');
        if(new Set(pr.options).size!==pr.options.length) err(c,g,ez,pr,'duplicate options '+pr.options.map(strip).join('|'));
        const key=c+'|'+q+' || '+pr.options.map(strip).join(' / ')+' => '+strip(pr.options[pr.a]);
-       if(/^(pr_|cj_)/.test(c) || ['pr_quiz','cj_abc','cj_opp','cj_iy','cj_vyj','cj_end','cj_pos','cj_gen','en_read','en_phrase','en_write','odd0','colors0','animals0','shapes0'].includes(c)){
+       if(/^(pr_|cj_|en_)/.test(c) || ['pr_quiz','cj_abc','cj_opp','cj_iy','cj_vyj','cj_end','cj_pos','cj_gen','en_read','en_phrase','en_write','odd0','colors0','animals0','shapes0'].includes(c)){
          const k2=c+'|'+q+' => '+(strip(pr.options[pr.a])||pr.say||'');
          out.texts[k2]=1; }
        continue;
@@ -37,6 +37,10 @@ JS = r"""
      else if((m=q.match(/^(\d+)\/(\d+) z (\d+)$/))) exp=(+m[1])*(+m[3])/(+m[2]);
      else if((m=q.match(/^Zaokrouhli ([\d ]+) na (\S+)$/))){ const n=+m[1].replace(/ /g,''); const t={desítky:10,stovky:100,tisíce:1000}[m[2]]; exp=Math.floor(n/t+0.5)*t; }
      else if((m=q.match(/^Pokračuj v řadě: (.*), \?$/))){ const s=m[1].split(', ').map(x=>+x.replace(/ /g,'')); const d=s[1]-s[0]; if(s.some((x,i)=>i&&x-s[i-1]!==d)) err(c,g,ez,pr,'seq not arithmetic'); exp=s[s.length-1]+d; if(exp<0) err(c,g,ez,pr,'seq negative'); }
+     else if((m=q.match(/^Které číslo je hned (za|před) (\d+)\?$/))) exp=m[1]==='za'?+m[2]+1:m[2]-1;
+     else if((m=q.match(/^Jaká číslice je v čísle (\d+) na místě (stovek|desítek|jednotek)\?$/))) exp=Math.floor(m[1]/({stovek:100,desítek:10,jednotek:1}[m[2]]))%10;
+     else if((m=q.match(/^Obvod čtverce se stranou (\d+) cm je \? cm$/))) exp=4*m[1];
+     else if((m=q.match(/^Obvod obdélníku se stranami (\d+) cm a (\d+) cm je \? cm$/))) exp=2*((+m[1])+(+m[2]));
      else if((m=q.match(/^Dvakrát (\d+)$/))||(m=q.match(/^Dvojnásobek čísla (\d+)$/))) exp=2*m[1];
      else if((m=q.match(/^Polovina z (\d+)$/))) exp=m[1]/2;
      else if((m=q.match(/^O kolik je (\d+) (víc|méně) než (\d+)\?$/))) exp=Math.abs(m[1]-m[3]);
