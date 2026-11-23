@@ -336,6 +336,10 @@ function parentView(){
       <div class="field"><label>Nový rodičovský PIN (prázdné = beze změny)</label><input type="text" id="s-pin" inputmode="numeric" maxlength="8"></div>
       <div class="field"><label>👨‍👩‍👧‍👦 Rodinný cíl na měsíc – kolik správných odpovědí mají děti nasbírat dohromady (0 = vypnuto)</label><input type="number" id="s-fgoal" min="0" max="10000" value="${familyCfg().goal}"></div>
       <div class="field"><label>Odměna za rodinný cíl</label><input type="text" id="s-freward" value="${esc(familyCfg().reward||'')}"></div>
+      <div class="field"><label>🔔 Zvuky na tomto zařízení</label>
+        <label class="chk"><input type="checkbox" data-sndset="ph-sfx" ${SND.on()?'checked':''}> Zvukové efekty (správně/chyba, souboj, oslavy, zvířátka)</label>
+        <label class="chk"><input type="checkbox" data-sndset="ph-music" ${lsGet('ph-music',false)?'checked':''}> Hudba na pozadí (v menu a při souboji, ne při úkolech)</label>
+        <label class="chk"><input type="checkbox" data-sndset="ph-vib" ${SND.vibOn()?'checked':''}> Vibrace (jen telefony a tablety s Androidem)</label></div>
       <div class="field repbox"><label class="chk" style="font-size:17px"><input type="checkbox" id="s-repon" ${repCfg().on?'checked':''}> <b>📧 Posílat týdenní zprávu e-mailem</b></label>
         <div class="muted" style="font-size:14px;margin:2px 0 6px">Stejný přehled jako v záložce Týdenní zpráva (dny, úspěšnost, slabá témata). ${HAS_GAS&&FAMILY?'':'<b>Funguje jen s online ukládáním (rodinný kód).</b>'}</div>
         <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
@@ -436,6 +440,7 @@ function bind(){
   document.querySelectorAll('.subjbox [data-cat]').forEach(el=>el.onchange=()=>{ const sb=el.closest('.subjbox').querySelector('[data-subjon]'); const any=[...el.closest('.subjbox').querySelectorAll('[data-cat]')].some(x=>x.checked); sb.checked=any; });
   document.querySelectorAll('[data-playsubj]').forEach(el=>el.onclick=()=>startExtra(el.dataset.playsubj));
   document.querySelectorAll('[data-subj]').forEach(el=>el.onclick=()=>{ readDraft(); const s=el.dataset.subj; draft.subjects=draft.subjects||['m']; if(draft.subjects.includes(s)){ if(draft.subjects.length>1) draft.subjects=draft.subjects.filter(x=>x!==s); } else draft.subjects.push(s); render(); });
+  document.querySelectorAll('[data-sndset]').forEach(el=>el.onchange=()=>{ lsSet(el.dataset.sndset, el.checked); SND.init(); MUSIC.set(musicForView()); if(el.checked && el.dataset.sndset==='ph-vib') vib(60); if(el.checked && el.dataset.sndset!=='ph-vib') sfx('ok',3); addSndToggle(); });
   document.querySelectorAll('[data-feed]').forEach(el=>el.onclick=()=>feed(el.dataset.feed));
   document.querySelectorAll('[data-ccolor]').forEach(el=>el.onclick=()=>{ readDraft(); draft.color=el.dataset.ccolor; render(); });
   const psel=$('#p-sel'); if(psel) psel.onchange=()=>{ parentHero=psel.value; render(); };

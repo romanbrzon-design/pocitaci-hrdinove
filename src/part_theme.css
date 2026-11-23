@@ -188,3 +188,11 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .ttab table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}.ttab td{padding:3px 4px;border-bottom:1px solid #eadfc8;vertical-align:middle}
 .ttab td.tb{width:30%}.ttab td.tb i{display:block;height:10px;border-radius:5px;background:#f0b429}.ttab td.tb i.w{background:#e0614a}.ttab td.tb i.g{background:#3aa864}
 .cgrpd summary{cursor:pointer;list-style:revert}.cstat{white-space:nowrap}
+
+/* zvuky: tlačítko 🔔 vedle 🔊 a poskočení zvířátka po klepnutí */
+#sndtg{position:fixed;left:64px;bottom:8px;z-index:60;width:50px;height:50px;display:flex;align-items:center;justify-content:center;border:3px solid #8a5a2b;border-radius:50%;padding:0;font:800 22px Nunito,sans-serif;background:#fff7e6;color:#5a3412;box-shadow:0 3px 0 #8a5a2b;cursor:pointer;opacity:.75}
+#sndtg.on{opacity:1}
+.sndhop{animation:sndhop .5s ease-out}
+@keyframes sndhop{30%{transform:translateY(-14%) scale(1.06)}60%{transform:translateY(0) scale(.97)}}
+.petav .petwrap.sndhop{animation:sndhopc .5s ease-out}
+@keyframes sndhopc{30%{transform:translateX(-50%) translateY(-12%)}60%{transform:translateX(-50%)}}

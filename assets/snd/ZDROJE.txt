@@ -1,0 +1,5 @@
+Zvuky zvířátek – volné dílo (CC0 1.0), sbírka "CC0 Public Domain Sounds" (github.com/lavenderdotpet/cc0-public-domain-sounds):
+- cat1–cat3: "Micro Pack - Cat Meows" (Ben Burnes / Abstraction), CC0
+- dog1, dog2, dragon1, eat1: "80 CC0 creature SFX" (OpenGameArt), CC0
+Upraveno: oříznutí ticha, normalizace hlasitosti, mono 22 kHz mp3 (dragon1 zvýšen o 30 %).
+Ostatní zvuky a hudba jsou generované přímo v kódu hry (part_sfx.js).
