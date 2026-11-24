@@ -441,7 +441,7 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .brdopt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:3px solid #8a5a2b;border-radius:18px;background:linear-gradient(#fffaf0,#f3e3bf);font:inherit;font-size:16px;cursor:pointer;box-shadow:0 4px 0 #8a5a2b}
 .brdopt:disabled{color:inherit;opacity:1;cursor:default}.brdopt:disabled:not(.good):not(.bad){opacity:.7}
 .brdopt b{font-weight:800}.brdopt.good{background:#c8f2c9;border-color:#2f9e49}.brdopt.bad,.brdopt.bad:disabled{opacity:.4;animation:shake .35s}
-.brdemo{font-size:58px;line-height:1.1}.brdimg{width:88px;height:88px;object-fit:contain}
+.brdemo{font-size:58px;line-height:1.1}.brdimg{width:96px;height:96px;object-fit:contain}
 .brdfact{text-align:center;font-size:17px;font-weight:700;margin:12px 8px 0;min-height:24px}
 .brdcred{margin-top:16px;font-size:12px;color:#7a6448;text-align:center}.brdcred summary{cursor:pointer;font-weight:700}.brdcred div{margin:2px 0}
 
@@ -4000,7 +4000,7 @@ const MINI_GAMES = {
         opts.innerHTML=''; btn.onclick=()=>play(ans); play(ans);
         list.forEach(b=>{ const o=mk('button','brdopt',`${pic(b)}<b>${b.name}</b>`); o.onclick=()=>{ if(o.disabled) return;
           if(b===ans){ stop(); sfx('ok'); if(first) score++; o.classList.add('good'); opts.querySelectorAll('.brdopt').forEach(x=>x.disabled=true);
-            fact.innerHTML=`${ans.emo} ${ans.fact}`; if(readOn()) speak(ans.fact.replace(/[^\p{L}\p{N}\s!.,–-]/gu,''));
+            fact.innerHTML=`${ans.img?'':ans.emo+' '}${ans.fact}`; if(readOn()) speak(ans.fact.replace(/[^\p{L}\p{N}\s!.,–-]/gu,''));
             const go=mk('button','btn ok',round>=ROUNDS?'🏁 Hotovo':'➡️ Další'); go.onclick=()=>{ go.remove(); next(); }; fact.append(document.createElement('br'), go); }
           else { first=false; sfx('bad'); o.classList.add('bad'); o.disabled=true; } };
           opts.append(o); }); };
@@ -4128,15 +4128,15 @@ const BIRDS = [
   {id:'prase',   name:'prasátko',emo:'🐖', lvl:0, fact:'Prasata se válejí v bahně, aby se v horku ochladila.'},
   {id:'pes',     name:'pejsek',  emo:'🐕', lvl:0, fact:'Pes má výborný čich – pozná, kudy šel člověk.', snd:'dog1'},
   {id:'kocka',   name:'kočka',   emo:'🐈', lvl:0, fact:'Kočka vidí i v šeru a ráda si přede.', snd:'cat1'},
-  {id:'kukacka', name:'kukačka', emo:'🐦', lvl:1, fact:'Kukačka klade vajíčka do hnízd jiných ptáků.'},
-  {id:'sova',    name:'sova (puštík)', emo:'🦉', lvl:1, fact:'Puštík loví v noci. Skvěle slyší i myš pod listím.'},
-  {id:'holub',   name:'holub',   emo:'🕊️', lvl:1, fact:'Holubi vrkají. Poštovní holub najde cestu domů i zdaleka.'},
-  {id:'vrana',   name:'vrána',   emo:'🐦‍⬛', lvl:1, fact:'Vrány patří k nejchytřejším ptákům.'},
-  {id:'kos',     name:'kos',     emo:'🐦', lvl:2, fact:'Sameček kosa je černý se žlutým zobákem a zpívá často už za úsvitu.'},
-  {id:'sykora',  name:'sýkora koňadra', emo:'🐦', lvl:2, fact:'Sýkora koňadra volá „ci-ci-bé“ a v zimě ráda chodí ke krmítku.'},
-  {id:'vrabec',  name:'vrabec',  emo:'🐦', lvl:2, fact:'Vrabci žijí v hejnech blízko lidí a hlasitě čimčarají.'},
-  {id:'datel',   name:'datel',   emo:'🐦', lvl:2, fact:'Datel bubnuje zobákem do stromu – tak si označuje své území.'},
-  {id:'cap',     name:'čáp',     emo:'🐦', lvl:2, fact:'Čáp bílý skoro nezpívá – klape zobákem. Na zimu odlétá do Afriky.'},
+  {id:'kukacka', name:'kukačka', emo:'🐦', img:true, lvl:1, fact:'Kukačka klade vajíčka do hnízd jiných ptáků.'},
+  {id:'sova',    name:'sova (puštík)', emo:'🦉', img:true, lvl:1, fact:'Puštík loví v noci. Skvěle slyší i myš pod listím.'},
+  {id:'holub',   name:'holub',   emo:'🕊️', img:true, lvl:1, fact:'Holubi vrkají. Poštovní holub najde cestu domů i zdaleka.'},
+  {id:'vrana',   name:'vrána',   emo:'🐦‍⬛', img:true, lvl:1, fact:'Vrány patří k nejchytřejším ptákům.'},
+  {id:'kos',     name:'kos',     emo:'🐦', img:true, lvl:2, fact:'Sameček kosa je černý se žlutým zobákem a zpívá často už za úsvitu.'},
+  {id:'sykora',  name:'sýkora koňadra', emo:'🐦', img:true, lvl:2, fact:'Sýkora koňadra volá „ci-ci-bé“ a v zimě ráda chodí ke krmítku.'},
+  {id:'vrabec',  name:'vrabec',  emo:'🐦', img:true, lvl:2, fact:'Vrabci žijí v hejnech blízko lidí a hlasitě čimčarají.'},
+  {id:'datel',   name:'datel',   emo:'🐦', img:true, lvl:2, fact:'Datel bubnuje zobákem do stromu – tak si označuje své území.'},
+  {id:'cap',     name:'čáp',     emo:'🐦', img:true, lvl:2, fact:'Čáp bílý skoro nezpívá – klape zobákem. Na zimu odlétá do Afriky.'},
 ];
 const BIRD_CREDITS = [
   ['kukačka','Benoît Van Hecke','CC BY-SA 4.0'],['sova','Vianney Bajart','CC BY-SA 4.0'],['holub','Marie-Lan Taÿ Pamart','CC BY-SA 4.0'],
