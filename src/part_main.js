@@ -4,7 +4,7 @@ function newId(){ return 'h'+Date.now().toString(36)+Math.random().toString(36).
 function newProfile(o={}){
   const grade=(o.grade!==undefined&&o.grade!==null&&o.grade!=='')?+o.grade:2;
   return Object.assign({id:newId(), name:'Hrdina', grade, gender:'m', mode:'quest', color:'#4f7cff', cats:defaultCats(grade, ['m']), catsV:4, pin:'', reward:'',
-    points:0, xp:0, owned:{}, eq:{}, beaten:0, chests:[], rewardClaimed:false, season:1, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0, created:Date.now()}, o);
+    points:0, xp:0, owned:{}, eq:{}, beaten:0, chests:[], rewardClaimed:false, season:1, streak:0, lastDone:null, history:{}, today:null, totalCorrect:0, created:Date.now(), fx:{gearV:2}}, o);
 }
 function defaultState(){
   return {v:2, savedAt:0,
@@ -30,6 +30,8 @@ function migrate(p){
   if((p.catsV||1)<4){ if(p.cats && p.cats.length){ let c=p.cats.slice();
       for(const [sj,re] of [['m',/^(?!en_|pr_|cj_)/],['en',/^en_/]]) if(c.some(x=>re.test(x)&&CATS[x]&&subjOf(x)===sj)){ const d=defaultCats(+p.grade||0,[sj],halfOf(p)).filter(x=>/^(m_|en_[zjstrd]$|en_sent)/.test(x)); c=c.concat(d.filter(x=>!c.includes(x))); }
       p.cats=c; } p.catsV=4; }
+  // výbava v2: boty a plášť po 7 sadách (part_more.js)
+  if(typeof migrateGear==='function') migrateGear(p);
   return p;
 }
 function migrateSettings(){ if(!S.settings.ver || S.settings.ver<3){ S.settings.perDay=10; S.settings.ver=3; } }

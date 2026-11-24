@@ -14,7 +14,7 @@ m6:[148,316,.09,.684,.903,.689,.493,.676,.074,.912],m7:[149,316,.097,.682,.89,.6
 const HEAD_GEO={m:[.235,.9],f:[.255,.86]}; // obočí (zlomek výšky), šířka pokrývky hlavy (zlomek šířky)
 const USE_LAYERS=true;
 const WGRIP={1:[.417,.842],2:[.48,.82],3:[.49,.829],4:[.492,.836],5:[.49,.836],6:[.51,.842],7:[.492,.805],8:[.487,.808],9:[.504,.751]};
-const BOOT_COL={1:'#7a4a22',2:'#8f99a6',3:'#e6edf7',4:'#c8321e',5:'#7fbfff'}; // kožené, rytířské (ocel), okřídlené (stříbrné), dračí, hvězdné
+const BOOT_COL={1:'#7a4a22',2:'#6e4a2a',3:'#8f99a6',4:'#a9bdd8',5:'#e6b422',6:'#c8321e',7:'#7fbfff'}; // kožené, okované, železné, rytířské, zlaté okřídlené, dračí, hvězdné
 // [šířka × šířka hlavy, posun spodní hrany nad obočí (zlomek výšky postavy)] – koruny jsou menší a sedí na vlasech
 // [šířka × šířka hlavy, posun spodní hrany nad obočí] – ploché koruny sedí pásem na vlasech nad čelem
 const HEAD_FIT={1:[1.0,.01],2:[1.0,.01],3:[1.0,.01],4:[1.02,.01],5:[1.0,.03],6:[1.06,.0],7:[1.0,.03]};
@@ -47,7 +47,7 @@ const _monsterSVG_old = monsterSVG, _sceneSVG_old = sceneSVG;
 monsterSVG = function(i){ return `<img class="monimg" src="${A_}mon${i}.webp" alt="${MONSTERS[i].name}" loading="lazy">`; };
 sceneSVG = function(i){ return `<img class="scene" src="${A_}bg${i}.webp" alt="" loading="lazy">`; };
 chestSVG = function(kind, open){ return `<img src="${A_}ui_chest_${kind==='gold'?'gold':'wood'}.webp" alt="" style="width:100%;${open?'filter:drop-shadow(0 0 16px #ffe066) brightness(1.12)':''}">`; };
-const ITEM_ICON = {weapon:9, shield:7, armor:7, head:7, boots:5, cape:5, pet:5, horse:4};
+const ITEM_ICON = {weapon:9, shield:7, armor:7, head:7, boots:7, cape:7, pet:5, horse:4};
 function itemIcon(p, slot, tier){
   if(((p&&p.mode)||'quest')==='quest' && ITEM_ICON[slot] && tier) return `<img src="${A_}i_${slot}${tier}.webp" alt="">`;
   if(p && p.mode==='pet' && PET_ACC_IMG[slot] && tier) return `<img src="${A_}pa_${slot}${tier}.webp" alt="">`;

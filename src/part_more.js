@@ -34,6 +34,23 @@ var FOE_N = 15, REWARD_AT = 9;
   TIPSPEC.push([[0,8],[1,6]],[[2,6],[3,6],[7,1]],[[0,9],[4,4],[6,4]],[[1,7],[2,7],[7,3]],[[0,9],[1,7],[2,7],[6,5],[7,4]]);
   Object.assign(PET_ACC_IMG,{buddy:0}); Object.assign(HOME_IMG,{});
 })();
+// 24. 11. 2026: boty a plášť mají stejných 7 sad jako štít, brnění a helma
+// (1 začátečnické, 2 okované, 3 železné, 4 rytířské, 5 zlaté, 6 dračí, 7 hvězdné) – ceny po sadách jako helma.
+// Staré kusy mají stejné vlastnosti jako dřív, jen jiné pořadí (převod v migrateGear, značka fx.gearV=2).
+(function(){
+  SLOTMAP.boots.items=[['Kožené boty',0,0,4,40],['Okované boty',0,1,5,110],['Železné boty',0,1,6,230],['Rytířské boty',1,2,7,390],['Zlaté okřídlené boty',2,3,8,660],['Dračí boty',3,4,10,900],['Hvězdné boty',4,6,13,1180]];
+  SLOTMAP.cape.items=[['Krátký plášť',0,0,4,40],['Hrdinský plášť',0,1,6,110],['Válečný plášť',0,2,7,230],['Rytířský plášť',0,2,9,390],['Královský plášť',0,3,10,660],['Dračí plášť',0,5,13,900],['Hvězdný plášť',0,7,17,1180]];
+})();
+const GEAR_V2_MAP={boots:[0,1,3,5,6,7], cape:[0,1,2,5,6,7]}; // staré číslo kusu → nové
+function migrateGear(p){
+  const f=p.fx=p.fx||{}; if((f.gearV||1)>=2) return; f.gearV=2;
+  const mp=(k,n)=>{ n=+n||0; return n>0 ? GEAR_V2_MAP[k][Math.min(n,5)] : n; };
+  for(const k of ['boots','cape']){
+    if(p.owned && p.owned[k]) p.owned[k]=mp(k,p.owned[k]);
+    if(p.eq && p.eq[k]) p.eq[k]=mp(k,p.eq[k]);
+    if(p.newItem && p.newItem.indexOf(k+':')===0) p.newItem=k+':'+mp(k,p.newItem.split(':')[1]);
+  }
+}
 // název odměny za legendární výpravu (volitelné, nastavují rodiče)
 function reward2Of(p){ return (p&&p.reward2)||(S.settings&&S.settings.reward2)||''; }
 const _itemIcon0=itemIcon;
