@@ -28,8 +28,10 @@ function doPost(e) {
     else if (body.action === 'log') logResult_(legacy_(), body.result || {});
     return json_({ ok: true });
   }
-  if (body.action === 'save') saveItems_(fam, body.items || {});
+  if (body.action === 'save') return json_({ ok: true, rejected: saveItems_(fam, body.items || {}) });
   else if (body.action === 'log') logResult_(fam, body.result || {});
+  else if (body.action === 'backups') return json_({ ok: true, list: backups_(fam, String(body.id || '')) });
+  else if (body.action === 'restore') return json_(restore_(fam, String(body.id || ''), +body.row || 0));
   else if (body.action === 'deleteFamily' && fam !== legacy_()) deleteFamily_(fam);
   else if (body.action === 'report') return json_(report_(fam, body));
   return json_({ ok: true });
@@ -94,22 +96,77 @@ function create_(fam) {
   return { ok: true };
 }
 
+// Ukládání s pojistkou (24. 11. 2026): starší kopie hrdiny (méně XP / méně správných odpovědí)
+// NEPŘEPÍŠE uloženého hrdinu – zůstane serverová verze, zamítnutá kopie jde do listu _zaloha.
+// Výjimka: vědomý reset rodičem (vyšší číslo výpravy „season“ nebo smazání hrdiny).
+// Před každým přepsáním se (nejvýše jednou za hodinu na hrdinu) uloží záloha předchozího stavu.
+function progress_(j) {
+  try { const p = JSON.parse(j); return { xp: +p.xp || 0, tc: +p.totalCorrect || 0, ts: +p.ts || 0, season: +p.season || 1, del: !!p.deleted, name: p.name || '' }; }
+  catch (e) { return null; }
+}
+function backup_(full, json, why) {
+  const sh = sheet_('_zaloha');
+  if (sh.getLastRow() === 0) { sh.appendRow(['Kdy', 'Klíč', 'Důvod', 'Data']); sh.setFrozenRows(1); sh.getRange('D:D').setNumberFormat('@'); }
+  sh.appendRow([new Date(), full, why, json]);
+}
 function saveItems_(fam, items) {
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
+  const rejected = [];
   try {
     const sh = sheet_('_data');
     sh.getRange('B:B').setNumberFormat('@');
-    const keys = sh.getDataRange().getValues().map(function (r) { return String(r[0]); });
+    const vals = sh.getDataRange().getValues();
+    const keys = vals.map(function (r) { return String(r[0]); });
+    const cache = CacheService.getScriptCache();
     Object.keys(items).forEach(function (k) {
       if (String(k).indexOf('|') >= 0) return;
       const full = key_(fam, k), i = keys.indexOf(full);
-      if (i < 0) { sh.appendRow([full, items[k], new Date()]); keys.push(full); }
-      else sh.getRange(i + 1, 2, 1, 2).setValues([[items[k], new Date()]]);
+      if (i < 0) { sh.appendRow([full, items[k], new Date()]); keys.push(full); return; }
+      const old = String(vals[i][1] || '');
+      if (old === items[k]) return;
+      if (k !== 'settings') {
+        const o = progress_(old), n = progress_(items[k]);
+        if (o && n && !n.del && n.season <= o.season && (n.xp < o.xp || n.tc < o.tc || (n.xp === o.xp && n.tc === o.tc && o.ts && n.ts < o.ts))) {
+          backup_(full, items[k], 'zamítnuto: starší kopie (' + n.name + ' xp ' + n.xp + ' < ' + o.name + ' xp ' + o.xp + ')');
+          rejected.push(k); return;
+        }
+        if (!cache.get('bk|' + full)) { backup_(full, old, 'průběžná záloha'); cache.put('bk|' + full, '1', 3600); }
+      }
+      sh.getRange(i + 1, 2, 1, 2).setValues([[items[k], new Date()]]);
     });
   } finally {
     lock.releaseLock();
   }
+  return rejected;
+}
+// seznam záloh hrdiny pro rodičovskou sekci (bez samotných dat – jen přehled)
+function backups_(fam, id) {
+  const sh = SpreadsheetApp.getActive().getSheetByName('_zaloha'); if (!sh) return [];
+  const full = key_(fam, id), out = [];
+  sh.getDataRange().getValues().forEach(function (r, i) {
+    if (i === 0 || String(r[1]) !== full) return;
+    const p = progress_(String(r[3])); if (!p) return;
+    out.push({ row: i + 1, when: Utilities.formatDate(new Date(r[0]), 'Europe/Prague', 'd. M. yyyy H:mm'), why: String(r[2]), name: p.name, xp: p.xp, tc: p.tc });
+  });
+  return out.slice(-30).reverse();
+}
+// obnovení hrdiny ze zálohy (řádek listu _zaloha musí patřit stejné rodině a hrdinovi)
+function restore_(fam, id, row) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const bk = SpreadsheetApp.getActive().getSheetByName('_zaloha'); if (!bk) return { ok: false };
+    const r = bk.getRange(row, 1, 1, 4).getValues()[0], full = key_(fam, id);
+    if (String(r[1]) !== full) return { ok: false };
+    const sh = sheet_('_data'), keys = sh.getDataRange().getValues().map(function (x) { return String(x[0]); });
+    const i = keys.indexOf(full);
+    const p = JSON.parse(String(r[3])); p.ts = Date.now();
+    const json = JSON.stringify(p);
+    if (i >= 0) { backup_(full, String(sh.getRange(i + 1, 2).getValue()), 'před obnovením'); sh.getRange(i + 1, 2, 1, 2).setValues([[json, new Date()]]); }
+    else sh.appendRow([full, json, new Date()]);
+    return { ok: true, profile: json };
+  } finally { lock.releaseLock(); }
 }
 
 function deleteFamily_(fam) {
