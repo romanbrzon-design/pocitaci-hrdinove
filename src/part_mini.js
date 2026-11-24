@@ -103,9 +103,10 @@ const MINI_GAMES = {
     const c=SND.init(); let src=null, alive=true;
     const info=mk('div','mginfo','Načítám zvuky…'); el.append(info);
     const need=pool.map(sn); need.forEach(n=>SND.load(n));
-    const stop=()=>{ try{ if(src) src.stop(); }catch(e){} src=null; };
-    const play=b=>{ stop(); const buf=SND.buf[sn(b)]; if(!c||!buf) return; if(c.state==='suspended') c.resume().catch(()=>{});
-      src=c.createBufferSource(); src.buffer=buf; const g=c.createGain(); g.gain.value=1; src.connect(g); g.connect(SND.out); src.start(); };
+    // jediná nahrávka v celé hře najednou (i když se hra spustí znovu) – zastaví i předčítání zajímavosti
+    const stop=()=>{ for(const s of [src, window._brdSrc]) try{ if(s){ s.onended=null; s.stop(); s.disconnect(); } }catch(e){} src=null; window._brdSrc=null; };
+    const play=b=>{ stop(); try{ speechSynthesis.cancel(); }catch(e){} const buf=SND.buf[sn(b)]; if(!c||!buf||!alive) return; if(c.state==='suspended') c.resume().catch(()=>{});
+      src=c.createBufferSource(); src.buffer=buf; const g=c.createGain(); g.gain.value=1; src.connect(g); g.connect(SND.out); src.start(); window._brdSrc=src; };
     const obs=new MutationObserver(()=>{ if(!document.body.contains(el)){ stop(); alive=false; obs.disconnect(); } }); obs.observe(document.body,{childList:true,subtree:true});
     let tries=0; const wait=()=>{ if(!alive) return; const ok=pool.filter(b=>SND.buf[sn(b)]); const pending=need.some(n=>SND.buf[n]===null);
       if(pending && tries++<40) return setTimeout(wait,150);
@@ -124,8 +125,8 @@ const MINI_GAMES = {
         list.forEach(b=>{ const o=mk('button','brdopt',`${pic(b)}<b>${b.name}</b>`); o.onclick=()=>{ if(o.disabled) return;
           if(b===ans){ stop(); sfx('ok'); if(first) score++; o.classList.add('good'); opts.querySelectorAll('.brdopt').forEach(x=>x.disabled=true);
             fact.innerHTML=`${ans.img?'':ans.emo+' '}${ans.fact}`; if(readOn()) speak(ans.fact.replace(/[^\p{L}\p{N}\s!.,–-]/gu,''));
-            const go=mk('button','btn ok',round>=ROUNDS?'🏁 Hotovo':'➡️ Další'); go.onclick=()=>{ go.remove(); next(); }; fact.append(document.createElement('br'), go); }
-          else { first=false; sfx('bad'); o.classList.add('bad'); o.disabled=true; } };
+            const go=mk('button','btn ok',round>=ROUNDS?'🏁 Hotovo':'➡️ Další'); go.onclick=()=>{ if(go._x) return; go._x=1; go.remove(); next(); }; fact.append(document.createElement('br'), go); }
+          else { stop(); first=false; sfx('bad'); o.classList.add('bad'); o.disabled=true; } };
           opts.append(o); }); };
       next(); };
     const cr=mk('details','brdcred','<summary>ℹ️ Autoři nahrávek</summary>'+BIRD_CREDITS.map(c=>`<div>${c[0]} – ${c[1]}, ${c[2]}</div>`).join('')+'<div>Pes a kočka: sbírka CC0 Public Domain Sounds (volné dílo). Nahrávky z Wikimedia Commons, zkráceny.</div>');
@@ -139,7 +140,7 @@ const MINI_GAMES = {
       if(y>0&&!seen.has(c-N)) nb.push([c-N,'t','b']); if(x<N-1&&!seen.has(c+1)) nb.push([c+1,'r','l']); if(y<N-1&&!seen.has(c+N)) nb.push([c+N,'b','t']); if(x>0&&!seen.has(c-1)) nb.push([c-1,'l','r']);
       if(!nb.length){ st.pop(); continue; } const [n,a,b]=pick(nb); W[c][a]=0; W[n][b]=0; seen.add(n); st.push(n); }
     const hero = p.mode==='pet' ? ({cat:'🐱',dog:'🐶',bunny:'🐰',pony:'🐴',rat:'🐀',hamster:'🐹',fox:'🦊',panda:'🐼',owl:'🦉',dragon:'🐲'}[p.species]||'🐾') : (p.gender==='f'?'👧':'👦');
-    const grid=mk('div','mzgrid'); grid.style.gridTemplateColumns=`repeat(${N},1fr)`; const cells=W.map((w,i)=>{ const d=mk('div','mzc'); d.style.cssText=`border-top-width:${w.t?3:0}px;border-right-width:${w.r?3:0}px;border-bottom-width:${w.b?3:0}px;border-left-width:${w.l?3:0}px`; grid.append(d); return d; });
+    const grid=mk('div','mzgrid'); grid.style.gridTemplateColumns=`repeat(${N},1fr)`; const cells=W.map((w,i)=>{ const d=mk('div','mzc'); const bw=N>=11?2:3; d.style.cssText=`border-top-width:${w.t?bw:0}px;border-right-width:${w.r?bw:0}px;border-bottom-width:${w.b?bw:0}px;border-left-width:${w.l?bw:0}px`; grid.append(d); return d; });
     let pos=0; const goal=N*N-1, t=timer(); let won=false; cells[goal].innerHTML='<span class="mzg">🎁</span>';
     const path=[0]; // prošlá cesta (bez slepých odboček – návratem se stopa maže)
     const draw=()=>{ const on=new Set(path); cells.forEach((c,i)=>{ c.classList.toggle('trail', on.has(i)); const h=c.querySelector('.mzh'); if(h) h.remove(); }); cells[pos].append(mk('span','mzh',hero)); };
@@ -165,6 +166,16 @@ const MINI_GAMES = {
     const pad=mk('div','mzpad'); [['t','⬆️'],['l','⬅️'],['r','➡️'],['b','⬇️']].forEach(([d,i])=>{ const b=mk('button','btn sec mzb mz'+d,i); b.onclick=()=>move(d,false); pad.append(b); });
     const kd=e=>{ if(view.g!=='maze'){ removeEventListener('keydown',kd); return; } const d={ArrowUp:'t',ArrowDown:'b',ArrowLeft:'l',ArrowRight:'r'}[e.key]; if(d){ e.preventDefault(); move(d,false); } }; addEventListener('keydown',kd);
     el.append(mk('div','mginfo',`Doveď ${hero} k dárku 🎁. Táhni prstem od ${hero} chodbami, nebo použij šipky.`), grid, pad); draw();
+    // velikost podle displeje: celé bludiště i šipky se musí vejít na šířku i na výšku obrazovky
+    grid.style.gridTemplateColumns=grid.style.gridTemplateRows=`repeat(${N},minmax(0,1fr))`;
+    const fit=()=>{ if(!document.body.contains(grid)){ removeEventListener('resize',fit); return; }
+      const vv=window.visualViewport, vw=vv?vv.width:innerWidth, vh=vv?vv.height:innerHeight;
+      const wAv=Math.min(el.clientWidth||vw, vw-16), top=Math.min(Math.max(grid.getBoundingClientRect().top+scrollY,0),170);
+      const hAv=vh-top-pad.offsetHeight-24;
+      const cell=Math.max(18, Math.floor((Math.min(wAv,hAv,460)-6)/N));
+      grid.style.width=grid.style.height=(cell*N+6)+'px'; grid.style.fontSize=Math.round(cell*.68)+'px';
+};
+    requestAnimationFrame(fit); addEventListener('resize',fit);
   },
 
   // 🧩 SKLÁDAČKA (prohazování dílků)

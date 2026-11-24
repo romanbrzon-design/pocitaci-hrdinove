@@ -83,8 +83,8 @@ function speak(text, lang){
     // stejná věta znovu během chvilky = dvojí spuštění (koktání) → ignorovat
     const now=Date.now(); if(speak._t===text && now-speak._at<1200) return; speak._t=text; speak._at=now;
     const go=()=>{ try{ const en=/^en/i.test(lang||'');
-      if(!csVoice && !enVoice) pickVoice();
-      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.9:(voiceNatural()?1:.95);
+      if(en ? !enVoice : !csVoice) pickVoice();
+      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.72:(voiceNatural()?1:.95); // angličtinu pomaleji, ať je slovo dobře slyšet
       speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} };
     // Chrome v Androidu zahodí větu, která se spustí hned po cancel() – proto krátká pauza
     if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(go,150); } else go();

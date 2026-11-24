@@ -137,7 +137,7 @@ function heroView(){
         ${t.done && !xs && SJ.length>1 ? `<div class="center" style="font-size:18px">➕ Dnes splněno! Procvičovat dál:</div><div class="row" style="justify-content:center">${SJ.map(s=>`<button class="btn ok small" data-playsubj="${s}">${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div>` : `<button class="btn ${t.done?'ok':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>`}
         <div class="sub center">Předměty: ${SJ.map(s=>SUBJECTS[s].icon+' '+SUBJECTS[s].name).join(' · ')}</div>
         <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`${M.mapTitle} – další: ${next.name}`:`${M.mapTitle} (${M.doneShort})`}</button>
-        <div class="sub">Za správný příklad ⭐ 7 bodů (napodruhé 3). Splněný den +20 a <b>truhla</b> s překvapením, všechno správně +20 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +10, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
+        <div class="sub">Za správný příklad ⭐ 5 bodů (napodruhé 2). Splněný den +20 a <b>truhla</b> s překvapením, všechno správně +20 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +10, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
         <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} v řadě</div>
         <div class="sub">🎁 Za ${M.finalName}: <b>${esc(rewardOf(p))}</b></div>
       </div>
@@ -493,7 +493,7 @@ function answer(val){
   const card=$('#pcard');
   if(isCorrect(pr,val)){
     const r = t.tries ? 1 : 2; t.res[t.idx]=r;
-    const gain = r===2?7:3;
+    const gain = r===2?5:2;
     p.xp=(p.xp||0)+1;
     p.points+=gain; t.pts+=gain; p.totalCorrect++;
     setFb('ok', pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:''));
