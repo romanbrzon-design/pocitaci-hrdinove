@@ -54,8 +54,11 @@ function migrateGear(p){
 // pozadí za hrdinou podle úrovně (24. 11. 2026): vlevo stáj, uprostřed dečka, vpravo domeček pro mazlíčka
 const HERO_BG_LV=[0,1,1,1,2,2,2,3,3,3,4,4,4,4,5,5,5,5,6,6,6]; // úroveň 1–20 → pozadí 1–6
 function heroBgTier(p){ return HERO_BG_LV[Math.min(20,Math.max(1,level(p)))]||1; }
-function heroBgCls(p){ return ((p&&p.mode)||'quest')==='quest' ? 'hbgstage' : ''; }
-function heroBgStyle(p){ return ((p&&p.mode)||'quest')==='quest' ? `style="background-image:url(${A_}hbg${heroBgTier(p)}.webp)"` : ''; }
+// výprava: hbg1–6 (stáj, koberec, domeček); zvířátko: pbg1–6 (volný střed pro pelíšek)
+function heroBgPre(p){ const m=(p&&p.mode)||'quest'; return m==='quest' ? 'hbg' : m==='pet' ? 'pbg' : ''; }
+const BG_N={hbg:6, pbg:3}; // kolik pozadí je hotových (vyšší úrovně dostanou poslední)
+function heroBgCls(p){ return heroBgPre(p) ? 'hbgstage' : ''; }
+function heroBgStyle(p){ const pre=heroBgPre(p); return pre ? `style="background-image:url(${A_}${pre}${Math.min(heroBgTier(p),BG_N[pre])}.webp)"` : ''; }
 // název odměny za legendární výpravu (volitelné, nastavují rodiče)
 function reward2Of(p){ return (p&&p.reward2)||(S.settings&&S.settings.reward2)||''; }
 const _itemIcon0=itemIcon;
