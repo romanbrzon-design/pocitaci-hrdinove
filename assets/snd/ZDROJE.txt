@@ -3,3 +3,21 @@ Zvuky zvířátek – volné dílo (CC0 1.0), sbírka "CC0 Public Domain Sounds"
 - dog1, dog2, dragon1, eat1: "80 CC0 creature SFX" (OpenGameArt), CC0
 Upraveno: oříznutí ticha, normalizace hlasitosti, mono 22 kHz mp3 (dragon1 zvýšen o 30 %).
 Ostatní zvuky a hudba jsou generované přímo v kódu hry (part_sfx.js).
+
+Minihra „Kdo to zpívá?“ – nahrávky z Wikimedia Commons (upraveno: zkráceno, vyrovnána hlasitost, mono 22 kHz mp3).
+Upravené soubory jsou šířeny pod stejnou licencí jako originál.
+- z_kukacka.mp3 – Benoît Van Hecke, CC BY-SA 4.0 – https://commons.wikimedia.org/wiki/File:Cuculus_canorus_-_Common_Cuckoo_XC541195.mp3
+- z_sova.mp3 – Vianney Bajart, CC BY-SA 4.0 – https://commons.wikimedia.org/wiki/File:Strix_aluco_male.oga
+- z_holub.mp3 – Marie-Lan Taÿ Pamart, CC BY-SA 4.0 – https://commons.wikimedia.org/wiki/File:Columba_livia_-_Rock_Dove_XC541143.mp3
+- z_vrana.mp3 – Oona Räisänen (Mysid), volné dílo – https://commons.wikimedia.org/wiki/File:Corvus_cornix.ogg
+- z_kos.mp3 – Oona Räisänen (Mysid), volné dílo – https://commons.wikimedia.org/wiki/File:Turdus_merula_2.ogg
+- z_sykora.mp3 – Vincent Ollivier, CC BY-SA 4.0 – https://commons.wikimedia.org/wiki/File:Parus_major_-_Great_Tit_XC402093.mp3
+- z_vrabec.mp3 – Joseph Sardin, CC0 – https://commons.wikimedia.org/wiki/File:Joseph_Sardin_-_Passer_domesticus_tschilp_call.oga
+- z_datel.mp3 – Jonn Leffmann, CC BY 3.0 – https://commons.wikimedia.org/wiki/File:Spillkr%C3%A5ka_trummar_-_Dendrocopos_martius..ogg
+- z_cap.mp3 – felix.blume, CC BY-SA 3.0 – https://commons.wikimedia.org/wiki/File:Ciconia_ciconia_bill-clattering.ogg
+- z_krava.mp3 – MichaeltheFox8621, CC BY-SA 4.0 – https://commons.wikimedia.org/wiki/File:Single_Cow_Moo.ogg
+- z_kohout.mp3 – alys, volné dílo – https://commons.wikimedia.org/wiki/File:Medium_rooster_crowing.ogg
+- z_ovce.mp3 – earthcalling, volné dílo – https://commons.wikimedia.org/wiki/File:Sheep_bleating.ogg
+- z_koza.mp3 – stephan, volné dílo – https://commons.wikimedia.org/wiki/File:Herd_of_goats_bleating.ogg
+- z_kachna.mp3 – Jonathon Jongsma, CC BY-SA 3.0 – https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_-_Mallard_XC62258.mp3
+- z_prase.mp3 – Secretlondon, CC BY-SA 3.0 (složeno ze 3 nahrávek Mudchute pig 1–3) – https://commons.wikimedia.org/wiki/File:Mudchute_pig_1.ogg
