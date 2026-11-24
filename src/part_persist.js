@@ -29,14 +29,20 @@ async function flush(){
   if(writing){ pendingWrite=true; return; }
   writing=true;
   try{
+    if(!pulledOnce){ writing=false; return; } // nejdřív načíst stav ze serveru – jinak by staré zařízení přepsalo novější postup
     const items=dirtyItems();
-    if(Object.keys(items).length){ await gas('saveItems', items); Object.assign(lastSent, items); }
+    if(Object.keys(items).length){ const res=await gas('saveItems', items); Object.assign(lastSent, items);
+      // server odmítl starší kopii hrdiny (má u sebe víc postupu) → převzít serverovou verzi
+      if(res && res.rejected && res.rejected.length){ for(const k of res.rejected) delete lastSent[k]; setTimeout(()=>pull(true), 50); } }
     syncState='cloud';
   }catch(e){ syncState='offline'; setTimeout(flush, 8000); }
   writing=false;
   if(pendingWrite){ pendingWrite=false; flush(); }
   updateSyncNote();
 }
+// server má u hrdiny víc postupu (stejná výprava, víc bodů / správných odpovědí) → serverová verze vyhrává, i kdyby místní měla novější čas
+function serverAhead(loc,o){ if(loc.deleted || o.deleted) return false; const ls=+loc.season||1, os=+o.season||1;
+  if(os!==ls) return os>ls; return (+o.xp||0)>(+loc.xp||0) || (+o.totalCorrect||0)>(+loc.totalCorrect||0); }
 async function pull(rerender){
   if(!HAS_GAS || writing) return;
   try{
@@ -48,7 +54,8 @@ async function pull(rerender){
     for(const [id,j] of Object.entries((r&&r.profiles)||{})){
       const o=migrate(JSON.parse(j)); const i=S.profiles.findIndex(p=>p.id===id);
       // místní verze má neodeslané změny a je novější než serverová → nechat místní (a odeslat ji)
-      if(i>=0){ const loc=S.profiles[i]; const dirty=JSON.stringify(loc)!==j; if(dirty && (loc.ts||0)>(o.ts||0)){ keptLocal=true; continue; } S.profiles[i]=o; }
+      if(i>=0){ const loc=S.profiles[i]; const dirty=JSON.stringify(loc)!==j;
+        if(dirty && !serverAhead(loc,o) && ((loc.ts||0)>(o.ts||0) || serverAhead(o,loc))){ keptLocal=true; continue; } S.profiles[i]=o; }
       else S.profiles.push(o);
       lastSent[id]=j; shadow[id]=bodyOf(o);
     }
@@ -56,7 +63,7 @@ async function pull(rerender){
     saveLocal(); syncState='cloud';
     if(!r || !r.settings || keptLocal || setDirty) setTimeout(flush, 50);
     if(rerender) render();
-  }catch(e){ syncState='offline'; }
+  }catch(e){ syncState='offline'; if(!pulledOnce) setTimeout(()=>pull(true), 15000); }
   updateSyncNote();
 }
 function logResult(p, h){
@@ -73,7 +80,7 @@ function updateSyncNote(){ const el=$('#syncnote'); if(!el) return;
                    '💾 Postup se ukládá v tomto prohlížeči.'; }
 
 // při zavření / přepnutí aplikace hned odeslat neuložené změny (i když běží odpočet 700 ms)
-function flushOnHide(){ if(!HAS_GAS || (typeof FAMILY!=='undefined' && !FAMILY)) return; clearTimeout(saveTimer);
+function flushOnHide(){ if(!HAS_GAS || !pulledOnce || (typeof FAMILY!=='undefined' && !FAMILY)) return; clearTimeout(saveTimer);
   const items=dirtyItems(); if(!Object.keys(items).length) return;
   gas('saveItems', items, true).then(()=>Object.assign(lastSent, items)).catch(()=>{}); }
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushOnHide(); });

@@ -46,7 +46,7 @@ function familyView(){
 async function famNew(){
   view.fst='⏳ Zakládám rodinu…'; render();
   for(let i=0;i<5;i++){ const c=newFamilyCode(); try{ FAMILY=c; const j=await gas('create',{}); if(j && j.ok){ setFamily(c);
-    S=emptyState(); TEST=null; lsSet('ph-test',null); saveLocal(); flush(); view={name:'home'}; render(); setTimeout(()=>{ introOpen(true); famShow(true); },300); return; } }catch(e){} }
+    S=emptyState(); TEST=null; lsSet('ph-test',null); pulledOnce=true; saveLocal(); flush(); view={name:'home'}; render(); setTimeout(()=>{ introOpen(true); famShow(true); },300); return; } }catch(e){} }
   FAMILY=''; view.fst='⚠️ Nepodařilo se spojit se serverem. Zkuste to prosím znovu.'; render();
 }
 async function famJoin(){
@@ -88,7 +88,26 @@ render=function(){
       <a class="btn small sec" href="soukromi.html" target="_blank">Ochrana soukromí</a></div>`;
     (c&&c.parentNode||$('#app')).appendChild(box); bind();
   }
+  if(view.name==='parent' && parentOk && parentTab==='backup' && HAS_GAS && FAMILY){
+    const c=document.querySelector('#app .card'); const box=document.createElement('div'); box.style.marginTop='18px';
+    box.innerHTML=`<h3 style="margin:0 0 6px">☁️ Zálohy na serveru</h3>
+      <p class="muted" style="margin:0 0 8px">Server si u každého hrdiny pamatuje starší stavy (průběžně a vždy, když nějaké zařízení poslalo starší kopii). Pokud hrdina přišel o postup, vyberte ho a obnovte.</p>
+      <div class="row"><select id="bk-hero">${heroes().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select><button class="btn small sec" id="bk-load">Zobrazit zálohy</button></div>
+      <div id="bk-list" style="margin-top:8px"></div>`;
+    (c||$('#app')).appendChild(box);
+    box.querySelector('#bk-load').onclick=()=>bkLoad(box.querySelector('#bk-hero').value);
+  }
 };
+async function bkLoad(id){ const el=$('#bk-list'); if(!el) return; el.innerHTML='⏳ Načítám…';
+  try{ const r=await gas('backups',{id}); const L=(r&&r.list)||[];
+    el.innerHTML = L.length ? `<table class="hist"><tr><th>Kdy</th><th>Jméno</th><th>Body</th><th>Správně</th><th></th></tr>${L.map(b=>`<tr><td>${esc(b.when)}<div class="muted" style="font-size:12px">${esc(b.why)}</div></td><td>${esc(b.name)}</td><td>${b.xp}</td><td>${b.tc}</td><td><button class="btn small" data-bkrow="${b.row}">Obnovit</button></td></tr>`).join('')}</table>` : '<p class="muted">Pro tohoto hrdinu zatím žádné zálohy nejsou.</p>';
+    el.querySelectorAll('[data-bkrow]').forEach(b=>b.onclick=()=>confirmBox('Obnovit hrdinu z této zálohy? Současný stav se předtím také zazálohuje.', ()=>bkRestore(id,+b.dataset.bkrow)));
+  }catch(e){ el.innerHTML='⚠️ Nepodařilo se spojit se serverem.'; } }
+async function bkRestore(id,row){
+  try{ const r=await gas('restore',{id,row}); if(!r||!r.ok||!r.profile) throw 0;
+    const o=migrate(JSON.parse(r.profile)), i=S.profiles.findIndex(p=>p.id===id); if(i>=0) S.profiles[i]=o; else S.profiles.push(o);
+    lastSent[id]=r.profile; shadow[id]=bodyOf(o); saveLocal(); toast('✅ Hrdina obnoven ze zálohy'); render();
+  }catch(e){ toast('⚠️ Obnovení se nepovedlo'); } }
 
 
 /* ---- týdenní zpráva e-mailem (volitelné) ----
