@@ -132,7 +132,7 @@ function heroView(){
     ${testBanner(p)}
     ${p.chests&&p.chests.length?`<div class="card row" style="margin-bottom:14px;background:#fff8dc;border-color:#f5d76e"><div style="width:70px">${chestSVG(p.chests[0])}</div><div style="flex:1;font-size:18px">Máš ${p.chests.length} ${plural(p.chests.length,'truhlu','truhly','truhel')} k otevření!</div><button class="btn gold" data-chest="1">🎁 Otevřít</button></div>`:''}
     <div class="grid2">
-      <div class="card hero"><div class="stage ${p.mode==='home'?'roomstage':''}">${avatarSVG(p,{glow:p.beaten>REWARD_AT})}</div>${p.mode==='pet'?petInfoHTML(p):''}${statsHTML(p)}</div>
+      <div class="card hero"><div class="stage ${p.mode==='home'?'roomstage':''} ${heroBgCls(p)}" ${heroBgStyle(p)}>${avatarSVG(p,{glow:p.beaten>REWARD_AT})}</div>${p.mode==='pet'?petInfoHTML(p):''}${statsHTML(p)}</div>
       <div class="card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
         ${t.done && !xs && SJ.length>1 ? `<div class="center" style="font-size:18px">➕ Dnes splněno! Procvičovat dál:</div><div class="row" style="justify-content:center">${SJ.map(s=>`<button class="btn ok small" data-playsubj="${s}">${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div>` : `<button class="btn ${t.done?'ok':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>`}
         <div class="sub center">Předměty: ${SJ.map(s=>SUBJECTS[s].icon+' '+SUBJECTS[s].name).join(' · ')}</div>

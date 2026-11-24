@@ -250,3 +250,5 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .card.hero .stage .av.rider .hfig.riderimg{margin-right:0;max-width:34%}
 .card.hero .stage .av.rider img.horse{left:3%;width:27%;max-height:58%}
 .card.hero .stage .av.rider img.comp{right:5%;width:11%}
+/* pozadí za hrdinou podle úrovně */
+.stage.hbgstage{background-size:cover;background-position:center bottom;background-repeat:no-repeat}

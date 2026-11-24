@@ -176,6 +176,8 @@ const ODESILATEL = 'chytrolinci@email.cz';
 function sendReport_(email, html, test) {
   const subject = (test ? '[zkouška] ' : '') + 'Chytrolínci – týdenní zpráva';
   const plain = 'Týdenní zpráva ze hry Chytrolínci. Pro zobrazení otevřete e-mail v programu, který umí HTML.';
+  // Odesílací server Seznamu poškozuje 4bajtové znaky (emoji) – všechno mimo ASCII pošleme jako HTML entity
+  html = String(html || '').replace(/[^\x00-\x7F]/gu, function (c) { return '&#' + c.codePointAt(0) + ';'; });
   let alias = false;
   try { alias = GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(ODESILATEL) >= 0; } catch (e) {}
   if (alias) GmailApp.sendEmail(email, subject, plain, { htmlBody: html, name: 'Chytrolínci', from: ODESILATEL, replyTo: ODESILATEL });

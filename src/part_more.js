@@ -51,6 +51,11 @@ function migrateGear(p){
     if(p.newItem && p.newItem.indexOf(k+':')===0) p.newItem=k+':'+mp(k,p.newItem.split(':')[1]);
   }
 }
+// pozadí za hrdinou podle úrovně (24. 11. 2026): vlevo stáj, uprostřed dečka, vpravo domeček pro mazlíčka
+const HERO_BG_LV=[0,1,1,1,2,2,2,3,3,3,4,4,4,4,5,5,5,5,6,6,6]; // úroveň 1–20 → pozadí 1–6
+function heroBgTier(p){ return HERO_BG_LV[Math.min(20,Math.max(1,level(p)))]||1; }
+function heroBgCls(p){ return ((p&&p.mode)||'quest')==='quest' ? 'hbgstage' : ''; }
+function heroBgStyle(p){ return ((p&&p.mode)||'quest')==='quest' ? `style="background-image:url(${A_}hbg${heroBgTier(p)}.webp)"` : ''; }
 // název odměny za legendární výpravu (volitelné, nastavují rodiče)
 function reward2Of(p){ return (p&&p.reward2)||(S.settings&&S.settings.reward2)||''; }
 const _itemIcon0=itemIcon;
