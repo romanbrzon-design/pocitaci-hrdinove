@@ -53,7 +53,7 @@ function albumView(){
     return `<div class="card albset"><h3 style="margin:0 0 8px">${set.name} <span class="muted" style="font-size:15px">${have}/12 ${f.setDone[set.id]?'✅ hotovo':''}</span></h3>
       <div class="stkgrid">${set.e.map((e,i)=>{ const n=f.stk[set.id+i]; return `<div class="stk ${n?'got':''} ${i>=10?'rare':''}">${n?e:'?'}${n>1?`<small>×${n}</small>`:''}</div>`; }).join('')}</div></div>`; }).join('');
   return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>📒 Album nálepek</h1><span class="pill">${stickerCount(p)}/60</span></div>
-    <p class="muted">Nálepky padají za správné odpovědi, za splněný den, z kola štěstí a za týdenní výzvy. Zlaté rámečky jsou vzácné. Za celou sadu dostaneš ⭐ 100 a zlatou truhlu!</p>
+    <p class="muted">Nálepky padají za správné odpovědi, za splněný den a za týdenní výzvy. Zlaté rámečky jsou vzácné. Za celou sadu dostaneš ⭐ 100 a zlatou truhlu!</p>
     <div class="albgrid">${sets}</div>`;
 }
 
@@ -82,7 +82,8 @@ function wheelPrizes(p){
   if(s>=14) pr[2]={t:'chest',v:'gold',l:'Zlatá truhla'};
   return pr;
 }
-function canSpin(p){ return !!(p && p.today && p.today.date===todayKey() && p.today.done && fx(p).wheel!==todayKey()); }
+// kolo štěstí vypnuto na přání (24. 11. 2026) – nic nepřidávalo; kód ponechán kvůli starým datům fx(p).wheel
+function canSpin(p){ return false; }
 function wheelOpen(){
   const p=prof(view.pid); if(!p || !canSpin(p)) return;
   const pr=wheelPrizes(p), cols=['#ff6b6b','#ffd84d','#4fc3f7','#81c784','#ba68c8','#ffb74d','#f06292','#4db6ac'];
@@ -277,7 +278,7 @@ function reportHTML(){
 var INTRO=[
   ['👋','Vítej v Chytrolíncích!','Tady se učíš hrou. Každý den splníš pár úloh – z matematiky, a když rodiče zapnou, i z angličtiny, přírodovědy a češtiny – a za to sbíráš body a poklady.'],
   ['🦸','Vytvoř si hrdinu','Klikni na „Nový hrdina“, napiš své jméno, vyber třídu a dobrodružství: ⚔️ výprava za drakem, 🏡 vlastní domeček, nebo 🐾 zvířátko, které roste.'],
-  ['🎯','Úkol dne','Každý den tě čeká 10 úloh. Za správnou odpověď dostaneš ⭐ body, za splněný den truhlu s překvapením a zatočíš si kolem štěstí. Kdo hraje každý den, má sérii a lepší výhry!'],
+  ['🎯','Úkol dne','Každý den tě čeká 10 úloh. Za správnou odpověď dostaneš ⭐ body, za splněný den truhlu s překvapením. Kdo hraje každý den, má sérii a lepší výhry!'],
   ['🛍️','Nakupuj a vyhrávej','Za body si kupuj meče, nábytek nebo hračky pro zvířátko – a nezapomeň si je nasadit. Pak poraz obludy, pozvi návštěvy nebo vyhraj soutěže. Na konci tě čeká odměna od rodičů!'],
   ['📒','Ještě víc zábavy','Sbírej nálepky do alba, plň výzvy týdne, nebo překonej rekord v časovce. 🔊 Když neumíš číst, zapni dole vlevo předčítání.'],
   ['👨‍👩‍👧','Pro rodiče','V sekci „Rodič“ (výchozí PIN 1234 – změňte si ho) nastavíte každému dítěti třídu, obtížnost a předměty, odměnu za dokončení, tajný kód a rodinný cíl. Najdete tam i týdenní zprávu, co dítěti jde a s čím má potíže.'],
