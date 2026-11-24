@@ -170,13 +170,29 @@ function report_(fam, b) {
   }
   return { ok: true };
 }
+// Odesílatel: chytrolinci@email.cz. Funguje, když je v Gmailu účtu, pod kterým skript běží, přidaný jako
+// „Odeslat poštu jako“ (Nastavení → Účty a import). Jinak se pošle z Gmailu s odpovědí na chytrolinci@email.cz.
+const ODESILATEL = 'chytrolinci@email.cz';
 function sendReport_(email, html, test) {
-  MailApp.sendEmail({
-    to: email,
-    subject: (test ? '[zkouška] ' : '') + 'Chytrolínci – týdenní zpráva',
-    htmlBody: html,
-    name: 'Chytrolínci'
-  });
+  const subject = (test ? '[zkouška] ' : '') + 'Chytrolínci – týdenní zpráva';
+  const plain = 'Týdenní zpráva ze hry Chytrolínci. Pro zobrazení otevřete e-mail v programu, který umí HTML.';
+  let alias = false;
+  try { alias = GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(ODESILATEL) >= 0; } catch (e) {}
+  if (alias) GmailApp.sendEmail(email, subject, plain, { htmlBody: html, name: 'Chytrolínci', from: ODESILATEL, replyTo: ODESILATEL });
+  else MailApp.sendEmail({ to: email, subject: subject, htmlBody: html, name: 'Chytrolínci', replyTo: ODESILATEL });
+}
+// kontrola z editoru: Spustit ▶ zkontrolovatOdesilatele → v Protokolu provádění je vidět, odkud se bude posílat
+function zkontrolovatOdesilatele() {
+  const a = GmailApp.getAliases();
+  const ok = a.map(function (x) { return x.toLowerCase(); }).indexOf(ODESILATEL) >= 0;
+  const msg = ok ? 'OK – zprávy půjdou z ' + ODESILATEL : 'Alias ' + ODESILATEL + ' NENÍ v Gmailu nastaven (aliasy: ' + (a.join(', ') || 'žádné') + '). Zprávy půjdou z ' + Session.getEffectiveUser().getEmail() + ' s odpovědí na ' + ODESILATEL + '.';
+  Logger.log(msg); return msg;
+}
+// zkušební zpráva sobě (na účet, pod kterým skript běží)
+function zkusebniZprava() {
+  const me = Session.getEffectiveUser().getEmail();
+  sendReport_(me, '<div style="font-family:Arial,sans-serif"><h2>🧠 Chytrolínci – zkušební zpráva</h2><p>Když tohle čtete a odesílatel je ' + ODESILATEL + ', je vše nastaveno. 🎉</p></div>', true);
+  Logger.log('Odesláno na ' + me); return me;
 }
 // spouští se každou hodinu; v nastavený den od 19:00 pošle každé rodině jednu zprávu
 function tydenniZpravy() {

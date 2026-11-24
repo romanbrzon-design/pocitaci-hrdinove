@@ -4,7 +4,7 @@
 const MINI = [
   {id:'pex',  icon:'🃏', name:'Pexeso',            rec:'low',  unit:'tahů'},
   {id:'diff', icon:'🔍', name:'Najdi rozdíly',     rec:'low',  unit:'s'},
-  {id:'bird', icon:'🐦', name:'Kdo to zpívá?',     soon:true},
+  {id:'bird', icon:'🐦', name:'Kdo to zpívá?',     rec:'high', unit:'z 8', soon:true},
   {id:'maze', icon:'🌀', name:'Bludiště',          rec:'low',  unit:'s'},
   {id:'puz',  icon:'🧩', name:'Skládačka',         rec:'low',  unit:'tahů'},
   {id:'mel',  icon:'🎵', name:'Zopakuj melodii',   rec:'high', unit:'tónů'},
@@ -95,6 +95,40 @@ const MINI_GAMES = {
     A.onclick=tap(A); B.onclick=tap(B);
     const hint=mk('button','btn sec small','💡 Nápověda'); hint.onclick=()=>{ const d=diffs.find(d=>!d.found); if(!d) return; for(const pn of [A,B]){ const c=mk('span','sdhint'); c.style.cssText=`left:${d.x}%;top:${d.y}%`; pn.append(c); setTimeout(()=>c.remove(),1400); } };
     const wrap=mk('div','sdwrap'); wrap.append(A,B); el.append(info, wrap, hint);
+  },
+
+  // 🐦 KDO TO ZPÍVÁ? – poslech nahrávky, výběr zvířete; 8 kol, body za správnou odpověď napoprvé
+  bird(el, p){
+    const L=miniLevel(p), pool=BIRDS.filter(b=>L===0?b.lvl===0:L===3?b.lvl>0:b.lvl<=L), sn=b=>b.snd||('z_'+b.id), nOpt=L<2?3:4, ROUNDS=8;
+    const c=SND.init(); let src=null, alive=true;
+    const info=mk('div','mginfo','Načítám zvuky…'); el.append(info);
+    const need=pool.map(sn); need.forEach(n=>SND.load(n));
+    const stop=()=>{ try{ if(src) src.stop(); }catch(e){} src=null; };
+    const play=b=>{ stop(); const buf=SND.buf[sn(b)]; if(!c||!buf) return; if(c.state==='suspended') c.resume().catch(()=>{});
+      src=c.createBufferSource(); src.buffer=buf; const g=c.createGain(); g.gain.value=1; src.connect(g); g.connect(SND.out); src.start(); };
+    const obs=new MutationObserver(()=>{ if(!document.body.contains(el)){ stop(); alive=false; obs.disconnect(); } }); obs.observe(document.body,{childList:true,subtree:true});
+    let tries=0; const wait=()=>{ if(!alive) return; const ok=pool.filter(b=>SND.buf[sn(b)]); const pending=need.some(n=>SND.buf[n]===null);
+      if(pending && tries++<40) return setTimeout(wait,150);
+      if(ok.length<nOpt){ info.textContent='Zvuky se ještě připravují – zkus to prosím později. 🙂'; return; }
+      start(ok); };
+    const pic=b=>b.img?`<img class="brdimg" src="${A_}bird/${b.id}.webp" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'brdemo',textContent:'${b.emo}'}))">`:`<span class="brdemo">${b.emo}</span>`;
+    const start=ok=>{
+      let round=0, score=0, last=null; info.textContent='Poslechni si zvuk a klepni, kdo to je.';
+      const head=mk('div','mglvl center',''); const btn=mk('button','btn ok brdplay','🔊 Pustit znovu'); const opts=mk('div','brdopts'); const fact=mk('div','brdfact','');
+      el.append(head, btn, opts, fact);
+      const next=()=>{ if(round>=ROUNDS){ stop(); btn.remove(); opts.remove(); return miniWin(el,p,'bird',score, score>=ROUNDS-1?'🎉 Výborné ucho!':score>=ROUNDS/2?'👏 Pěkně jsi poslouchal'+(p.gender==='f'?'a':'')+'!':'🙂 Příště to půjde ještě líp!'); }
+        round++; let first=true; fact.textContent=''; head.textContent=`Kolo ${round} z ${ROUNDS} · ⭐ ${score}`;
+        const cand=ok.filter(b=>b!==last); const ans=pick(cand); last=ans;
+        const others=shuffle(ok.filter(b=>b!==ans)).slice(0,nOpt-1), list=shuffle([ans,...others]);
+        opts.innerHTML=''; btn.onclick=()=>play(ans); play(ans);
+        list.forEach(b=>{ const o=mk('button','brdopt',`${pic(b)}<b>${b.name}</b>`); o.onclick=()=>{ if(o.disabled) return;
+          if(b===ans){ stop(); sfx('ok'); if(first) score++; o.classList.add('good'); opts.querySelectorAll('.brdopt').forEach(x=>x.disabled=true);
+            fact.innerHTML=`${ans.emo} ${ans.fact}`; if(readOn()) speak(ans.fact.replace(/[^\p{L}\p{N}\s!.,–-]/gu,''));
+            const go=mk('button','btn ok',round>=ROUNDS?'🏁 Hotovo':'➡️ Další'); go.onclick=()=>{ go.remove(); next(); }; fact.append(document.createElement('br'), go); }
+          else { first=false; sfx('bad'); o.classList.add('bad'); o.disabled=true; } };
+          opts.append(o); }); };
+      next(); };
+    setTimeout(wait,100);
   },
 
   // 🌀 BLUDIŠTĚ
@@ -205,6 +239,27 @@ const MINI_GAMES = {
     el.append(chooser, mk('div','mginfo','Vyber barvu a klepni do obrázku.'), pal, holder, clr);
   },
 };
+// „Kdo to zpívá?“ – nahrávky assets/snd/z_<id>.mp3 (zdroje v ZDROJE.txt), obrázek assets/bird/<id>.webp (když img:true), jinak emoji
+// lvl 0 = dvorek (od nejmenších), 1 = známí ptáci, 2 = těžší ptáci (od 2. ročníku)
+const BIRDS = [
+  {id:'krava',   name:'kráva',   emo:'🐄', lvl:0, fact:'Kráva dává mléko – vyrábí se z něj sýr, máslo i jogurt.'},
+  {id:'kohout',  name:'kohout',  emo:'🐓', lvl:0, fact:'Kohout kokrhá hlavně brzy ráno. Slepice snášejí vajíčka.'},
+  {id:'ovce',    name:'ovce',    emo:'🐑', lvl:0, fact:'Z ovčí vlny se pletou teplé svetry a čepice.'},
+  {id:'koza',    name:'koza',    emo:'🐐', lvl:0, fact:'Kozy výborně šplhají. Z kozího mléka se dělá sýr.'},
+  {id:'kachna',  name:'kachna',  emo:'🦆', lvl:0, fact:'Kachna má mezi prsty blány, a proto dobře plave.'},
+  {id:'prase',   name:'prasátko',emo:'🐖', lvl:0, fact:'Prasata se válejí v bahně, aby se v horku ochladila.'},
+  {id:'pes',     name:'pejsek',  emo:'🐕', lvl:0, fact:'Pes má výborný čich – pozná, kudy šel člověk.', snd:'dog1'},
+  {id:'kocka',   name:'kočka',   emo:'🐈', lvl:0, fact:'Kočka vidí i v šeru a ráda si přede.', snd:'cat1'},
+  {id:'kukacka', name:'kukačka', emo:'🐦', img:true, lvl:1, fact:'Kukačka klade vajíčka do hnízd jiných ptáků.'},
+  {id:'sova',    name:'sova (puštík)', emo:'🦉', img:true, lvl:1, fact:'Puštík loví v noci. Skvěle slyší i myš pod listím.'},
+  {id:'holub',   name:'holub',   emo:'🕊️', img:true, lvl:1, fact:'Holubi vrkají. Poštovní holub najde cestu domů i zdaleka.'},
+  {id:'vrana',   name:'vrána',   emo:'🐦‍⬛', img:true, lvl:1, fact:'Vrány patří k nejchytřejším ptákům.'},
+  {id:'kos',     name:'kos',     emo:'🐦', img:true, lvl:2, fact:'Sameček kosa je černý se žlutým zobákem a zpívá často už za úsvitu.'},
+  {id:'sykora',  name:'sýkora koňadra', emo:'🐦', img:true, lvl:2, fact:'Sýkora koňadra volá „ci-ci-bé“ a v zimě ráda chodí ke krmítku.'},
+  {id:'vrabec',  name:'vrabec',  emo:'🐦', img:true, lvl:2, fact:'Vrabci žijí v hejnech blízko lidí a hlasitě čimčarají.'},
+  {id:'datel',   name:'datel',   emo:'🐦', img:true, lvl:2, fact:'Datel bubnuje zobákem do stromu – tak si označuje své území.'},
+  {id:'cap',     name:'čáp',     emo:'🐦', img:true, lvl:2, fact:'Čáp bílý skoro nezpívá – klape zobákem. Na zimu odlétá do Afriky.'},
+];
 // tvary pro spojování teček (souřadnice 0–100, po směru hodinových ručiček)
 const DOT_SHAPES = [
   {name:'domeček', emo:'🏠', color:'#ffd6a5', pts:[[20,92],[20,48],[50,14],[80,48],[80,92]]},
