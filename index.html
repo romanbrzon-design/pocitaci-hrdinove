@@ -421,6 +421,7 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .sdhint{border-color:#f0b429;animation:sdblink .35s 4}@keyframes sdblink{50%{opacity:.15}}
 .shake{animation:shake .35s}
 .mzgrid{display:grid;max-width:min(92vw,440px);margin:0 auto;aspect-ratio:1;border:3px solid #3b2412;background:#fffaf0;user-select:none}
+.mzh.dtbad{display:inline-block;animation:shake .35s}
 .mzc{border:0 solid #3b2412;display:flex;align-items:center;justify-content:center;font-size:min(6vw,30px);aspect-ratio:1;line-height:1}.mzc.trail{background:#fff1b8}
 .mzpad{display:grid;grid-template-columns:repeat(3,64px);grid-template-areas:". t ." "l . r" ". b .";gap:6px;justify-content:center;margin-top:10px}
 .mzb{font-size:26px;padding:8px}.mzt{grid-area:t}.mzl{grid-area:l}.mzr{grid-area:r}.mzb.mzb{margin:0}.mzpad .mzb:nth-child(4){grid-area:b}
@@ -3974,16 +3975,30 @@ const MINI_GAMES = {
     const hero = p.mode==='pet' ? ({cat:'🐱',dog:'🐶',bunny:'🐰',pony:'🐴',rat:'🐀',hamster:'🐹',fox:'🦊',panda:'🐼',owl:'🦉',dragon:'🐲'}[p.species]||'🐾') : (p.gender==='f'?'👧':'👦');
     const grid=mk('div','mzgrid'); grid.style.gridTemplateColumns=`repeat(${N},1fr)`; const cells=W.map((w,i)=>{ const d=mk('div','mzc'); d.style.cssText=`border-top-width:${w.t?3:0}px;border-right-width:${w.r?3:0}px;border-bottom-width:${w.b?3:0}px;border-left-width:${w.l?3:0}px`; grid.append(d); return d; });
     let pos=0; const goal=N*N-1, t=timer(); let won=false; cells[goal].innerHTML='<span class="mzg">🎁</span>';
-    const draw=()=>{ cells.forEach((c,i)=>{ c.classList.toggle('trail', c.dataset.v==='1'); const h=c.querySelector('.mzh'); if(h) h.remove(); }); cells[pos].dataset.v='1'; cells[pos].append(mk('span','mzh',hero)); };
-    const step=(dir)=>{ if(won) return false; const w=W[pos], x=pos%N; const m={t:[-N,w.t],r:[1,w.r||x===N-1],b:[N,w.b],l:[-1,w.l||x===0]}[dir]; if(m[1]) return false; pos+=m[0]; return true; };
+    const path=[0]; // prošlá cesta (bez slepých odboček – návratem se stopa maže)
+    const draw=()=>{ const on=new Set(path); cells.forEach((c,i)=>{ c.classList.toggle('trail', on.has(i)); const h=c.querySelector('.mzh'); if(h) h.remove(); }); cells[pos].append(mk('span','mzh',hero)); };
+    const win=()=>{ if(pos===goal && !won){ won=true; setTimeout(()=>miniWin(el,p,'maze',t(),'🎉 Došel jsi k pokladu!'.replace('Došel jsi', p.gender==='f'?'Došla jsi':'Došel jsi')),300); } };
+    const step=(dir)=>{ if(won) return false; const w=W[pos], x=pos%N; const m={t:[-N,w.t],r:[1,w.r||x===N-1],b:[N,w.b],l:[-1,w.l||x===0]}[dir]; if(m[1]) return false; pos+=m[0];
+      if(path.length>1 && path[path.length-2]===pos) path.pop(); else path.push(pos); return true; };
     const move=(dir, run)=>{ let k=0; while(step(dir)){ k++; if(!run) break; const w=W[pos], open=['t','r','b','l'].filter(d=>!w[d]).length; if(open!==2 || pos===goal) break; const opp={t:'b',b:'t',l:'r',r:'l'}[dir]; if(w[dir]){ dir=['t','r','b','l'].find(d=>!w[d]&&d!==opp); } }
-      if(k){ sfx('tick'); draw(); if(pos===goal && !won){ won=true; setTimeout(()=>miniWin(el,p,'maze',t(),'🎉 Došel jsi k pokladu!'.replace('Došel jsi', p.gender==='f'?'Došla jsi':'Došel jsi')),300); } } else sfx('tap'); };
-    let sx=null, sy=null; grid.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; });
-    grid.addEventListener('pointerup',e=>{ if(sx==null) return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; if(Math.max(Math.abs(dx),Math.abs(dy))<20) return; move(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'b':'t'), true); });
+      if(k){ sfx('tick'); draw(); win(); } else sfx('tap'); };
+    // ✍️ kreslení cesty prstem: začít na hrdinovi nebo na už prošlé cestě a táhnout chodbami
+    const cellAt=e=>{ const r=grid.getBoundingClientRect(), x=Math.floor((e.clientX-r.left)/r.width*N), y=Math.floor((e.clientY-r.top)/r.height*N); return x<0||y<0||x>=N||y>=N ? -1 : y*N+x; };
+    const toward=c=>{ let k=0; for(let g=0; g<2*N && pos!==c && !won; g++){ const dx=c%N-pos%N, dy=Math.floor(c/N)-Math.floor(pos/N);
+        const ds=[Math.abs(dx)>=Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'b':'t'), Math.abs(dx)>=Math.abs(dy)?(dy>0?'b':dy<0?'t':null):(dx>0?'r':dx<0?'l':null)].filter(Boolean);
+        if(!ds.some(d=>step(d))) break; k++; }
+      if(k){ sfx('tick'); draw(); win(); } };
+    let drag=false;
+    grid.addEventListener('pointerdown',e=>{ if(won) return; const c=cellAt(e); if(c<0) return; const i=path.indexOf(c);
+      if(i<0 && !(Math.abs(c%N-pos%N)+Math.abs(Math.floor(c/N)-Math.floor(pos/N))===1)){ const h=cells[pos].querySelector('.mzh'); if(h){ h.classList.remove('dtbad'); void h.offsetWidth; h.classList.add('dtbad'); } sfx('tap'); return; }
+      drag=true; try{ grid.setPointerCapture(e.pointerId); }catch(_){}
+      if(i>=0 && c!==pos){ path.length=i+1; pos=c; sfx('tick'); draw(); } else toward(c); e.preventDefault(); });
+    grid.addEventListener('pointermove',e=>{ if(!drag) return; const c=cellAt(e); if(c>=0 && c!==pos) toward(c); });
+    const end=()=>{ drag=false; }; grid.addEventListener('pointerup',end); grid.addEventListener('pointercancel',end);
     grid.style.touchAction='none';
     const pad=mk('div','mzpad'); [['t','⬆️'],['l','⬅️'],['r','➡️'],['b','⬇️']].forEach(([d,i])=>{ const b=mk('button','btn sec mzb mz'+d,i); b.onclick=()=>move(d,false); pad.append(b); });
     const kd=e=>{ if(view.g!=='maze'){ removeEventListener('keydown',kd); return; } const d={ArrowUp:'t',ArrowDown:'b',ArrowLeft:'l',ArrowRight:'r'}[e.key]; if(d){ e.preventDefault(); move(d,false); } }; addEventListener('keydown',kd);
-    el.append(mk('div','mginfo',`Doveď ${hero} k dárku 🎁. Šipkami, nebo přejeď prstem po bludišti.`), grid, pad); draw();
+    el.append(mk('div','mginfo',`Doveď ${hero} k dárku 🎁. Táhni prstem od ${hero} chodbami, nebo použij šipky.`), grid, pad); draw();
   },
 
   // 🧩 SKLÁDAČKA (prohazování dílků)
