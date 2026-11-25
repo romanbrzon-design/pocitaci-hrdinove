@@ -493,7 +493,7 @@ function answer(val){
   const card=$('#pcard');
   if(isCorrect(pr,val)){
     const r = t.tries ? 1 : 2; t.res[t.idx]=r;
-    const gain = r===2?5:2;
+    const gain = r===2?5:(t.helpIdx===t.idx?1:2);
     p.xp=(p.xp||0)+1;
     p.points+=gain; t.pts+=gain; p.totalCorrect++;
     setFb('ok', pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:''));
