@@ -149,6 +149,48 @@ async function pushReport(now, force){
   if(!now && !force && Date.now()-_repPushed<120000) return null; _repPushed=Date.now();
   try{ return await gas('report', {email:r.email, day:r.day||6, html:emailReportHTML(), week:weekStart(), now:!!now}); }catch(e){ return null; }
 }
+
+/* ============ Kniha přání – nápady rodičů přijdou e-mailem na chytrolinci@email.cz ============ */
+const WISH_MAIL='chytrolinci@email.cz';
+const WISH_KINDS=[['idea','💡 Nápad na vylepšení'],['learn','📚 Chybí mi učivo'],['bug','🐞 Chyba v otázce nebo ve hře'],['praise','⭐ Pochvala'],['other','✉️ Jiné']];
+let wishDraft={kind:'idea', text:'', email:''}, wishBusy=false;
+const wishSent=()=>{ const l=lsGet('ph-wishes',[]); return Array.isArray(l)?l:[]; };
+function wishInfo(){ const hs=heroes(); return `dětí ${hs.length}; třídy ${hs.map(p=>p.grade).join(',')||'-'}; ${(()=>{const u=navigator.userAgent||''; return /Android/i.test(u)?'Android':/iPhone|iPad/i.test(u)?'iOS':/Windows/i.test(u)?'Windows':/Mac/i.test(u)?'Mac':'jiné';})()}${matchMedia('(display-mode: standalone)').matches?' (aplikace)':' (prohlížeč)'}`; }
+function wishHTML(){
+  const em = wishDraft.email || repCfg().email || '';
+  const L=wishSent().slice(-5).reverse();
+  return `<h3 style="margin:0 0 6px">💡 Kniha přání</h3>
+    <p style="margin:0 0 10px">Co byste ve hře rádi doplnili nebo vylepšili? Chybí vám nějaké učivo, našli jste chybu v otázce, nebo máte nápad na novou hru? Napište nám – každé přání si přečteme a podle vašich nápadů budeme Chytrolínky vylepšovat.</p>
+    <div class="field"><label>O co jde?</label><select id="w-kind">${WISH_KINDS.map(([k,l])=>`<option value="${k}" ${wishDraft.kind===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label>Vaše přání</label><textarea id="w-text" maxlength="3000" rows="6" placeholder="Např.: Do 3. třídy bych přidal(a) převody jednotek času… / V otázce o … je chyba…" style="width:100%;font:inherit;font-size:16px;border:2px solid var(--line);border-radius:12px;padding:10px;box-sizing:border-box">${esc(wishDraft.text)}</textarea></div>
+    <div class="field"><label>Váš e-mail pro odpověď (nepovinné)</label><input type="email" id="w-email" placeholder="vas@email.cz" value="${esc(em)}"></div>
+    <button class="btn ok" data-act="wish-send" ${wishBusy?'disabled':''}>${wishBusy?'⏳ Odesílám…':'📨 Odeslat přání'}</button>
+    <p class="muted" style="font-size:13px;margin-top:8px">Přání se pošle autorovi hry na ${WISH_MAIL} spolu s rodinným kódem a ročníky dětí (bez jmen dětí). Když nejste online, můžete napsat i přímo e-mailem: <a href="${wishMailto()}">${WISH_MAIL}</a>.</p>
+    ${L.length?`<h4 style="margin:14px 0 4px">Vaše odeslaná přání</h4>${L.map(w=>`<div class="muted" style="font-size:14px;border-top:1px solid var(--line);padding:6px 0"><b>${esc(w.d)}</b> · ${esc((WISH_KINDS.find(k=>k[0]===w.k)||['','✉️ Jiné'])[1])}<br>${esc(w.t.length>160?w.t.slice(0,160)+'…':w.t)}</div>`).join('')}`:''}`;
+}
+function wishMailto(){
+  const k=(WISH_KINDS.find(x=>x[0]===wishDraft.kind)||WISH_KINDS[0])[1].replace(/^\S+\s/,'');
+  return 'mailto:'+WISH_MAIL+'?subject='+encodeURIComponent('Chytrolínci – kniha přání: '+k)+'&body='+encodeURIComponent((wishDraft.text||'')+(FAMILY?'\n\n(Rodina '+FAMILY+')':''));
+}
+function wishRead(){ const k=$('#w-kind'), t=$('#w-text'), e=$('#w-email'); if(k) wishDraft.kind=k.value; if(t) wishDraft.text=t.value; if(e) wishDraft.email=e.value.trim(); }
+async function wishSend(){
+  if(wishBusy) return; wishRead();
+  const text=wishDraft.text.trim();
+  if(text.length<3){ toast('Napište prosím, co byste si přáli 🙂'); return; }
+  if(wishDraft.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(wishDraft.email)){ toast('E-mail nevypadá správně'); return; }
+  const fallback=msg=>{ confirmBox(msg+' Chcete přání poslat přes svou e-mailovou aplikaci?', ()=>{ location.href=wishMailto(); }); };
+  if(!HAS_GAS || !FAMILY){ fallback('Odeslání ze hry funguje jen s online ukládáním (rodinný kód).'); return; }
+  wishBusy=true; render();
+  let r=null; try{ r=await gas('wish',{kind:wishDraft.kind, text, email:wishDraft.email, info:wishInfo()}); }catch(e){}
+  wishBusy=false;
+  if(r && r.wish){
+    const l=wishSent(); l.push({d:new Date().toLocaleDateString('cs-CZ'), k:wishDraft.kind, t:text}); lsSet('ph-wishes', l.slice(-30));
+    wishDraft.text=''; const ta=$('#w-text'); if(ta) ta.value=''; render(); toast('💛 Děkujeme! Přání jsme dostali.');
+  } else if(r && r.error==='limit'){ render(); toast('Dnes už jste poslali hodně přání – zkuste to prosím zítra.'); }
+  else { render(); fallback('Přání se teď nepodařilo odeslat.'); }
+}
+const _actW=act; act=function(a){ if(a==='wish-send') return wishSend(); return _actW(a); };
+const _renderW=render; render=function(){ if(view.name==='parent' && parentOk && parentTab==='wish' && $('#w-text')) wishRead(); _renderW(); };
 const _finishRep=finish; finish=function(t){ const x=_finishRep(t); setTimeout(()=>pushReport(),1500); return x; };
 </script>
 </body>

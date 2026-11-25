@@ -281,7 +281,7 @@ var INTRO=[
   ['🎯','Úkol dne','Každý den tě čeká 10 úloh. Za správnou odpověď dostaneš ⭐ body, za splněný den truhlu s překvapením. Kdo hraje každý den, má sérii a lepší výhry!'],
   ['🛍️','Nakupuj a vyhrávej','Za body si kupuj meče, nábytek nebo hračky pro zvířátko – a nezapomeň si je nasadit. Pak poraz obludy, pozvi návštěvy nebo vyhraj soutěže. Na konci tě čeká odměna od rodičů!'],
   ['📒','Ještě víc zábavy','Sbírej nálepky do alba, plň výzvy týdne, nebo překonej rekord v časovce. 🔊 Když neumíš číst, zapni dole vlevo předčítání.'],
-  ['👨‍👩‍👧','Pro rodiče','V sekci „Rodič“ (výchozí PIN 1234 – změňte si ho) nastavíte každému dítěti třídu, obtížnost a předměty, odměnu za dokončení, tajný kód a rodinný cíl. Najdete tam i týdenní zprávu, co dítěti jde a s čím má potíže.'],
+  ['👨‍👩‍👧','Pro rodiče','V sekci „Rodič“ (výchozí PIN 1234 – změňte si ho) nastavíte každému dítěti třídu, obtížnost a předměty, odměnu za dokončení, tajný kód a rodinný cíl. Najdete tam i týdenní zprávu, co dítěti jde a s čím má potíže, a Knihu přání – tam nám napište, co byste ve hře chtěli doplnit.'],
 ];
 function introOpen(force){
   if(!force && lsGet('ph-intro')) return;

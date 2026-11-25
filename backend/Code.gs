@@ -3,6 +3,7 @@
  *   list "_data"     – stav aplikace (needitovat ručně). Klíč = "KÓD|id"; řádky bez "|" patří původní rodině.
  *   list "Výsledky"  – přehled každého dokončeného dne
  *   list "_zpravy"   – nastavení týdenní zprávy e-mailem (needitovat ručně)
+ *   list "Přání"     – kniha přání od rodičů (každé přání se zároveň pošle e-mailem na chytrolinci@email.cz)
  *
  * TÝDENNÍ ZPRÁVY E-MAILEM: po vložení kódu jednou spusťte funkci nastavitTydenniZpravy
  * (Spustit ▶) a povolte odesílání e-mailů. Pak nasaďte novou verzi webové aplikace.
@@ -34,6 +35,7 @@ function doPost(e) {
   else if (body.action === 'restore') return json_(restore_(fam, String(body.id || ''), +body.row || 0));
   else if (body.action === 'deleteFamily' && fam !== legacy_()) deleteFamily_(fam);
   else if (body.action === 'report') return json_(report_(fam, body));
+  else if (body.action === 'wish') return json_(wish_(fam, body));
   return json_({ ok: true });
 }
 
@@ -280,3 +282,56 @@ function nastavitTydenniZpravy() {
   ScriptApp.newTrigger('tydenniZpravy').timeBased().everyHours(1).create();
   return 'Týdenní zprávy nastaveny (kontrola každou hodinu).';
 }
+
+/* ---------- kniha přání od rodičů ---------- */
+// list "Přání": Kdy | Rodina | Druh | Text | E-mail rodiče | Info o zařízení | Odesláno e-mailem
+const PRANI_DRUHY = { idea: 'Nápad na vylepšení', learn: 'Chybí mi učivo', bug: 'Chyba v otázce nebo ve hře', praise: 'Pochvala', other: 'Jiné' };
+function wish_(fam, b) {
+  const text = String(b.text || '').trim().slice(0, 3000);
+  if (text.length < 3) return { ok: false, error: 'empty' };
+  let email = String(b.email || '').trim().slice(0, 120);
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) email = '';
+  const kind = PRANI_DRUHY[b.kind] ? b.kind : 'other';
+  const info = String(b.info || '').slice(0, 500);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  let row;
+  try {
+    const sh = sheet_('Přání');
+    if (sh.getLastRow() === 0) { sh.appendRow(['Kdy', 'Rodina', 'Druh', 'Text', 'E-mail rodiče', 'Info', 'Odesláno e-mailem']); sh.setFrozenRows(1); }
+    // ochrana proti zahlcení: nejvýš 10 přání od jedné rodiny za den
+    const today = Utilities.formatDate(new Date(), 'Europe/Prague', 'yyyy-MM-dd');
+    const vals = sh.getDataRange().getValues();
+    let n = 0;
+    for (let r = Math.max(1, vals.length - 300); r < vals.length; r++)
+      if (String(vals[r][1]) === fam && vals[r][0] instanceof Date && Utilities.formatDate(vals[r][0], 'Europe/Prague', 'yyyy-MM-dd') === today) n++;
+    if (n >= 10) return { ok: false, error: 'limit' };
+    sh.appendRow([new Date(), fam, PRANI_DRUHY[kind], text, email, info, '']);
+    row = sh.getLastRow();
+  } finally {
+    lock.releaseLock();
+  }
+  let sent = false;
+  try { sendWish_(fam, PRANI_DRUHY[kind], text, email, info); sent = true; sheet_('Přání').getRange(row, 7).setValue('ano'); } catch (e) { sheet_('Přání').getRange(row, 7).setValue('chyba: ' + e); }
+  return { ok: true, wish: true, sent: sent };
+}
+function esc_(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function sendWish_(fam, druh, text, email, info) {
+  const subject = 'Chytrolínci – kniha přání: ' + druh;
+  let html = '<div style="font-family:Arial,sans-serif;font-size:15px">' +
+    '<h2 style="margin:0 0 10px">💡 Nové přání do hry Chytrolínci</h2>' +
+    '<p><b>Druh:</b> ' + esc_(druh) + '<br><b>Rodina:</b> ' + esc_(fam) + '<br><b>Kdy:</b> ' + Utilities.formatDate(new Date(), 'Europe/Prague', 'd. M. yyyy H:mm') +
+    '<br><b>E-mail rodiče:</b> ' + (email ? esc_(email) + ' (stačí odpovědět na tento e-mail)' : 'neuveden') + '</p>' +
+    '<div style="background:#fff7e0;border:1px solid #e8d49a;border-radius:10px;padding:12px;white-space:pre-wrap">' + esc_(text) + '</div>' +
+    '<p style="color:#888;font-size:12px;margin-top:12px">' + esc_(info) + '<br>Všechna přání jsou i v Google tabulce na listu „Přání“.</p></div>';
+  const plain = druh + '\nRodina: ' + fam + '\nE-mail: ' + (email || 'neuveden') + '\n\n' + text + '\n\n' + info;
+  html = html.replace(/[^\x00-\x7F]/gu, function (c) { return '&#' + c.codePointAt(0) + ';'; });
+  const opt = { htmlBody: html, name: 'Chytrolínci – kniha přání' };
+  if (email) opt.replyTo = email;
+  let alias = false;
+  try { alias = GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(ODESILATEL) >= 0; } catch (e) {}
+  if (alias) { opt.from = ODESILATEL; GmailApp.sendEmail(ODESILATEL, subject, plain, opt); }
+  else { opt.to = ODESILATEL; opt.subject = subject; MailApp.sendEmail(opt); }
+}
+// zkouška z editoru: Spustit ▶ zkusebniPrani → na chytrolinci@email.cz přijde zkušební přání
+function zkusebniPrani() { return wish_('TEST', { kind: 'idea', text: 'Zkušební přání z editoru skriptu.', email: '', info: 'test' }); }

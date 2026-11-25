@@ -323,7 +323,7 @@ function parentView(){
   if(!parentOk) return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Rodičovská sekce</h1></div>
     <div class="card" style="max-width:380px;margin:0 auto"><div class="field"><label>Zadej PIN</label><input type="password" id="pin" inputmode="numeric" maxlength="8" autocomplete="off"></div>
     <button class="btn" data-act="pinok">Vstoupit</button><p class="muted" style="font-size:14px">Výchozí PIN je 1234 – po přihlášení si ho změňte.</p></div>`;
-  const tabs=[['settings','Nastavení'],['heroes','Hrdinové'],['report','📊 Týdenní zpráva'],['history','Historie'],['test','🧪 Testování'],['backup','Záloha']];
+  const tabs=[['settings','Nastavení'],['heroes','Hrdinové'],['report','📊 Týdenní zpráva'],['history','Historie'],['test','🧪 Testování'],['backup','Záloha'],['wish','💡 Kniha přání']];
   let body='';
   if(parentTab==='settings'){
     body=`<div class="field"><label>Výchozí odměna za splnění celého dobrodružství</label><input type="text" id="s-reward" value="${esc(S.settings.reward)}"></div>
@@ -364,6 +364,8 @@ function parentView(){
       <div class="field"><label>Dobrodružství</label><select id="t-mode">${Object.values(MODES).map(M=>`<option value="${M.key}" ${TEST&&TEST.mode===M.key?'selected':''}>${M.icon} ${M.title}</option>`).join('')}</select></div>
       <div class="field"><label>Zvířátko (pro 🐾)</label><select id="t-species">${SPECIES.map(s=>`<option value="${s.id}" ${TEST&&TEST.species===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div></div>
       <div class="row">${TEST?'<button class="btn" data-act="t-open">▶️ Pokračovat s testovacím hrdinou</button>':''}<button class="btn ${TEST?'sec':''}" data-act="t-new">🧪 ${TEST?'Nový testovací hrdina':'Spustit testovacího hrdinu'}</button></div>`;
+  } else if(parentTab==='wish'){
+    body=wishHTML();
   } else if(parentTab==='backup'){
     body=`<p>Postup se ukládá automaticky do vaší Google tabulky. Pro jistotu si můžete zkopírovat zálohu.</p>
       <textarea id="bk" style="width:100%;height:120px;font-family:monospace;font-size:12px;border:2px solid var(--line);border-radius:12px;padding:8px">${esc(btoa(unescape(encodeURIComponent(JSON.stringify(S)))))}</textarea>

@@ -1,0 +1,64 @@
+CHYTROLÍNCI – TEXTY DO GOOGLE PLAY (aktualizováno 25. 11. 2026, verze hry v28)
+================================================================================
+
+NÁZEV APLIKACE (max 30 znaků):
+Chytrolínci – učení hrou
+
+KRÁTKÝ POPIS (max 80 znaků):
+Matika, čeština, angličtina a přírodověda hrou – úkol dne, hrdinové a odměny.
+
+ÚPLNÝ POPIS (max 4000 znaků):
+--------------------------------------------------------------------------------
+Chytrolínci jsou česká vzdělávací hra pro děti od předškoláků až po 5. třídu. Každý den dítě splní krátký „úkol dne“ podle své třídy a za správné odpovědi sbírá body, truhly a nálepky.
+
+🧮 CO SE DĚTI UČÍ
+• Matematika: sčítání a odčítání, násobilka, dělení se zbytkem, porovnávání, slovní úlohy, peníze, jednotky, hodiny, geometrie…
+• Čeština: abeceda a slabiky, i/y, vyjmenovaná slova, párové souhlásky, slovní druhy, rod, věty…
+• Angličtina: poslech slovíček s obrázky, barvy, čísla, čtení a fráze – aplikace slova vyslovuje
+• Přírodověda: zvířata, stromy a jejich plody, roční období, lidské tělo, vesmír a Česko
+• Předškoláci: barvy, tvary, počítání obrázků a poznávání zvířat
+Obtížnost se řídí zvolenou třídou a pololetím, rodiče mohou upravit předměty i typy úloh.
+
+🤔 „NEVÍM – VYSVĚTLI MI TO“
+Když si dítě neví rady, hra mu u matematiky a češtiny ukáže postup krok za krokem a nahlas ho přečte. Odpověď pak dítě zadá samo – učí se, ne jen hádá.
+
+⚔️ TŘI DOBRODRUŽSTVÍ
+• Výprava za drakem – kup si meč, štít, brnění, boty, plášť a koně a poraz obludy
+• Můj domeček – zařiď si pokojíček a přivítej návštěvy
+• Moje zvířátko – starej se o mládě, obleč ho, krm ho a vyhrajte spolu soutěže
+S každou úrovní se mění i prostředí – od louky až po dračí pevnost nad mraky. Správná odpověď = úder, chyba = soupeř útočí. Kdo se učí, ten vyhrává!
+
+🧩 ZVÍDAVÉ MINIHRY
+Pexeso, najdi rozdíly, „Kdo to zpívá?“ se skutečnými hlasy ptáků, bludiště, skládačka, zopakuj melodii, spoj tečky a omalovánky. Rodiče mohou nastavit, že se minihry otevřou až po splnění úkolu.
+
+🎁 MOTIVACE, KTERÁ FUNGUJE
+• Body, truhly a série dní v řadě
+• Album naučných nálepek se zajímavostmi
+• Výzvy týdne a časovka
+• Odměna od rodičů za poraženého draka a rodinný cíl – nastavíte si je sami
+
+👨‍👩‍👧 PRO RODIČE
+• Rodičovská sekce chráněná PINem
+• Týdenní zpráva v aplikaci i e-mailem: co dítěti jde a s čím má potíže
+• Slabá témata a chyby se dítěti samy vrací k procvičení
+• Více dětí v jedné rodině, postup na všech zařízeních pod rodinným kódem
+• Předčítání pro děti, které ještě neumí číst
+• Kniha přání – napište nám, co byste ve hře chtěli doplnit. Hru podle vašich nápadů průběžně vylepšujeme.
+
+🔒 BEZPEČNĚ
+Bez reklam, bez chatu, bez registrace a bez sběru osobních údajů. Ukládá se jen přezdívka, třída a herní postup.
+
+Hra vznikla s pomocí nástrojů umělé inteligence; obrázky byly vytvořeny pomocí Google Gemini.
+--------------------------------------------------------------------------------
+
+KATEGORIE: Hry → Vzdělávací (nebo Aplikace → Vzdělávání)
+ŠTÍTKY: vzdělávání, matematika, děti
+JAZYK: čeština
+KONTAKTNÍ E-MAIL: chytrolinci@email.cz
+WEB: https://romanbrzon-design.github.io/pocitaci-hrdinove/
+ZÁSADY OCHRANY SOUKROMÍ: https://romanbrzon-design.github.io/pocitaci-hrdinove/soukromi.html
+
+GRAFIKA (složka play/):
+• Ikona 512×512: ikona_512.png
+• Hlavní obrázek 1024×500: banner_1024x500.png
+• Snímky telefonu (min. 2, max. 8): zatím je potřeba přefotit (nová výbava, pozadí, minihry, vysvětlení)
