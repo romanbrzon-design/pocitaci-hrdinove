@@ -1,9 +1,4 @@
 if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-/* ---- Příprava na placené rozšíření: zdarma soupeři 1–10, legendární 11–15 v rozšíření ----
-   Zatím má rozšíření každý (PREMIUM_ON=false). Až bude platba přes Google Play, přepne se na true. */
-var PREMIUM_ON = false;
-function hasPremium(){ return !PREMIUM_ON || !!(S.settings && S.settings.premium) || FAMILY===(S.settings&&S.settings.legacyCode); }
-function foeLockedByPlan(i){ return i>REWARD_AT && !hasPremium(); }
 /* ============ Rodinný kód – každá rodina vidí jen svá data ============ */
 function emptyState(){ const s=defaultState(); s.profiles=[]; s.settings.reward='Odměna podle domluvy s rodiči'; return s; }
 var FAMILY = lsGet('ph-family') || '';
@@ -192,6 +187,3 @@ async function wishSend(){
 const _actW=act; act=function(a){ if(a==='wish-send') return wishSend(); return _actW(a); };
 const _renderW=render; render=function(){ if(view.name==='parent' && parentOk && parentTab==='wish' && $('#w-text')) wishRead(); _renderW(); };
 const _finishRep=finish; finish=function(t){ const x=_finishRep(t); setTimeout(()=>pushReport(),1500); return x; };
-</script>
-</body>
-</html>

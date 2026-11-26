@@ -4,6 +4,11 @@
  *   list "Výsledky"  – přehled každého dokončeného dne
  *   list "_zpravy"   – nastavení týdenní zprávy e-mailem (needitovat ručně)
  *   list "Přání"     – kniha přání od rodičů (každé přání se zároveň pošle e-mailem na chytrolinci@email.cz)
+ *   list "_plus"     – rodiny s odemčeným Chytrolínci Plus (koupě přes Google Play, dárek, věrnost). Řádek lze přidat i ručně:
+ *                      sloupec Rodina = rodinný kód, Důvod = dárek. Stav „zrušeno“ Plus zase zamkne.
+ *
+ * CHYTROLÍNCI PLUS: dokud není spuštěno (funkce zapnoutPlus), má všechno každý zdarma.
+ * Před spuštěním: Služby (+) → Google Play Android Developer API → Přidat, pak jednou spustit zkontrolovatPlayApi.
  *
  * TÝDENNÍ ZPRÁVY E-MAILEM: po vložení kódu jednou spusťte funkci nastavitTydenniZpravy
  * (Spustit ▶) a povolte odesílání e-mailů. Pak nasaďte novou verzi webové aplikace.
@@ -23,6 +28,7 @@ function doPost(e) {
   const body = JSON.parse(e.postData.contents);
   const fam = fam_(body.family);
   if (body.action === 'create') return json_(create_(fam));
+  if (body.action === 'plusStatus') return json_(plusStatus_(fam));
   if (!fam) {
     // starší verze aplikace bez rodinného kódu → původní rodina
     if (body.action === 'save') saveItems_(legacy_(), body.items || {});
@@ -36,6 +42,7 @@ function doPost(e) {
   else if (body.action === 'deleteFamily' && fam !== legacy_()) deleteFamily_(fam);
   else if (body.action === 'report') return json_(report_(fam, body));
   else if (body.action === 'wish') return json_(wish_(fam, body));
+  else if (body.action === 'plusBuy') return json_(plusBuy_(fam, body));
   return json_({ ok: true });
 }
 
@@ -335,3 +342,83 @@ function sendWish_(fam, druh, text, email, info) {
 }
 // zkouška z editoru: Spustit ▶ zkusebniPrani → na chytrolinci@email.cz přijde zkušební přání
 function zkusebniPrani() { return wish_('TEST', { kind: 'idea', text: 'Zkušební přání z editoru skriptu.', email: '', info: 'test' }); }
+
+// ================= ⭐ Chytrolínci Plus =================
+const PLUS_PKG = 'cz.chytrolinci.app';
+const PLUS_SKUS = ['chytrolinci_plus'];
+function plusOn_() { return PropertiesService.getScriptProperties().getProperty('PLUS_ON') === '1'; }
+function plusSheet_() {
+  const sh = sheet_('_plus');
+  if (sh.getLastRow() === 0) { sh.appendRow(['Kdy', 'Rodina', 'Důvod', 'Produkt', 'Objednávka', 'Token', 'Stav']); sh.setFrozenRows(1); sh.getRange('F:F').setNumberFormat('@'); }
+  return sh;
+}
+function plusRows_() { const sh = plusSheet_(); const n = sh.getLastRow(); return n < 2 ? [] : sh.getRange(2, 1, n - 1, 7).getValues(); }
+function plusOf_(fam) {
+  if (!fam) return null;
+  const rows = plusRows_().filter(function (r) { return fam_(r[1]) === fam; });
+  if (!rows.length) return null;
+  const last = rows[rows.length - 1];
+  return String(last[6]).toLowerCase().indexOf('zruš') === 0 ? null : { why: String(last[2] || '') };
+}
+function plusStatus_(fam) {
+  const on = plusOn_(); const p = plusOf_(fam);
+  return { ok: true, plus: true, on: on, active: !!p, why: p ? p.why : '', skus: PLUS_SKUS };
+}
+// Ověření nákupu u Google Play + potvrzení (acknowledge – jinak Google platbu do 3 dnů vrátí)
+function playGet_(sku, token) {
+  if (typeof AndroidPublisher === 'undefined') throw new Error('Není přidaná služba Google Play Android Developer API');
+  return AndroidPublisher.Purchases.Products.get(PLUS_PKG, sku, token);
+}
+function playAck_(sku, token) { AndroidPublisher.Purchases.Products.acknowledge({}, PLUS_PKG, sku, token); }
+function plusBuy_(fam, b) {
+  const token = String(b.token || '').trim(), sku = String(b.sku || '');
+  if (!token || PLUS_SKUS.indexOf(sku) < 0) return { ok: false, error: 'bad' };
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const known = plusRows_().filter(function (r) { return String(r[5]) === token && fam_(r[1]) === fam && String(r[6]).indexOf('zruš') !== 0; });
+    if (known.length) return { ok: true, active: true, why: 'koupě' };
+    let state = '', order = '', grant = false;
+    try {
+      const pur = playGet_(sku, token);
+      order = pur.orderId || '';
+      if (+pur.purchaseState === 0) {                       // 0 = zaplaceno, 1 = zrušeno, 2 = čeká na platbu
+        grant = true; state = 'zaplaceno';
+        if (+pur.acknowledgementState !== 1) { try { playAck_(sku, token); state = 'zaplaceno, potvrzeno'; } catch (e) { state = 'zaplaceno – NEPOTVRZENO: ' + e.message; } }
+      } else state = +pur.purchaseState === 2 ? 'čeká na platbu' : 'zrušeno (Google)';
+    } catch (e) {
+      // ověření nejde (služba není přidaná / chyba API) → odemknout, ale dát vědět, ať se to zkontroluje ručně do 3 dnů
+      const m = String(e.message || e);
+      if (/invalid|not found|404|400|purchaseToken/i.test(m)) { grant = false; state = 'neplatný token: ' + m; }
+      else { grant = true; state = 'NEOVĚŘENO: ' + m; }
+    }
+    plusSheet_().appendRow([new Date(), fam, b.restore ? 'obnovení nákupu' : 'koupě', sku, order, token, state]);
+    if (!b.restore || state.indexOf('NE') >= 0) { try { notifyPlus_(fam, state, order, !!b.restore); } catch (e) {} }
+    return { ok: true, active: grant, why: 'koupě', state: state };
+  } finally { lock.releaseLock(); }
+}
+function notifyPlus_(fam, state, order, restore) {
+  const warn = state.indexOf('NE') >= 0;
+  const subject = (warn ? '⚠️ ' : '⭐ ') + 'Chytrolínci Plus – ' + (restore ? 'obnovení nákupu' : 'nový nákup') + ' (' + fam + ')';
+  const text = 'Rodina: ' + fam + '\nStav: ' + state + '\nObjednávka: ' + (order || '-') + '\nKdy: ' + Utilities.formatDate(new Date(), 'Europe/Prague', 'd. M. yyyy H:mm') +
+    (warn ? '\n\nPOZOR: nákup se nepodařilo ověřit nebo potvrdit u Google Play. Nepotvrzený nákup Google do 3 dnů vrátí. Zkontrolujte službu Google Play Android Developer API (funkce zkontrolovatPlayApi) a objednávku v Play Console.' : '') +
+    '\n\nVšechny nákupy jsou v Google tabulce na listu „_plus“.';
+  MailApp.sendEmail(ODESILATEL, subject, text);
+}
+// ---- spouštějte ručně z editoru (Spustit ▶) ----
+function zapnoutPlus() { PropertiesService.getScriptProperties().setProperty('PLUS_ON', '1'); return 'Plus ZAPNUTO – bez Plus se zamkne čeština, angličtina, přírodověda, úrovně 11+, soupeři 11–15, výbava 6+, minihry.'; }
+function vypnoutPlus() { PropertiesService.getScriptProperties().deleteProperty('PLUS_ON'); return 'Plus vypnuto – všechno je zase zdarma pro všechny.'; }
+function darovatPlusMojiRodine() { plusSheet_().appendRow([new Date(), '44G7FN', 'dárek (vlastní rodina)', '', '', '', 'aktivní']); return 'Rodina 44G7FN má Plus.'; }
+// věrnost: všem rodinám, které hru už používají, dát Plus zdarma (spustit těsně před zapnutím Plus)
+function darovatPlusVsemSoucasnym() {
+  const keys = sheet_('_data').getRange('A:A').getValues().map(function (r) { return String(r[0]); });
+  const fams = {}; keys.forEach(function (k) { const i = k.indexOf('|'); if (i > 0) fams[k.slice(0, i)] = 1; });
+  const have = {}; plusRows_().forEach(function (r) { have[fam_(r[1])] = 1; });
+  let n = 0; Object.keys(fams).forEach(function (f) { if (!have[f] && f !== 'TEST') { plusSheet_().appendRow([new Date(), f, 'věrnost (hráli před spuštěním Plus)', '', '', '', 'aktivní']); n++; } });
+  return 'Plus darováno ' + n + ' rodinám.';
+}
+// ověří, že skript smí volat Google Play Developer API (vyžaduje přidanou službu a autorizaci)
+function zkontrolovatPlayApi() {
+  if (typeof AndroidPublisher === 'undefined') return 'CHYBÍ služba: Služby (+) → Google Play Android Developer API → Přidat.';
+  try { AndroidPublisher.Purchases.Products.get(PLUS_PKG, PLUS_SKUS[0], 'test-neexistujici-token'); return 'Neočekávaná odpověď'; }
+  catch (e) { const m = String(e.message || e); return /invalid|not found|404|Purchase token|400/i.test(m) ? 'OK – API odpovídá (testovací token je podle očekávání neplatný): ' + m : 'PROBLÉM s přístupem: ' + m; }
+}
