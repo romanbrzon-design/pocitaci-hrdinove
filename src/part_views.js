@@ -12,7 +12,8 @@ const plural = (n, one, few, many) => n===1?one:(n>=2&&n<=4?few:many);
 
 /* ============ Views ============ */
 let view={name:'home'};
-let parentOk=false, parentTab='settings', parentHero=null;
+let parentOk=false, parentTab='settings', parentHero=null, serviceOk=false;
+const SERVICE_H='99874ef492effbed3a4dd71edb9ecfb0d9650d5dcf5465572d891bdbb435a375';
 function go(v){ view=v; busy=false; render(); window.scrollTo(0,0); }
 function render(){
   const app=$('#app');
@@ -356,7 +357,7 @@ function parentView(){
     body = heroes().map(p=>{
       const keys=Object.keys(p.history||{}).sort().reverse().slice(0,21);
       const rows=keys.map(k=>{const h=p.history[k]; return `<tr><td>${k.split('-').reverse().join('. ')}</td><td>${h.c}/${h.n}</td><td>+${h.pts}</td><td class="muted" style="font-size:13px">${(h.wrongCats||[]).map(c=>CATS[c]?CATS[c].label:c).join(', ')}</td></tr>`;}).join('');
-      return `<h3>${esc(p.name)} <span class="muted" style="font-size:15px">· ${gl(p.grade)} · správně celkem ${p.totalCorrect} · ${modeOf(p).icon} ${p.beaten}/${FOE_N}</span></h3>${rows?`<table class="hist"><tr><th>Den</th><th>Správně</th><th>Body</th><th>Kde chyboval</th></tr>${rows}</table>`:'<p class="muted">Zatím žádné dokončené dny.</p>'}`;}).join('') + `<p class="muted" style="font-size:13px">Podrobný přehled je i ve vaší Google tabulce na listu „Výsledky“.</p>`;
+      return `<h3>${esc(p.name)} <span class="muted" style="font-size:15px">· ${gl(p.grade)} · správně celkem ${p.totalCorrect} · ${modeOf(p).icon} ${p.beaten}/${FOE_N}</span></h3>${rows?`<table class="hist"><tr><th>Den</th><th>Správně</th><th>Body</th><th>Kde chyboval</th></tr>${rows}</table>`:'<p class="muted">Zatím žádné dokončené dny.</p>'}`;}).join('');
   } else if(parentTab==='test'){
     body=`<p>Vyzkoušejte si hru sami. Testovací hrdina se ukládá jen v tomto prohlížeči, nezobrazuje se dětem a nic neposílá do výsledků. V testu máte tlačítka na přidání bodů, úrovní a odemčení všech výzev.</p>
       <div class="row"><div class="field"><label>Ročník příkladů</label><select id="t-grade">${[0,1,2,3,4,5].map(g=>`<option value="${g}" ${(TEST?TEST.grade:2)==g?'selected':''}>${gl(g)}</option>`).join('')}</select></div>
@@ -367,9 +368,11 @@ function parentView(){
   } else if(parentTab==='wish'){
     body=wishHTML();
   } else if(parentTab==='backup'){
-    body=`<p>Postup se ukládá automaticky do vaší Google tabulky. Pro jistotu si můžete zkopírovat zálohu.</p>
+    body=`<p>Postup se ukládá automaticky na server hry. Když dítě o postup přijde, obnovíte ho níže ze záloh na serveru.</p>`
+      + (serviceOk ? `<h3 style="margin:10px 0 6px">🔧 Servisní záloha</h3>
       <textarea id="bk" style="width:100%;height:120px;font-family:monospace;font-size:12px;border:2px solid var(--line);border-radius:12px;padding:8px">${esc(btoa(unescape(encodeURIComponent(JSON.stringify(S)))))}</textarea>
-      <div class="row"><button class="btn small" data-act="copybk">Kopírovat</button><button class="btn sec small" data-act="importbk">Načíst vložený kód</button></div>`;
+      <div class="row"><button class="btn small" data-act="copybk">Kopírovat</button><button class="btn sec small" data-act="importbk">Načíst vložený kód</button></div>`
+      : `<div class="row" style="align-items:center"><input id="svc" type="password" autocomplete="off" placeholder="Servisní heslo" style="max-width:200px"><button class="btn sec small" data-act="svcok">🔧 Servis</button></div>`);
   }
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Rodičovská sekce</h1><button class="btn sec small" data-act="lock">🔒 Zamknout</button></div>
     <div class="tabs">${tabs.map(([k,l])=>`<button class="${parentTab===k?'on':''}" data-tab="${k}">${l}</button>`).join('')}</div>
@@ -616,8 +619,8 @@ function act(a){
   const p = view.pid ? prof(view.pid) : null;
   switch(a){
   case 'home': draft=null; go({name:'home'}); break;
-  case 'parent': parentOk=false; go({name:'parent'}); break;
-  case 'lock': parentOk=false; go({name:'home'}); break;
+  case 'parent': parentOk=false; serviceOk=false; go({name:'parent'}); break;
+  case 'lock': parentOk=false; serviceOk=false; go({name:'home'}); break;
   case 'create': draft=null; go({name:'create'}); break;
   case 'createok': {
     readDraft(); const name=(draft.name||'').trim();
@@ -686,6 +689,7 @@ function act(a){
   case 'claimed': { const h=prof(parentHero); h.rewardClaimed=true; save(); render(); break; }
   case 'newseason': { const h=prof(parentHero); confirmBox(`Začít novou výpravu pro ${esc(h.name)}? Body, výbava, úroveň i obludy se vynulují.`, ()=>{ Object.assign(h,{points:0,xp:0,owned:{},eq:{},beaten:0,rewardClaimed:false,newItem:null}); h.season=(h.season||1)+1; save(); render(); toast('Nová výprava začíná! 🚀'); }); break; }
   case 'delhero': { const h=prof(parentHero); confirmBox(`Opravdu smazat hrdinu ${esc(h.name)}? Tohle nejde vrátit.`, ()=>{ h.deleted=true; h.history={}; h.today=null; parentHero=null; save(); render(); toast('Smazáno'); }); break; }
+  case 'svcok': { const v=($('#svc').value||'').trim(); (async()=>{ let h=''; try{ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)); h=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }catch(e){} if(h===SERVICE_H){ serviceOk=true; render(); } else { toast('Špatné heslo'); $('#svc').value=''; } })(); break; }
   case 'copybk': { const v=$('#bk').value; try{ navigator.clipboard.writeText(v).then(()=>toast('Zkopírováno ✓'),()=>{ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); }); }catch(e){ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); } break; }
   case 'importbk': try{ const o=JSON.parse(decodeURIComponent(escape(atob($('#bk').value.trim())))); if(!o.profiles) throw 0; confirmBox('Načíst zálohu? Současný postup se přepíše.', ()=>{ S=o; S.profiles.forEach(migrate); save(); toast('Záloha načtena ✓'); render(); }); }catch(e){ toast('Kód se nepodařilo načíst'); } break;
   }
