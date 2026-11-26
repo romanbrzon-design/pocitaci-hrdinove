@@ -46,7 +46,7 @@ Pexeso, najdi rozdíly, „Kdo to zpívá?“ se skutečnými hlasy ptáků, blu
 • Kniha přání – napište nám, co byste ve hře chtěli doplnit. Hru podle vašich nápadů průběžně vylepšujeme.
 
 🔒 BEZPEČNĚ
-Bez reklam, bez chatu, bez registrace a bez sběru osobních údajů. Ukládá se jen přezdívka, třída a herní postup.
+Bez reklam, bez chatu a bez registrace. Ukládá se jen přezdívka, třída a herní postup – e-mail rodiče jen tehdy, když ho rodič sám zadá.
 
 Hra vznikla s pomocí nástrojů umělé inteligence; obrázky byly vytvořeny pomocí Google Gemini.
 --------------------------------------------------------------------------------
