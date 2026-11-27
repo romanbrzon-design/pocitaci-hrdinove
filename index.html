@@ -3008,7 +3008,8 @@ function parentView(){
         <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
         <select id="s-repday" style="flex:1">${[[6,'každou sobotu večer'],[7,'každou neděli večer'],[5,'každý pátek večer']].map(([v,l])=>`<option value="${v}" ${(+repCfg().day||6)===v?'selected':''}>${l}</option>`).join('')}</select></div>
         ${repCfg().on&&repCfg().email&&HAS_GAS&&FAMILY?'<button class="btn sec small" data-act="reptest" style="margin-top:6px">📨 Poslat zkušební zprávu teď</button>':''}</div>
-      <div class="row"><button class="btn ok" data-act="savesettings">Uložit nastavení</button><a class="btn sec small" href="navod.html" target="_blank">📘 Návod pro rodiče</a></div>`;
+      <div class="row"><button class="btn ok" data-act="savesettings">Uložit nastavení</button><a class="btn sec small" href="navod.html" target="_blank">📘 Návod pro rodiče</a></div>
+      <p class="muted" style="font-size:13px;margin-top:10px">🤖 Hra vznikla s pomocí umělé inteligence (kód a texty Claude, obrázky Google Gemini). Úlohy jsou předem připravené – děti s žádnou AI nekomunikují.</p>`;
   } else if(parentTab==='heroes'){
     const hs=heroes(); if(!parentHero || !prof(parentHero) || prof(parentHero).deleted) parentHero = hs[0] && hs[0].id;
     body = hs.length ? `<div class="field"><label>Hrdina</label><select id="p-sel">${hs.map(p=>`<option value="${p.id}" ${p.id===parentHero?'selected':''}>${esc(p.name)} (${gs(p.grade)}, ${modeOf(p).icon} ${p.beaten}/${FOE_N})</option>`).join('')}</select></div>${heroEditHTML(prof(parentHero))}` : '<p>Zatím žádní hrdinové.</p>';
