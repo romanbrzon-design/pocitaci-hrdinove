@@ -156,7 +156,7 @@ CATS.pr_quiz = {grade:0, subj:'pr', label:'Přírodověda – otázky podle roč
 }};
 
 /* ---- Čeština ---- */
-const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-lko',2],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['pa-pou-šek',3],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
+const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-lko',3],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['pa-pou-šek',3],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
 const CJ_OPP = [['velký','malý'],['den','noc'],['horký','studený'],['vysoký','nízký'],['rychlý','pomalý'],['veselý','smutný'],['starý','mladý'],['nahoře','dole'],['otevřít','zavřít'],['plný','prázdný'],['dlouhý','krátký'],['těžký','lehký'],['mokrý','suchý'],['světlo','tma'],['tlustý','tenký'],['začátek','konec']];
 const CJ_OPP_GRP = [['velký','malý','vysoký','nízký','dlouhý','krátký','tlustý','tenký','těžký','lehký'],['den','noc','světlo','tma','začátek','konec'],['horký','studený','mokrý','suchý'],['starý','mladý','rychlý','pomalý']];
 const CJ_IY_HARD = [['r_ba','y'],['k_tka','y'],['ch_ba','y'],['t_gr','y'],['kr_sa','y'],['t_ché','i'],['r_chle','y'],['ch_tat','y'],['n_tka','i'],['d_vadlo','i']];

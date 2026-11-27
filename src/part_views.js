@@ -342,6 +342,9 @@ function parentView(){
         <label class="chk"><input type="checkbox" data-sndset="ph-sfx" ${SND.on()?'checked':''}> Zvukové efekty (správně/chyba, souboj, oslavy, zvířátka)</label>
         <label class="chk"><input type="checkbox" data-sndset="ph-music" ${lsGet('ph-music',false)?'checked':''}> Hudba na pozadí (v menu a při souboji, ne při úkolech)</label>
         <label class="chk"><input type="checkbox" data-sndset="ph-vib" ${SND.vibOn()?'checked':''}> Vibrace (jen telefony a tablety s Androidem)</label></div>
+      <div class="field"><label>🇬🇧 Hlas pro angličtinu na tomto zařízení</label>${(()=>{ const vs=enVoices(), cur=lsGet('ph-envoice')||''; if(!vs.length) return '<div class="muted" style="font-size:14px">Zařízení zatím nenabídlo žádný anglický hlas. Na Androidu: Nastavení → Převod textu na řeč → Google → nainstalovat angličtinu (Spojené království).</div>';
+        return `<div class="row"><select id="s-envoice" style="flex:3;min-width:200px"><option value="">Automaticky – ${esc(vs[0].name)}</option>${vs.map(v=>`<option value="${esc(v.name)}" ${v.name===cur?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select><button class="btn sec small" data-act="envtest" type="button">▶️ Poslechnout</button></div>
+        <div class="muted" style="font-size:14px;margin-top:4px">Pro správnou britskou výslovnost vyberte hlas s označením en-GB (např. Google UK English, Sonia, Ryan, Libby). Ukázka: book, rabbit, apple.</div>`; })()}</div>
       <div class="field repbox"><label class="chk" style="font-size:17px"><input type="checkbox" id="s-repon" ${repCfg().on?'checked':''}> <b>📧 Posílat týdenní zprávu e-mailem</b></label>
         <div class="muted" style="font-size:14px;margin:2px 0 6px">Stejný přehled jako v záložce Týdenní zpráva (dny, úspěšnost, slabá témata). ${HAS_GAS&&FAMILY?'':'<b>Funguje jen s online ukládáním (rodinný kód).</b>'}</div>
         <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
@@ -449,6 +452,7 @@ function bind(){
   document.querySelectorAll('.subjbox [data-cat]').forEach(el=>el.onchange=()=>{ const sb=el.closest('.subjbox').querySelector('[data-subjon]'); const any=[...el.closest('.subjbox').querySelectorAll('[data-cat]')].some(x=>x.checked); sb.checked=any; });
   document.querySelectorAll('[data-playsubj]').forEach(el=>el.onclick=()=>startExtra(el.dataset.playsubj));
   document.querySelectorAll('[data-subj]').forEach(el=>el.onclick=()=>{ readDraft(); const s=el.dataset.subj; draft.subjects=draft.subjects||['m']; if(draft.subjects.includes(s)){ if(draft.subjects.length>1) draft.subjects=draft.subjects.filter(x=>x!==s); } else draft.subjects.push(s); render(); });
+  { const ev=$('#s-envoice'); if(ev) ev.onchange=()=>{ lsSet('ph-envoice',ev.value); pickVoice(); speak('book. rabbit. apple. Hello!','en'); }; }
   document.querySelectorAll('[data-sndset]').forEach(el=>el.onchange=()=>{ lsSet(el.dataset.sndset, el.checked); SND.init(); MUSIC.set(musicForView()); if(el.checked && el.dataset.sndset==='ph-vib') vib(60); if(el.checked && el.dataset.sndset!=='ph-vib') sfx('ok',3); addSndToggle(); });
   document.querySelectorAll('[data-feed]').forEach(el=>el.onclick=()=>feed(el.dataset.feed));
   document.querySelectorAll('[data-ccolor]').forEach(el=>el.onclick=()=>{ readDraft(); draft.color=el.dataset.ccolor; render(); });
@@ -692,6 +696,7 @@ function act(a){
   case 'claimed': { const h=prof(parentHero); h.rewardClaimed=true; save(); render(); break; }
   case 'newseason': { const h=prof(parentHero); confirmBox(`Začít novou výpravu pro ${esc(h.name)}? Body, výbava, úroveň i obludy se vynulují.`, ()=>{ Object.assign(h,{points:0,xp:0,owned:{},eq:{},beaten:0,rewardClaimed:false,newItem:null}); h.season=(h.season||1)+1; save(); render(); toast('Nová výprava začíná! 🚀'); }); break; }
   case 'delhero': { const h=prof(parentHero); confirmBox(`Opravdu smazat hrdinu ${esc(h.name)}? Tohle nejde vrátit.`, ()=>{ h.deleted=true; h.history={}; h.today=null; parentHero=null; save(); render(); toast('Smazáno'); }); break; }
+  case 'envtest': pickVoice(); speak('book. rabbit. apple. Hello!','en'); break;
   case 'svcok': { const v=($('#svc').value||'').trim(); (async()=>{ let h=''; try{ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)); h=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }catch(e){} if(h===SERVICE_H){ serviceOk=true; render(); } else { toast('Špatné heslo'); $('#svc').value=''; } })(); break; }
   case 'copybk': { const v=$('#bk').value; try{ navigator.clipboard.writeText(v).then(()=>toast('Zkopírováno ✓'),()=>{ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); }); }catch(e){ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); } break; }
   case 'importbk': try{ const o=JSON.parse(decodeURIComponent(escape(atob($('#bk').value.trim())))); if(!o.profiles) throw 0; confirmBox('Načíst zálohu? Současný postup se přepíše.', ()=>{ S=o; S.profiles.forEach(migrate); save(); toast('Záloha načtena ✓'); render(); }); }catch(e){ toast('Kód se nepodařilo načíst'); } break;

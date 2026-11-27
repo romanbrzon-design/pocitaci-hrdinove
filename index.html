@@ -940,8 +940,14 @@ DEFAULT_CATS[0] = ['colors0','shapes0','count0','more0','odd0','size0','pattern0
 /* ---- Předčítání otázek (pro děti, které ještě nečtou) ---- */
 let csVoice=null, enVoice=null;
 function voiceScore(v){ const n=v.name||''; return (/natural/i.test(n)?100:0)+(/online/i.test(n)?50:0)+(/google/i.test(n)?30:0)+(/vlasta|sonia|libby|maisie/i.test(n)?5:0)+(v.localService?0:2); }
+// angličtina: spisovná britská výslovnost – známé hlasy s ní dopředu, regionální přízvuky (skotský, irský, indický…) dozadu
+const EN_RP = /sonia|ryan|libby|maisie|thomas|hazel|george|susan|google uk english|daniel|kate|serena|arthur|martha|oliver|olivia|ethan|hollie|bella|abbi|alfie|elliot|noah/i;
+const EN_REGION = /scot|irish|ireland|wales|welsh|india|austral|zealand|africa|nigeria|kenya|singapore|philipp|canad|jamaic|north|yorkshire|liverpool|manchester|geordie/i;
+function enScore(v){ const n=(v.name||'')+' '+(v.voiceURI||''); return voiceScore(v) + (/^en[-_]GB$/i.test(v.lang)?40:/^en[-_]GB/i.test(v.lang)?20:/^en[-_]US$/i.test(v.lang)?5:0) + (EN_RP.test(n)?25:0) - (EN_REGION.test(n)?200:0) - (/^en[-_](IE|IN|AU|NZ|ZA|SC|GB[-_]SCOTLAND)/i.test(v.lang)?150:0); }
+function enVoices(){ try{ return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>enScore(b)-enScore(a)); }catch(e){ return []; } }
 function bestVoice(vs, re){ const c=vs.filter(v=>re.test(v.lang)); c.sort((a,b)=>voiceScore(b)-voiceScore(a)); return c[0]||null; }
-function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestVoice(vs,/^cs/i); enVoice = bestVoice(vs,/^en-GB/i) || bestVoice(vs,/^en/i); }catch(e){} }
+function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestVoice(vs,/^cs/i);
+  const want=lsGet('ph-envoice',''), en=enVoices(); enVoice = (want && en.find(v=>v.name===want)) || en[0] || null; }catch(e){} }
 function voiceNatural(){ return !!(csVoice && voiceScore(csVoice)>=50); }
 try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 function speak(text, lang){
@@ -950,7 +956,7 @@ function speak(text, lang){
     const now=Date.now(); if(speak._t===text && now-speak._at<1200) return; speak._t=text; speak._at=now;
     const go=()=>{ try{ const en=/^en/i.test(lang||'');
       if(en ? !enVoice : !csVoice) pickVoice();
-      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.72:(voiceNatural()?1:.95); // angličtinu pomaleji, ať je slovo dobře slyšet
+      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?((enVoice&&enVoice.lang)||'en-GB'):'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.72:(voiceNatural()?1:.95); // angličtinu pomaleji, ať je slovo dobře slyšet
       speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} };
     // Chrome v Androidu zahodí větu, která se spustí hned po cancel() – proto krátká pauza
     if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(go,150); } else go();
@@ -1120,7 +1126,7 @@ CATS.pr_quiz = {grade:0, subj:'pr', label:'Přírodověda – otázky podle roč
 }};
 
 /* ---- Čeština ---- */
-const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-lko',2],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['pa-pou-šek',3],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
+const CJ_SYL = [['ko-lo',2],['má-ma',2],['au-to',2],['pes',1],['vlak',1],['hra',1],['ban-án',2],['jab-lko',3],['ko-čka',2],['slun-ce',2],['mo-týl',2],['zmrz-li-na',3],['au-to-bus',3],['te-le-vi-ze',4],['čo-ko-lá-da',4],['pa-pou-šek',3],['ko-lo-běž-ka',4],['be-ru-ška',3],['ok-no',2],['dům',1]];
 const CJ_OPP = [['velký','malý'],['den','noc'],['horký','studený'],['vysoký','nízký'],['rychlý','pomalý'],['veselý','smutný'],['starý','mladý'],['nahoře','dole'],['otevřít','zavřít'],['plný','prázdný'],['dlouhý','krátký'],['těžký','lehký'],['mokrý','suchý'],['světlo','tma'],['tlustý','tenký'],['začátek','konec']];
 const CJ_OPP_GRP = [['velký','malý','vysoký','nízký','dlouhý','krátký','tlustý','tenký','těžký','lehký'],['den','noc','světlo','tma','začátek','konec'],['horký','studený','mokrý','suchý'],['starý','mladý','rychlý','pomalý']];
 const CJ_IY_HARD = [['r_ba','y'],['k_tka','y'],['ch_ba','y'],['t_gr','y'],['kr_sa','y'],['t_ché','i'],['r_chle','y'],['ch_tat','y'],['n_tka','i'],['d_vadlo','i']];
@@ -3003,6 +3009,9 @@ function parentView(){
         <label class="chk"><input type="checkbox" data-sndset="ph-sfx" ${SND.on()?'checked':''}> Zvukové efekty (správně/chyba, souboj, oslavy, zvířátka)</label>
         <label class="chk"><input type="checkbox" data-sndset="ph-music" ${lsGet('ph-music',false)?'checked':''}> Hudba na pozadí (v menu a při souboji, ne při úkolech)</label>
         <label class="chk"><input type="checkbox" data-sndset="ph-vib" ${SND.vibOn()?'checked':''}> Vibrace (jen telefony a tablety s Androidem)</label></div>
+      <div class="field"><label>🇬🇧 Hlas pro angličtinu na tomto zařízení</label>${(()=>{ const vs=enVoices(), cur=lsGet('ph-envoice')||''; if(!vs.length) return '<div class="muted" style="font-size:14px">Zařízení zatím nenabídlo žádný anglický hlas. Na Androidu: Nastavení → Převod textu na řeč → Google → nainstalovat angličtinu (Spojené království).</div>';
+        return `<div class="row"><select id="s-envoice" style="flex:3;min-width:200px"><option value="">Automaticky – ${esc(vs[0].name)}</option>${vs.map(v=>`<option value="${esc(v.name)}" ${v.name===cur?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select><button class="btn sec small" data-act="envtest" type="button">▶️ Poslechnout</button></div>
+        <div class="muted" style="font-size:14px;margin-top:4px">Pro správnou britskou výslovnost vyberte hlas s označením en-GB (např. Google UK English, Sonia, Ryan, Libby). Ukázka: book, rabbit, apple.</div>`; })()}</div>
       <div class="field repbox"><label class="chk" style="font-size:17px"><input type="checkbox" id="s-repon" ${repCfg().on?'checked':''}> <b>📧 Posílat týdenní zprávu e-mailem</b></label>
         <div class="muted" style="font-size:14px;margin:2px 0 6px">Stejný přehled jako v záložce Týdenní zpráva (dny, úspěšnost, slabá témata). ${HAS_GAS&&FAMILY?'':'<b>Funguje jen s online ukládáním (rodinný kód).</b>'}</div>
         <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
@@ -3110,6 +3119,7 @@ function bind(){
   document.querySelectorAll('.subjbox [data-cat]').forEach(el=>el.onchange=()=>{ const sb=el.closest('.subjbox').querySelector('[data-subjon]'); const any=[...el.closest('.subjbox').querySelectorAll('[data-cat]')].some(x=>x.checked); sb.checked=any; });
   document.querySelectorAll('[data-playsubj]').forEach(el=>el.onclick=()=>startExtra(el.dataset.playsubj));
   document.querySelectorAll('[data-subj]').forEach(el=>el.onclick=()=>{ readDraft(); const s=el.dataset.subj; draft.subjects=draft.subjects||['m']; if(draft.subjects.includes(s)){ if(draft.subjects.length>1) draft.subjects=draft.subjects.filter(x=>x!==s); } else draft.subjects.push(s); render(); });
+  { const ev=$('#s-envoice'); if(ev) ev.onchange=()=>{ lsSet('ph-envoice',ev.value); pickVoice(); speak('book. rabbit. apple. Hello!','en'); }; }
   document.querySelectorAll('[data-sndset]').forEach(el=>el.onchange=()=>{ lsSet(el.dataset.sndset, el.checked); SND.init(); MUSIC.set(musicForView()); if(el.checked && el.dataset.sndset==='ph-vib') vib(60); if(el.checked && el.dataset.sndset!=='ph-vib') sfx('ok',3); addSndToggle(); });
   document.querySelectorAll('[data-feed]').forEach(el=>el.onclick=()=>feed(el.dataset.feed));
   document.querySelectorAll('[data-ccolor]').forEach(el=>el.onclick=()=>{ readDraft(); draft.color=el.dataset.ccolor; render(); });
@@ -3353,6 +3363,7 @@ function act(a){
   case 'claimed': { const h=prof(parentHero); h.rewardClaimed=true; save(); render(); break; }
   case 'newseason': { const h=prof(parentHero); confirmBox(`Začít novou výpravu pro ${esc(h.name)}? Body, výbava, úroveň i obludy se vynulují.`, ()=>{ Object.assign(h,{points:0,xp:0,owned:{},eq:{},beaten:0,rewardClaimed:false,newItem:null}); h.season=(h.season||1)+1; save(); render(); toast('Nová výprava začíná! 🚀'); }); break; }
   case 'delhero': { const h=prof(parentHero); confirmBox(`Opravdu smazat hrdinu ${esc(h.name)}? Tohle nejde vrátit.`, ()=>{ h.deleted=true; h.history={}; h.today=null; parentHero=null; save(); render(); toast('Smazáno'); }); break; }
+  case 'envtest': pickVoice(); speak('book. rabbit. apple. Hello!','en'); break;
   case 'svcok': { const v=($('#svc').value||'').trim(); (async()=>{ let h=''; try{ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)); h=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }catch(e){} if(h===SERVICE_H){ serviceOk=true; render(); } else { toast('Špatné heslo'); $('#svc').value=''; } })(); break; }
   case 'copybk': { const v=$('#bk').value; try{ navigator.clipboard.writeText(v).then(()=>toast('Zkopírováno ✓'),()=>{ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); }); }catch(e){ $('#bk').select(); toast('Označeno – zkopírujte Ctrl+C'); } break; }
   case 'importbk': try{ const o=JSON.parse(decodeURIComponent(escape(atob($('#bk').value.trim())))); if(!o.profiles) throw 0; confirmBox('Načíst zálohu? Současný postup se přepíše.', ()=>{ S=o; S.profiles.forEach(migrate); save(); toast('Záloha načtena ✓'); render(); }); }catch(e){ toast('Kód se nepodařilo načíst'); } break;
@@ -4560,7 +4571,7 @@ const XP_END = {'hra_':'hrady','plo_':'ploty','le_|d':'ledu','du_':'duby','zu_':
 const XP_UU_ALT = {'d_m':'domy','k_ň':'koně','st_l':'stoly','p_l':'polovina','m_j':'moje','h_l':'hole','l_žko':'lože','v_z':'vozy','dv_r':'dvora'};
 const XP_BIG = {petr:'jméno člověka',eva:'jméno člověka',jana:'jméno člověka','tomáš':'jméno člověka',karel:'jméno člověka',lucie:'jméno člověka',ondra:'jméno člověka',
   praha:'jméno města',brno:'jméno města',ostrava:'jméno města','plzeň':'jméno města',vltava:'jméno řeky',labe:'jméno řeky','sněžka':'jméno hory','alík':'jméno psa',micka:'jméno kočky'};
-const XP_SYL = {'ko-lo':'ko-lo','má-ma':'má-ma','au-to':'au-to','pes':'pes','vlak':'vlak','hra':'hra','ban-án':'ba-nán','jab-lko':'ja-blko','ko-čka':'ko-čka','slun-ce':'slun-ce',
+const XP_SYL = {'ko-lo':'ko-lo','má-ma':'má-ma','au-to':'au-to','pes':'pes','vlak':'vlak','hra':'hra','ban-án':'ba-nán','jab-lko':'ja-bl-ko','ko-čka':'ko-čka','slun-ce':'slun-ce',
   'mo-týl':'mo-týl','zmrz-li-na':'zmrz-li-na','au-to-bus':'au-to-bus','te-le-vi-ze':'te-le-vi-ze','čo-ko-lá-da':'čo-ko-lá-da','pa-pou-šek':'pa-pou-šek','ko-lo-běž-ka':'ko-lo-běž-ka',
   'be-ru-ška':'be-ru-ška','ok-no':'ok-no','dům':'dům'};
 const XP_KIND = {oznamovací:'něco nám oznamuje (sděluje) a končí tečkou.', tázací:'na něco se ptá a končí otazníkem.',
@@ -4713,7 +4724,7 @@ const XP_CAT = {
     if(k[0]==='abc'){ const i=ABC.indexOf(k[1]); if(i<0) return null; const sl=ABC.slice(Math.max(0,i-2),i+3).map((x,j)=>x===ABC[i+1]?XP.b(x):x).join(' ');
       return `Zarecituj si abecedu: … ${sl} …<br>Po ${k[1]} je ${XP.b(ABC[i+1])}.${ABC[i+1]==='CH'?' (CH je v české abecedě hned za H.)':''}`; }
     if(k[0]==='syl'){ const sp=XP_SYL[k[1]]||k[1], n=sp.split('-').length;
-      return `Vytleskej slovo po slabikách: ${XP.b(sp.replace(/-/g,' – '))}.<br>Tleskneš ${n}× → ${XP.b(n)} ${kus(n,'slabika','slabiky','slabik')}.`; }
+      return `Vytleskej slovo po slabikách: ${XP.b(sp.replace(/-/g,' – '))}.<br>Tleskneš ${n}× → ${XP.b(n)} ${kus(n,'slabika','slabiky','slabik')}.${/-[^aáeéěiíoóuúůyý-]+(-|$)|^[^aáeéěiíoóuúůyý-]+-/.test(sp)?' Pozor: písmeno L nebo R mezi souhláskami tvoří slabiku samo (jako v <b>vlk</b>).':''}`; }
     return null; },
   cj_sort(pr){ const k=xpKey(pr), list=(k[2]||'').split(','), last=k[1]==='L'; if(list.length<2) return null;
     return `Rozhoduje první písmeno. V abecedě jdou slova takto:<br>${list.map((w,i)=>`${i+1}. <b>${w.slice(0,cjFirst(w).length)}</b>${w.slice(cjFirst(w).length)}`).join(' &nbsp; ')}<br>${last?'Poslední':'První'} je ${XP.b(last?list[list.length-1]:list[0])}.`; },

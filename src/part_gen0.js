@@ -78,8 +78,14 @@ DEFAULT_CATS[0] = ['colors0','shapes0','count0','more0','odd0','size0','pattern0
 /* ---- Předčítání otázek (pro děti, které ještě nečtou) ---- */
 let csVoice=null, enVoice=null;
 function voiceScore(v){ const n=v.name||''; return (/natural/i.test(n)?100:0)+(/online/i.test(n)?50:0)+(/google/i.test(n)?30:0)+(/vlasta|sonia|libby|maisie/i.test(n)?5:0)+(v.localService?0:2); }
+// angličtina: spisovná britská výslovnost – známé hlasy s ní dopředu, regionální přízvuky (skotský, irský, indický…) dozadu
+const EN_RP = /sonia|ryan|libby|maisie|thomas|hazel|george|susan|google uk english|daniel|kate|serena|arthur|martha|oliver|olivia|ethan|hollie|bella|abbi|alfie|elliot|noah/i;
+const EN_REGION = /scot|irish|ireland|wales|welsh|india|austral|zealand|africa|nigeria|kenya|singapore|philipp|canad|jamaic|north|yorkshire|liverpool|manchester|geordie/i;
+function enScore(v){ const n=(v.name||'')+' '+(v.voiceURI||''); return voiceScore(v) + (/^en[-_]GB$/i.test(v.lang)?40:/^en[-_]GB/i.test(v.lang)?20:/^en[-_]US$/i.test(v.lang)?5:0) + (EN_RP.test(n)?25:0) - (EN_REGION.test(n)?200:0) - (/^en[-_](IE|IN|AU|NZ|ZA|SC|GB[-_]SCOTLAND)/i.test(v.lang)?150:0); }
+function enVoices(){ try{ return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>enScore(b)-enScore(a)); }catch(e){ return []; } }
 function bestVoice(vs, re){ const c=vs.filter(v=>re.test(v.lang)); c.sort((a,b)=>voiceScore(b)-voiceScore(a)); return c[0]||null; }
-function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestVoice(vs,/^cs/i); enVoice = bestVoice(vs,/^en-GB/i) || bestVoice(vs,/^en/i); }catch(e){} }
+function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); csVoice = bestVoice(vs,/^cs/i);
+  const want=lsGet('ph-envoice',''), en=enVoices(); enVoice = (want && en.find(v=>v.name===want)) || en[0] || null; }catch(e){} }
 function voiceNatural(){ return !!(csVoice && voiceScore(csVoice)>=50); }
 try{ speechSynthesis.onvoiceschanged=pickVoice; pickVoice(); }catch(e){}
 function speak(text, lang){
@@ -88,7 +94,7 @@ function speak(text, lang){
     const now=Date.now(); if(speak._t===text && now-speak._at<1200) return; speak._t=text; speak._at=now;
     const go=()=>{ try{ const en=/^en/i.test(lang||'');
       if(en ? !enVoice : !csVoice) pickVoice();
-      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?'en-GB':'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.72:(voiceNatural()?1:.95); // angličtinu pomaleji, ať je slovo dobře slyšet
+      const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]+>/g,'')); u.lang=en?((enVoice&&enVoice.lang)||'en-GB'):'cs-CZ'; const v=en?enVoice:csVoice; if(v) u.voice=v; u.rate=en?.72:(voiceNatural()?1:.95); // angličtinu pomaleji, ať je slovo dobře slyšet
       speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} };
     // Chrome v Androidu zahodí větu, která se spustí hned po cancel() – proto krátká pauza
     if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(go,150); } else go();

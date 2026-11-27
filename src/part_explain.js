@@ -129,7 +129,7 @@ const XP_END = {'hra_':'hrady','plo_':'ploty','le_|d':'ledu','du_':'duby','zu_':
 const XP_UU_ALT = {'d_m':'domy','k_ň':'koně','st_l':'stoly','p_l':'polovina','m_j':'moje','h_l':'hole','l_žko':'lože','v_z':'vozy','dv_r':'dvora'};
 const XP_BIG = {petr:'jméno člověka',eva:'jméno člověka',jana:'jméno člověka','tomáš':'jméno člověka',karel:'jméno člověka',lucie:'jméno člověka',ondra:'jméno člověka',
   praha:'jméno města',brno:'jméno města',ostrava:'jméno města','plzeň':'jméno města',vltava:'jméno řeky',labe:'jméno řeky','sněžka':'jméno hory','alík':'jméno psa',micka:'jméno kočky'};
-const XP_SYL = {'ko-lo':'ko-lo','má-ma':'má-ma','au-to':'au-to','pes':'pes','vlak':'vlak','hra':'hra','ban-án':'ba-nán','jab-lko':'ja-blko','ko-čka':'ko-čka','slun-ce':'slun-ce',
+const XP_SYL = {'ko-lo':'ko-lo','má-ma':'má-ma','au-to':'au-to','pes':'pes','vlak':'vlak','hra':'hra','ban-án':'ba-nán','jab-lko':'ja-bl-ko','ko-čka':'ko-čka','slun-ce':'slun-ce',
   'mo-týl':'mo-týl','zmrz-li-na':'zmrz-li-na','au-to-bus':'au-to-bus','te-le-vi-ze':'te-le-vi-ze','čo-ko-lá-da':'čo-ko-lá-da','pa-pou-šek':'pa-pou-šek','ko-lo-běž-ka':'ko-lo-běž-ka',
   'be-ru-ška':'be-ru-ška','ok-no':'ok-no','dům':'dům'};
 const XP_KIND = {oznamovací:'něco nám oznamuje (sděluje) a končí tečkou.', tázací:'na něco se ptá a končí otazníkem.',
@@ -282,7 +282,7 @@ const XP_CAT = {
     if(k[0]==='abc'){ const i=ABC.indexOf(k[1]); if(i<0) return null; const sl=ABC.slice(Math.max(0,i-2),i+3).map((x,j)=>x===ABC[i+1]?XP.b(x):x).join(' ');
       return `Zarecituj si abecedu: … ${sl} …<br>Po ${k[1]} je ${XP.b(ABC[i+1])}.${ABC[i+1]==='CH'?' (CH je v české abecedě hned za H.)':''}`; }
     if(k[0]==='syl'){ const sp=XP_SYL[k[1]]||k[1], n=sp.split('-').length;
-      return `Vytleskej slovo po slabikách: ${XP.b(sp.replace(/-/g,' – '))}.<br>Tleskneš ${n}× → ${XP.b(n)} ${kus(n,'slabika','slabiky','slabik')}.`; }
+      return `Vytleskej slovo po slabikách: ${XP.b(sp.replace(/-/g,' – '))}.<br>Tleskneš ${n}× → ${XP.b(n)} ${kus(n,'slabika','slabiky','slabik')}.${/-[^aáeéěiíoóuúůyý-]+(-|$)|^[^aáeéěiíoóuúůyý-]+-/.test(sp)?' Pozor: písmeno L nebo R mezi souhláskami tvoří slabiku samo (jako v <b>vlk</b>).':''}`; }
     return null; },
   cj_sort(pr){ const k=xpKey(pr), list=(k[2]||'').split(','), last=k[1]==='L'; if(list.length<2) return null;
     return `Rozhoduje první písmeno. V abecedě jdou slova takto:<br>${list.map((w,i)=>`${i+1}. <b>${w.slice(0,cjFirst(w).length)}</b>${w.slice(cjFirst(w).length)}`).join(' &nbsp; ')}<br>${last?'Poslední':'První'} je ${XP.b(last?list[list.length-1]:list[0])}.`; },
