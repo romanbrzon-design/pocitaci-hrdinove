@@ -55,6 +55,7 @@ function migrateGear(p){
 const HERO_BG_LV=[0,1,1,1,2,2,2,3,3,3,4,4,4,4,5,5,5,5,6,6,6]; // úroveň 1–20 → pozadí 1–6
 function heroBgTier(p){ return HERO_BG_LV[Math.min(20,Math.max(1,level(p)))]||1; }
 // výprava: hbg1–6 (stáj, koberec, domeček); zvířátko: pbg1–6 (volný střed pro pelíšek)
+// domeček: vrstva hroom1–6 v roomSVG (part_img.js) – podlaha, strop, výhled z okna; tapety dál z obchodu
 function heroBgPre(p){ const m=(p&&p.mode)||'quest'; return m==='quest' ? 'hbg' : m==='pet' ? 'pbg' : ''; }
 const BG_N={hbg:6, pbg:6}; // kolik pozadí je hotových (vyšší úrovně dostanou poslední)
 function heroBgCls(p){ return heroBgPre(p) ? 'hbgstage' : ''; }

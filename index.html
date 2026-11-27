@@ -2361,6 +2361,8 @@ if(USE_PET_IMG) petSVG = function(p, opts={}){ const pl=p.look||{};
 roomSVG = function(p, opts={}){
   const e=p.eq||{};
   let s=`<img class="roombg" src="${A_}room${e.wall||0}.webp" alt="">`;
+  // v32: podle úrovně se mění podlaha, strop a výhled z okna (vrstva hroom1–6 přes tapetu)
+  try{ if(typeof heroBgTier==='function') s+=`<img class="roombg" src="${A_}hroom${heroBgTier(p)}.webp" alt="">`; }catch(_){}
   if(e.curtain) s+=ov('h_curtain'+e.curtain, .30, .13, .40, 2);
   if(e.lamp>=4 && !opts.scene) s+=ov('h_lamp'+e.lamp, .14, -.01, .13, 3);
   if(!opts.scene){
@@ -2477,6 +2479,7 @@ function migrateGear(p){
 const HERO_BG_LV=[0,1,1,1,2,2,2,3,3,3,4,4,4,4,5,5,5,5,6,6,6]; // úroveň 1–20 → pozadí 1–6
 function heroBgTier(p){ return HERO_BG_LV[Math.min(20,Math.max(1,level(p)))]||1; }
 // výprava: hbg1–6 (stáj, koberec, domeček); zvířátko: pbg1–6 (volný střed pro pelíšek)
+// domeček: vrstva hroom1–6 v roomSVG (part_img.js) – podlaha, strop, výhled z okna; tapety dál z obchodu
 function heroBgPre(p){ const m=(p&&p.mode)||'quest'; return m==='quest' ? 'hbg' : m==='pet' ? 'pbg' : ''; }
 const BG_N={hbg:6, pbg:6}; // kolik pozadí je hotových (vyšší úrovně dostanou poslední)
 function heroBgCls(p){ return heroBgPre(p) ? 'hbgstage' : ''; }

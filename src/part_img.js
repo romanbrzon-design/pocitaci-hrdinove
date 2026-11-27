@@ -105,6 +105,8 @@ if(USE_PET_IMG) petSVG = function(p, opts={}){ const pl=p.look||{};
 roomSVG = function(p, opts={}){
   const e=p.eq||{};
   let s=`<img class="roombg" src="${A_}room${e.wall||0}.webp" alt="">`;
+  // v32: podle úrovně se mění podlaha, strop a výhled z okna (vrstva hroom1–6 přes tapetu)
+  try{ if(typeof heroBgTier==='function') s+=`<img class="roombg" src="${A_}hroom${heroBgTier(p)}.webp" alt="">`; }catch(_){}
   if(e.curtain) s+=ov('h_curtain'+e.curtain, .30, .13, .40, 2);
   if(e.lamp>=4 && !opts.scene) s+=ov('h_lamp'+e.lamp, .14, -.01, .13, 3);
   if(!opts.scene){
