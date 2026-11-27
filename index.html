@@ -472,6 +472,10 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .mcard.pluslock .badge{font-size:20px}
 .plusbtn{white-space:nowrap}
 
+/* v31: rodičovská sekce se na telefonu nevejde do šířky (dlouhé volby v <select>) */
+.grid2>*{min-width:0}
+.card select,.card input[type=text],.card input[type=email]{max-width:100%}
+
 </style>
 </head>
 <body>
@@ -907,7 +911,9 @@ Object.assign(CATS, {
     return choice(`Kde je <b>${more?'VÍC':'MÉNĚ'}</b> ${th[1]}?`, `Kde je ${more?'víc':'méně'} ${th[1]}?`, [g(a),g(b)], want, '', 'more|'+th[0]+a+'|'+b+more);
   }},
   odd0: {grade:0, label:'Co sem nepatří', gen(){
-    const keys=Object.keys(GROUPS0); const k=pick(keys); let k2=pick(keys); while(k2===k) k2=pick(keys);
+    // hračky se nemíchají s dopravou (autíčko může být hračka) – v27 stejně jako u čestiny
+    const clash=(a,b)=>{ const s=new Set([a,b]); return s.has('hračky') && s.has('doprava'); };
+    const keys=Object.keys(GROUPS0); const k=pick(keys); let k2=pick(keys); while(k2===k || clash(k,k2)) k2=pick(keys);
     const same=pickN(GROUPS0[k], EASY?2:3), odd=pick(GROUPS0[k2]); const opts=shuffle([...same, odd]);
     return choice('Co sem <b>nepatří</b>?', 'Co sem nepatří?', opts.map(e=>em(e)), opts.indexOf(odd));
   }},
@@ -923,7 +929,9 @@ Object.assign(CATS, {
     return choice('Co bude dál?', 'Co bude dál?', opts.map(e=>em(e)), opts.indexOf(ans), `<div class="many">${seq.map(e=>em(e,38)).join('')}${em('❓',38)}</div>`);
   }},
   animals0: {grade:0, label:'Najdi zvířátko', gen(){
-    const opts=pickN(ANIMALS0, EASY?3:4); const t=opts[ri(0,opts.length-1)];
+    // myška a potkan nikdy spolu (na malém obrázku se pletou)
+    let opts=pickN(ANIMALS0, EASY?3:4); while(opts.some(o=>o[0]==='🐭') && opts.some(o=>o[0]==='🐀')) opts=pickN(ANIMALS0, EASY?3:4);
+    const t=opts[ri(0,opts.length-1)];
     return choice(`Kde je <b>${t[1]}</b>?`, `Kde je ${t[1]}?`, opts.map(o=>em(o[0],52)), opts.indexOf(t));
   }},
 });
@@ -1060,7 +1068,7 @@ for(const w of EN_BOOK1){ const e=EN_PIC.find(x=>x[0]===w[1]); if(e) e[3]=Math.m
 // slova, která už jsou s obrázkem, se neopakují ve čtecím seznamu (jinak by mohla být dvakrát mezi odpověďmi)
 for(let i=EN_WORDS.length-1;i>=0;i--) if(EN_PIC.some(x=>x[0]===EN_WORDS[i][0])) EN_WORDS.splice(i,1);
 // skupiny, které se nesmí plést (obecné slovo × jeho druh, části těla) – nikdy nejsou spolu mezi odpověďmi
-const EN_GRP=[['hop','jump'],['head','hair'],['head','happy'],['head','sad'],['head','sleepy'],['head','sick'],['hello','goodbye'],['goodbye','walk'],['hat','cap','woolly hat'],['swing','zip line'],['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup']];
+const EN_GRP=[['hop','jump'],['head','hair'],['head','happy'],['head','sad'],['head','sleepy'],['head','sick'],['hello','goodbye'],['goodbye','walk'],['hat','cap','woolly hat'],['swing','zip line'],['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup'],['cold','winter'],['hot','summer'],['sleep','sleepy'],['swim','swimsuit']];
 const enClash=(a,b)=>EN_GRP.some(g=>g.includes(a)&&g.includes(b));
 
 /* ---- Přírodověda: [od třídy, do třídy, otázka, správně, [špatně], obrázek] ---- */
@@ -1092,7 +1100,7 @@ const PR_BANK = [
   [4,5,'Čím dýcháme?','plícemi',['srdcem','žaludkem','játry'],'🫁'],[4,5,'Co tvoří oporu těla?','kostra',['kůže','krev','vlasy'],'🦴'],
   [4,5,'Kolikátá planeta od Slunce je Země?','třetí',['první','pátá','desátá'],'🌍'],[4,5,'Která planeta je největší?','Jupiter',['Země','Mars','Merkur'],'🪐'],
   [4,5,'Slunce je…','hvězda',['planeta','měsíc','kometa'],'☀️'],[4,5,'Kolem čeho obíhá Měsíc?','kolem Země',['kolem Marsu','kolem Jupiteru','kolem ničeho'],'🌙'],
-  [4,5,'Nejvyšší hora Česka je…','Sněžka',['Praděd','Lysá hora','Říp'],'⛰️'],[4,5,'Nejdelší řeka v Česku je…','Vltava',['Labe','Morava','Dyje'],'🏞️'],
+  [4,5,'Nejvyšší hora Česka je…','Sněžka',['Praděd','Lysá hora','Říp'],'⛰️'],[4,5,'Nejdelší řeka v Česku je…','Vltava',['Jizera','Morava','Dyje'],'🏞️'],
   [4,5,'Co jí sova?','myši',['trávu','ovoce','listí'],'🦉'],[4,5,'Kdo je na začátku potravního řetězce?','rostliny',['lišky','sovy','vlci'],'🌾'],
   [4,5,'Které zvíře v zimě spí zimním spánkem?','ježek',['zajíc','srnka','vrabec'],'🦔'],[4,5,'Který pták na zimu odlétá do teplých krajin?','vlaštovka',['vrabec','sýkora','kos'],'🐦'],
   // stromy a jejich plody (prvouka 1. třídy)
@@ -1274,7 +1282,7 @@ const PR_TOPICS = {
     [0,2,'Kdo hasí požáry?','hasič',['kuchař','učitel','prodavač'],'🚒'],[0,2,'Kdo učí děti ve škole?','učitel',['zubař','kominík','zedník'],'👩‍🏫'],
     [1,3,'Kdo opravuje auta?','automechanik',['pekař','švadlena','kuchař'],'🔧'],[0,2,'Kdo prodává v obchodě?','prodavač',['pilot','hasič','zubař'],'🛒'],
     [0,2,'Kdo řídí autobus?','řidič',['kuchař','zahradník','lékař'],'🚌'],[0,2,'Kdo se stará o zuby?','zubař',['pekař','zedník','pošťák'],'🦷'],
-    [1,3,'Kdo čistí komíny?','kominík',['kuchař','pilot','zubař'],'🎩'],[1,3,'Kdo staví domy ze zdí?','zedník',['zubař','pošťák','kadeřník'],'🧱'],
+    [1,3,'Kdo čistí komíny?','kominík',['kuchař','pilot','zubař'],'🎩'],[1,3,'Kdo staví zdi z cihel?','zedník',['zubař','pošťák','kadeřník'],'🧱'],
     [1,3,'Kdo nosí dopisy a balíky?','pošťák',['pekař','zubař','hasič'],'✉️'],[0,2,'Kdo vaří v restauraci?','kuchař',['pilot','kominík','zedník'],'👨‍🍳'],
     [1,3,'Kdo vyrábí nábytek ze dřeva?','truhlář',['zubař','pošťák','kuchař'],'🪚'],[1,3,'Kdo léčí zvířata?','veterinář',['zedník','pekař','pilot'],'🐾'],
     [1,3,'Kdo řídí letadlo?','pilot',['kuchař','kominík','zubař'],'✈️'],[1,3,'Kdo stříhá vlasy?','kadeřník',['pekař','zedník','pošťák'],'💇'],
@@ -1595,7 +1603,7 @@ const XP_PER_LEVEL = {short:15, mid:20, long:30};
 const MAX_LEVEL = 20;
 function mult(){ return LEN_MULT[S.settings.length]||0.5; }
 function price(slot,tier,p){ const sl=(p&&slotOf(p,slot))||SLOTMAP[slot]; return Math.max(5, Math.round(sl.items[tier-1][4]*mult()/5)*5); }
-function bounty(mi){ return Math.round(MONSTERS[mi].gold*mult()/5)*5; }
+function bounty(mi){ return Math.round(MONSTERS[mi].gold*mult()/10)*5; } // od v31 poloviční
 function level(p){ return Math.min(MAX_LEVEL, 1+Math.floor((p.xp||0)/(XP_PER_LEVEL[S.settings.length]||20))); }
 function xpInfo(p){ const per=XP_PER_LEVEL[S.settings.length]||20, L=level(p); if(L>=MAX_LEVEL) return {L, cur:per, per, max:true}; return {L, cur:(p.xp||0)-(L-1)*per, per}; }
 function stats(p){
@@ -1804,21 +1812,21 @@ function chestSVG(kind, open){
   return `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">${open?`<circle cx="100" cy="80" r="70" fill="#fff3a0" opacity=".7"/><path d="M100 10 l6 30 M60 25 l14 26 M140 25 l-14 26 M30 55 l26 14 M170 55 l-26 14" stroke="#ffd84d" stroke-width="5" stroke-linecap="round"/>`:''}<ellipse cx="100" cy="168" rx="80" ry="8" fill="#000" opacity=".1"/><rect x="30" y="78" width="140" height="84" rx="8" fill="${body}" stroke="${band}" stroke-width="4"/><path d="M60 78 V162 M140 78 V162" stroke="${band}" stroke-width="8"/>${open?'':`<rect x="88" y="70" width="24" height="28" rx="4" fill="${lock}" stroke="${band}" stroke-width="3"/><circle cx="100" cy="84" r="4" fill="${band}"/>`}${lid}</svg>`;
 }
 function openChestFor(p){
+  // od v31: truhla dává zkušenosti a nálepku, NE novou výbavu.
+  // Výjimečně „najde“ věc, kterou už dítě má – promění se v zkušenosti navíc.
   if(!p.chests || !p.chests.length) return null;
-  const kind=p.chests.shift();
+  const kind=p.chests.shift(), gold=kind==='gold';
   p.owned=p.owned||{};
-  const cands = slotsOf(p).filter(sl=>(p.owned[sl.id]||0) < sl.items.length);
-  const itemChance = kind==='gold' ? 1 : 0.45;
-  if(cands.length && Math.random()<itemChance){
-    // cheapest next item out of 3 random slots – drops stay useful for the current stage
-    const pool=cands.slice(), sample=[];
-    for(let i=0;i<3&&pool.length;i++) sample.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
-    sample.sort((a,b)=>a.items[p.owned[a.id]||0][4]-b.items[p.owned[b.id]||0][4]);
-    const sl=sample[0], t=(p.owned[sl.id]||0)+1; p.owned[sl.id]=t; p.newItem=sl.id+':'+t;
-    return {kind, item:sl.items[t-1], slot:sl.name};
+  let xp=gold ? 5+Math.floor(Math.random()*4) : 2+Math.floor(Math.random()*3);   // zlatá 5–8, dřevěná 2–4
+  let found=null;
+  const have=slotsOf(p).filter(sl=>(p.owned[sl.id]||0)>0);
+  if(have.length && Math.random()<(gold?0.25:0.12)){
+    const sl=have[Math.floor(Math.random()*have.length)], t=1+Math.floor(Math.random()*(p.owned[sl.id]||1));
+    found={item:sl.items[t-1], slot:sl.name}; xp+=2;
   }
-  const pts=(kind==='gold'?60:20)+Math.floor(Math.random()*5)*10;
-  p.points+=pts; return {kind, points:pts};
+  p.xp=(p.xp||0)+xp;
+  let stk=null; try{ if(typeof dropSticker==='function') stk=dropSticker(p,true); }catch(e){}
+  return {kind, xp, found, stk};
 }
 
 /* ============ Art: shading, outlines, scenes ============ */
@@ -2788,7 +2796,7 @@ function heroView(){
         ${t.done && !xs && SJ.length>1 ? `<div class="center" style="font-size:18px">➕ Dnes splněno! Procvičovat dál:</div><div class="row" style="justify-content:center">${SJ.map(s=>`<button class="btn ok small" data-playsubj="${s}">${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div>` : `<button class="btn ${t.done?'ok':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>`}
         <div class="sub center">Předměty: ${SJ.map(s=>SUBJECTS[s].icon+' '+SUBJECTS[s].name).join(' · ')}</div>
         <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`${M.mapTitle} – další: ${next.name}`:`${M.mapTitle} (${M.doneShort})`}</button>
-        <div class="sub">Za správný příklad ⭐ 5 bodů (napodruhé 2). Splněný den +20 a <b>truhla</b> s překvapením, všechno správně +20 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +10, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
+        <div class="sub">Za správný příklad ⭐ 3 body (napodruhé 1). Splněný den +10 a <b>truhla</b> se zkušenostmi a nálepkou, všechno správně +10 a <b>zlatá truhla</b>, série 3+ dny +5. Po splnění můžeš počítat další sady (za každou +5, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
         <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} v řadě</div>
         <div class="sub">🎁 Za ${M.finalName}: <b>${esc(rewardOf(p))}</b></div>
       </div>
@@ -2831,8 +2839,8 @@ function summaryView(){
     <div class="card center">
       <div style="font-size:64px">${s.correct===s.total?'🏆':s.correct>=s.total*0.75?'🌟':'💪'}</div>
       <h2 style="margin:6px 0">${s.correct} z ${s.total} správně</h2>
-      ${s.practice?`<p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Dokončení sady: ⭐ 15${s.perfect?'<br>Všechno správně: 🎁 truhla':''}</p><h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`:`
-      <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 30${s.perfect?'<br>Všechno správně: ⭐ 30':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 10`:''}</p>
+      ${s.practice?`<p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Dokončení sady: ⭐ 5${s.perfect?'<br>Všechno správně: 🎁 truhla':''}</p><h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`:`
+      <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 10${s.perfect?'<br>Všechno správně: ⭐ 10':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 5`:''}</p>
       <h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`}
       ${p.chests&&p.chests.length?`<div style="max-width:170px;margin:6px auto" class="${'pop'}">${chestSVG(p.chests[0])}</div><button class="btn gold" data-chest="1" style="font-size:20px">🎁 Otevřít ${p.chests[0]==='gold'?'zlatou ':''}truhlu!</button>`:''}
       ${funSummaryHTML(p,s)}
@@ -2973,7 +2981,7 @@ function heroEditHTML(p){
 function parentView(){
   if(!parentOk) return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Rodičovská sekce</h1></div>
     <div class="card" style="max-width:380px;margin:0 auto"><div class="field"><label>Zadej PIN</label><input type="password" id="pin" inputmode="numeric" maxlength="8" autocomplete="off"></div>
-    <button class="btn" data-act="pinok">Vstoupit</button><p class="muted" style="font-size:14px">Výchozí PIN je 1234 – po přihlášení si ho změňte.</p></div>`;
+    <button class="btn" data-act="pinok">Vstoupit</button><p class="muted" style="font-size:14px">Výchozí PIN je 1234 – po přihlášení si ho změňte.</p><p style="font-size:15px;margin:6px 0 0"><a href="navod.html" target="_blank">📘 Návod pro rodiče</a></p></div>`;
   const tabs=[['settings','Nastavení'],['heroes','Hrdinové'],['report','📊 Týdenní zpráva'],['history','Historie'],['test','🧪 Testování'],['backup','Záloha'],['wish','💡 Kniha přání']];
   let body='';
   if(parentTab==='settings'){
@@ -2997,7 +3005,7 @@ function parentView(){
         <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
         <select id="s-repday" style="flex:1">${[[6,'každou sobotu večer'],[7,'každou neděli večer'],[5,'každý pátek večer']].map(([v,l])=>`<option value="${v}" ${(+repCfg().day||6)===v?'selected':''}>${l}</option>`).join('')}</select></div>
         ${repCfg().on&&repCfg().email&&HAS_GAS&&FAMILY?'<button class="btn sec small" data-act="reptest" style="margin-top:6px">📨 Poslat zkušební zprávu teď</button>':''}</div>
-      <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
+      <div class="row"><button class="btn ok" data-act="savesettings">Uložit nastavení</button><a class="btn sec small" href="navod.html" target="_blank">📘 Návod pro rodiče</a></div>`;
   } else if(parentTab==='heroes'){
     const hs=heroes(); if(!parentHero || !prof(parentHero) || prof(parentHero).deleted) parentHero = hs[0] && hs[0].id;
     body = hs.length ? `<div class="field"><label>Hrdina</label><select id="p-sel">${hs.map(p=>`<option value="${p.id}" ${p.id===parentHero?'selected':''}>${esc(p.name)} (${gs(p.grade)}, ${modeOf(p).icon} ${p.beaten}/${FOE_N})</option>`).join('')}</select></div>${heroEditHTML(prof(parentHero))}` : '<p>Zatím žádní hrdinové.</p>';
@@ -3055,11 +3063,13 @@ function showChest(){
   const box=m.querySelector('#chbox'); let n=0;
   const iv=setInterval(()=>{ box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); if(++n>=2) clearInterval(iv); },380);
   setTimeout(()=>{
-    const r=openChestFor(p); save();
+    const lv0=level(p); const r=openChestFor(p); r.lvBefore=lv0; save();
     box.innerHTML=chestSVG(kind,true);
-    m.querySelector('#chtxt').innerHTML = r.item
-      ? `<div style="font-size:26px">✨ ${r.item[0]} ✨</div><div class="muted">${r.slot} · ${itemStatText(r.item)}</div><p style="font-size:16px">Najdeš ho v batohu – klikni na něj a nasaď si ho!</p>`
-      : `<div style="font-size:30px">⭐ +${r.points} bodů</div>`;
+    const lvB=r.lvBefore;
+    m.querySelector('#chtxt').innerHTML = `<div style="font-size:28px">💪 +${r.xp} ${plural(r.xp,'zkušenost','zkušenosti','zkušeností')}</div>`
+      + (r.found?`<div class="muted" style="font-size:16px;margin-top:6px">V truhle byl i <b>${esc(r.found.item[0])}</b> – ten už máš, tak se proměnil ve 2 zkušenosti navíc.</div>`:'')
+      + (r.stk&&r.stk.s?`<div style="font-size:44px;margin-top:8px">${r.stk.s.e}</div><div style="font-size:18px">${r.stk.s.rare?'✨ Vzácná nálepka!':'Nálepka do alba!'}</div>${r.stk.extra?`<div class="muted" style="font-size:15px">${r.stk.extra}</div>`:''}`:'')
+      + (lvB && level(p)>lvB?`<p style="font-size:20px">🎉 Nová úroveň ${level(p)}!</p>`:'');
     m.querySelector('#chbtn').innerHTML=`<button class="btn ok">Super!</button>`;
     m.querySelector('#chbtn button').onclick=()=>{ m.remove(); render(); };
     confetti(r.kind==='gold'?50:25);
@@ -3148,7 +3158,7 @@ function answer(val){
   const card=$('#pcard');
   if(isCorrect(pr,val)){
     const r = t.tries ? 1 : 2; t.res[t.idx]=r;
-    const gain = r===2?5:(t.helpIdx===t.idx?1:2);
+    const gain = r===2?3:1; // od v31 poloviční odměny (dříve 5/2, po vysvětlení 1)
     p.xp=(p.xp||0)+1;
     p.points+=gain; t.pts+=gain; p.totalCorrect++;
     setFb('ok', pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:''));
@@ -3177,7 +3187,7 @@ function finish(t){
   const lvlBefore = view.lvlStart||0;
   if(view.practice){
     const base=t.pts, perfect=t.res.every(r=>r===2);
-    p.points+=10; t.pts+=10;
+    p.points+=5; t.pts+=5;
     if(perfect){ p.chests=p.chests||[]; p.chests.push('wood'); }
     const k=todayKey(); p.history=p.history||{};
     const h=p.history[k]||{c:0,n:0,pts:0,wrongCats:[]};
@@ -3186,12 +3196,12 @@ function finish(t){
     logResult(p, {c:correct, n:total, pts:t.pts, wrongCats:[...new Set((t.wrong||[]).map(w=>w.cat))]});
     confetti(perfect?40:20);
     view={name:'summary',pid:p.id,sum:{practice:true,correct,total,wrong,base,pts:t.pts,perfect,lvlUp:level(p)>lvlBefore}}; render(); return; }
-  const base=t.pts; let bonus=20; const perfect=t.res.every(r=>r===2);
-  if(perfect) bonus+=20;
+  const base=t.pts; let bonus=10; const perfect=t.res.every(r=>r===2);
+  if(perfect) bonus+=10;
   const k=todayKey();
   if(p.lastDone && dayDiff(p.lastDone,k)===1) p.streak++; else if(p.lastDone!==k) p.streak=1;
   p.lastDone=k;
-  const streakBonus=p.streak>=3; if(streakBonus) bonus+=10;
+  const streakBonus=p.streak>=3; if(streakBonus) bonus+=5;
   p.points+=bonus; t.pts+=bonus; t.done=true;
   p.chests=p.chests||[]; p.chests.push(perfect?'gold':'wood');
   p.history=p.history||{};
@@ -3385,9 +3395,9 @@ function dropSticker(p, quiet){
   const s=pool[Math.floor(Math.random()*pool.length)], f=fx(p);
   const dup=!!f.stk[s.id]; f.stk[s.id]=(f.stk[s.id]||0)+1;
   let extra='';
-  if(dup){ p.points+=5; extra=' (už ji máš – +5 ⭐)'; }
+  if(dup){ p.points+=3; extra=' (už ji máš – +3 ⭐)'; }
   const set=STICKER_SETS.find(x=>x.id===s.set);
-  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=100; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` · Celá sada „${set.name}“! +100 ⭐ a zlatá truhla`; confetti(60); }
+  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=50; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` · Celá sada „${set.name}“! +50 ⭐ a zlatá truhla`; confetti(60); }
   if(!quiet) stickerPop(s, extra);
   return {s, extra};
 }
@@ -3402,7 +3412,7 @@ function albumView(){
     return `<div class="card albset"><h3 style="margin:0 0 8px">${set.name} <span class="muted" style="font-size:15px">${have}/12 ${f.setDone[set.id]?'✅ hotovo':''}</span></h3>
       <div class="stkgrid">${set.e.map((e,i)=>{ const n=f.stk[set.id+i]; return `<div class="stk ${n?'got':''} ${i>=10?'rare':''}">${n?e:'?'}${n>1?`<small>×${n}</small>`:''}</div>`; }).join('')}</div></div>`; }).join('');
   return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>📒 Album nálepek</h1><span class="pill">${stickerCount(p)}/60</span></div>
-    <p class="muted">Nálepky padají za správné odpovědi, za splněný den a za týdenní výzvy. Zlaté rámečky jsou vzácné. Za celou sadu dostaneš ⭐ 100 a zlatou truhlu!</p>
+    <p class="muted">Nálepky padají za správné odpovědi, za splněný den a za týdenní výzvy. Zlaté rámečky jsou vzácné. Za celou sadu dostaneš ⭐ 50 a zlatou truhlu!</p>
     <div class="albgrid">${sets}</div>`;
 }
 
@@ -3477,14 +3487,14 @@ function checkChallenges(p){
   if(!p) return; const ws=weekStart(), st=weekStats(p,ws), f=fx(p); const c=f.chal[ws]=f.chal[ws]||{cl:[],all:0};
   for(const k of Object.keys(f.chal)) if(k<addDays(ws,-21)) delete f.chal[k];
   let changed=false;
-  for(const ch of weekChallenges(p,ws)){ if(!c.cl.includes(ch.id) && ch.m(st)>=ch.goal){ c.cl.push(ch.id); p.points+=50; changed=true; toast(`🎯 Výzva splněna: ${ch.text} · +50 ⭐ a nálepka`); setTimeout(()=>dropSticker(p),600); } }
+  for(const ch of weekChallenges(p,ws)){ if(!c.cl.includes(ch.id) && ch.m(st)>=ch.goal){ c.cl.push(ch.id); p.points+=25; changed=true; toast(`🎯 Výzva splněna: ${ch.text} · +25 ⭐ a nálepka`); setTimeout(()=>dropSticker(p),600); } }
   if(!c.all && c.cl.length>=3){ c.all=1; p.chests=p.chests||[]; p.chests.push('gold'); changed=true; setTimeout(()=>{ toast('🏅 Všechny výzvy týdne splněny! Zlatá truhla je tvoje.'); confetti(60); },1500); }
   if(changed) save();
 }
 function challengesHTML(p){
   const ws=weekStart(), st=weekStats(p,ws), c=(fx(p).chal[ws]||{cl:[]});
   const left=6-((new Date().getDay()+6)%7);
-  return `<div class="card"><h3 style="margin:0 0 6px">🎯 Výzvy týdne <span class="muted" style="font-size:14px">· ${left?`ještě ${left} ${plural(left,'den','dny','dní')}`:'poslední den!'} · každá +50 ⭐ a nálepka, všechny = zlatá truhla</span></h3>
+  return `<div class="card"><h3 style="margin:0 0 6px">🎯 Výzvy týdne <span class="muted" style="font-size:14px">· ${left?`ještě ${left} ${plural(left,'den','dny','dní')}`:'poslední den!'} · každá +25 ⭐ a nálepka, všechny = zlatá truhla</span></h3>
     ${weekChallenges(p,ws).map(ch=>{ const v=Math.min(ch.goal, ch.m(st)), done=c.cl.includes(ch.id);
       return `<div class="chal ${done?'done':''}"><div>${done?'✅':'⬜'} ${ch.text}</div><div class="bar"><i style="width:${v/ch.goal*100}%"></i></div><small>${v}/${ch.goal}</small></div>`; }).join('')}</div>`;
 }
@@ -3520,7 +3530,7 @@ function timedAnswer(val){
 function timedEnd(){
   const p=prof(view.pid), T=view.tm, f=fx(p), d=fxDay(p);
   const rec=T.score>(f.tbestAll||0); if(rec) f.tbestAll=T.score; d.tb=Math.max(d.tb||0,T.score);
-  d.truns=(d.truns||0)+1; const pts=d.truns<=3 ? T.score*3 : 0; p.points+=pts; save(); checkChallenges(p);
+  d.truns=(d.truns||0)+1; const pts=d.truns<=3 ? Math.round(T.score*1.5) : 0; p.points+=pts; save(); checkChallenges(p);
   if(rec && T.score>0) confetti(50);
   view={name:'timedEnd', pid:p.id, res:{score:T.score, wrong:T.wrong, rec, pts, runs:d.truns}}; render();
   if(readOn()) speak(`Konec! Stihl jsi ${T.score} správně.${rec?' To je nový rekord!':''}`);
@@ -3529,7 +3539,7 @@ function timedEndView(){
   const p=prof(view.pid), r=view.res;
   return `<div class="top"><h1>⏱️ Časovka – konec!</h1></div><div class="card center"><div style="font-size:64px">${r.rec?'🏆':'⏱️'}</div>
     <h2>${r.score} správně${r.wrong?` · ${r.wrong} ${plural(r.wrong,'chyba','chyby','chyb')}`:''}</h2>${r.rec?'<p style="font-size:22px">🎉 Nový rekord!</p>':`<p>Rekord: ${fx(p).tbestAll||0}</p>`}
-    <p style="font-size:18px">${r.pts?`+${r.pts} ⭐ (3 body za každou správnou)`:'Body se dávají za první 3 časovky denně – teď už jen pro radost a rekord.'}</p>
+    <p style="font-size:18px">${r.pts?`+${r.pts} ⭐ (za každé 2 správné 3 body)`:'Body se dávají za první 3 časovky denně – teď už jen pro radost a rekord.'}</p>
     <div class="row" style="justify-content:center"><button class="btn gold" data-act="timed">🔁 Znovu</button><button class="btn sec" data-act="hero">← Zpět</button></div></div>`;
 }
 
@@ -3545,7 +3555,7 @@ function duelSetupView(){
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>⚔️ Souboj</h1></div>
     <div class="card center"><p style="font-size:18px">Dva hrdinové se střídají u jednoho počítače. Každý dostane 5 úloh podle své třídy. Vyhrává, kdo má víc správně – při shodě rychlejší.</p>
     <div class="row" style="justify-content:center;align-items:center;gap:14px">${sel('d-a',a)}<b style="font-size:28px">VS</b>${sel('d-b',b)}</div>
-    <p class="muted">Vítěz +30 ⭐, druhý +10 ⭐ (první 3 souboje denně).</p><button class="btn gold" data-act="duel-go" style="font-size:20px">⚔️ Začít souboj</button></div>`;
+    <p class="muted">Vítěz +15 ⭐, druhý +5 ⭐ (první 3 souboje denně).</p><button class="btn gold" data-act="duel-go" style="font-size:20px">⚔️ Začít souboj</button></div>`;
 }
 function duelGo(){
   const a=$('#d-a').value, b=$('#d-b').value; if(a===b){ toast('Vyber dva různé hrdiny'); return; }
@@ -3572,7 +3582,7 @@ function duelEnd(){
   const D=view.D; const [A,B]=D.ids.map(prof);
   let w = D.score[0]!==D.score[1] ? (D.score[0]>D.score[1]?0:1) : (D.time[0]<=D.time[1]?0:1);
   const award=(p,v)=>{ const d=fxDay(p); d.duels=(d.duels||0)+1; if(d.duels<=3){ p.points+=v; return v; } return 0; };
-  const pw=award([A,B][w],30), pl=award([A,B][1-w],10); const dw=fxDay([A,B][w]); dw.dw=(dw.dw||0)+1;
+  const pw=award([A,B][w],15), pl=award([A,B][1-w],5); const dw=fxDay([A,B][w]); dw.dw=(dw.dw||0)+1;
   save(); [A,B].forEach(checkChallenges); confetti(50);
   view={name:'duelEnd', pid:D.ids[w], R:{D, w, pw, pl}}; render();
   if(readOn()) speak(`Vítězem je ${[A,B][w].name}!`);
@@ -3858,9 +3868,9 @@ dropSticker=function(p, quiet){
   let pool=ALL_STICKERS.filter(s=>s.rare===rare); const fresh=pool.filter(s=>!f.stk[s.id]); if(fresh.length && Math.random()<0.67) pool=fresh;
   const s=pool[Math.floor(Math.random()*pool.length)];
   const dup=!!f.stk[s.id]; f.stk[s.id]=(f.stk[s.id]||0)+1;
-  let extra=''; if(dup){ p.points+=5; extra='Tuhle už máš – dostáváš +5 ⭐.'; }
+  let extra=''; if(dup){ p.points+=3; extra='Tuhle už máš – dostáváš +3 ⭐.'; }
   const set=STICKER_SETS.find(x=>x.id===s.set);
-  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=100; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` Obrázek „${set.name}“ je složený! +100 ⭐ a zlatá truhla. V albu tě čeká kvíz.`; setTimeout(()=>confetti(70),400); }
+  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=50; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` Obrázek „${set.name}“ je složený! +50 ⭐ a zlatá truhla. V albu tě čeká kvíz.`; setTimeout(()=>confetti(70),400); }
   if(!quiet) stickerPop(s, extra, p);
   return {s, extra};
 };
@@ -3893,10 +3903,10 @@ albumView=function(){
     const qz=f.quiz[set.id];
     return `<div class="card albset ${done?'done':''}"><h3 style="margin:0 0 8px">${STK_DATA[set.id].icon} ${set.name} <span class="muted" style="font-size:15px">${have}/12 ${done?'✅':''}</span></h3>
       <div class="puzzle" style="--bg:url(${A_}stkset_${set.id}.webp), ${SET_BG[set.id]}">${pieces}</div>
-      ${done?(qz?`<div class="muted" style="margin-top:6px">🧠 Kvíz splněn: ${qz}/3</div>`:`<button class="btn ok small" data-quiz="${set.id}" style="margin-top:8px">🧠 Kvíz o sadě (až +30 ⭐)</button>`):''}</div>`; }).join('');
+      ${done?(qz?`<div class="muted" style="margin-top:6px">🧠 Kvíz splněn: ${qz}/3</div>`:`<button class="btn ok small" data-quiz="${set.id}" style="margin-top:8px">🧠 Kvíz o sadě (až +15 ⭐)</button>`):''}</div>`; }).join('');
   return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>📒 Album nálepek</h1><span class="pill">${stickerCount(p)}/${STK_TOTAL}</span></div>
     <div class="card"><b style="font-size:19px">${rk.name}</b> · přečteno ${rk.n} kartiček${rk.next?` · do hodnosti ${rk.next[1]} zbývá ${rk.next[0]-rk.n}`:' · nejvyšší hodnost!'}
-    <div class="muted">Klikni na nálepku a dozvíš se zajímavost. Každá nálepka odkryje kousek obrázku – složíš celý? Za hotový obrázek ⭐ 100, zlatá truhla a kvíz.</div></div>
+    <div class="muted">Klikni na nálepku a dozvíš se zajímavost. Každá nálepka odkryje kousek obrázku – složíš celý? Za hotový obrázek ⭐ 50, zlatá truhla a kvíz.</div></div>
     <div class="albgrid">${sets}</div>`;
 };
 function quizOpen(setId){
@@ -3910,7 +3920,7 @@ function quizOpen(setId){
       b.classList.add(good?'right':'wrong'); m.querySelector('#qfb').innerHTML=good?'✅ Správně!':`❌ Správně je: ${q[1]}`;
       setTimeout(()=>{ i++; if(i<3) draw(); else finishQ(); }, good?900:1800); });
   };
-  const finishQ=()=>{ fx(p).quiz[setId]=ok; p.points+=ok*10; save(); if(ok===3) confetti(50);
+  const finishQ=()=>{ fx(p).quiz[setId]=ok; p.points+=ok*5; save(); if(ok===3) confetti(50);
     m.innerHTML=`<div class="card center"><div style="font-size:60px">${ok===3?'🏆':'🧠'}</div><h2>${ok} ze 3 správně</h2><p style="font-size:18px">+${ok*10} ⭐</p><button class="btn gold" id="qok">Hotovo</button></div>`;
     m.querySelector('#qok').onclick=()=>{ m.remove(); render(); }; };
   draw(); document.body.appendChild(m);

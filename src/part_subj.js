@@ -104,7 +104,7 @@ for(const w of EN_BOOK1){ const e=EN_PIC.find(x=>x[0]===w[1]); if(e) e[3]=Math.m
 // slova, která už jsou s obrázkem, se neopakují ve čtecím seznamu (jinak by mohla být dvakrát mezi odpověďmi)
 for(let i=EN_WORDS.length-1;i>=0;i--) if(EN_PIC.some(x=>x[0]===EN_WORDS[i][0])) EN_WORDS.splice(i,1);
 // skupiny, které se nesmí plést (obecné slovo × jeho druh, části těla) – nikdy nejsou spolu mezi odpověďmi
-const EN_GRP=[['hop','jump'],['head','hair'],['head','happy'],['head','sad'],['head','sleepy'],['head','sick'],['hello','goodbye'],['goodbye','walk'],['hat','cap','woolly hat'],['swing','zip line'],['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup']];
+const EN_GRP=[['hop','jump'],['head','hair'],['head','happy'],['head','sad'],['head','sleepy'],['head','sick'],['hello','goodbye'],['goodbye','walk'],['hat','cap','woolly hat'],['swing','zip line'],['bird','duck','hen','parrot','chicken'],['shoe','boots','sandals'],['arm','hand'],['leg','foot'],['mum','mother'],['dad','father'],['cup','soup'],['cold','winter'],['hot','summer'],['sleep','sleepy'],['swim','swimsuit']];
 const enClash=(a,b)=>EN_GRP.some(g=>g.includes(a)&&g.includes(b));
 
 /* ---- Přírodověda: [od třídy, do třídy, otázka, správně, [špatně], obrázek] ---- */
@@ -136,7 +136,7 @@ const PR_BANK = [
   [4,5,'Čím dýcháme?','plícemi',['srdcem','žaludkem','játry'],'🫁'],[4,5,'Co tvoří oporu těla?','kostra',['kůže','krev','vlasy'],'🦴'],
   [4,5,'Kolikátá planeta od Slunce je Země?','třetí',['první','pátá','desátá'],'🌍'],[4,5,'Která planeta je největší?','Jupiter',['Země','Mars','Merkur'],'🪐'],
   [4,5,'Slunce je…','hvězda',['planeta','měsíc','kometa'],'☀️'],[4,5,'Kolem čeho obíhá Měsíc?','kolem Země',['kolem Marsu','kolem Jupiteru','kolem ničeho'],'🌙'],
-  [4,5,'Nejvyšší hora Česka je…','Sněžka',['Praděd','Lysá hora','Říp'],'⛰️'],[4,5,'Nejdelší řeka v Česku je…','Vltava',['Labe','Morava','Dyje'],'🏞️'],
+  [4,5,'Nejvyšší hora Česka je…','Sněžka',['Praděd','Lysá hora','Říp'],'⛰️'],[4,5,'Nejdelší řeka v Česku je…','Vltava',['Jizera','Morava','Dyje'],'🏞️'],
   [4,5,'Co jí sova?','myši',['trávu','ovoce','listí'],'🦉'],[4,5,'Kdo je na začátku potravního řetězce?','rostliny',['lišky','sovy','vlci'],'🌾'],
   [4,5,'Které zvíře v zimě spí zimním spánkem?','ježek',['zajíc','srnka','vrabec'],'🦔'],[4,5,'Který pták na zimu odlétá do teplých krajin?','vlaštovka',['vrabec','sýkora','kos'],'🐦'],
   // stromy a jejich plody (prvouka 1. třídy)

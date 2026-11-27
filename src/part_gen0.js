@@ -49,7 +49,9 @@ Object.assign(CATS, {
     return choice(`Kde je <b>${more?'VÍC':'MÉNĚ'}</b> ${th[1]}?`, `Kde je ${more?'víc':'méně'} ${th[1]}?`, [g(a),g(b)], want, '', 'more|'+th[0]+a+'|'+b+more);
   }},
   odd0: {grade:0, label:'Co sem nepatří', gen(){
-    const keys=Object.keys(GROUPS0); const k=pick(keys); let k2=pick(keys); while(k2===k) k2=pick(keys);
+    // hračky se nemíchají s dopravou (autíčko může být hračka) – v27 stejně jako u čestiny
+    const clash=(a,b)=>{ const s=new Set([a,b]); return s.has('hračky') && s.has('doprava'); };
+    const keys=Object.keys(GROUPS0); const k=pick(keys); let k2=pick(keys); while(k2===k || clash(k,k2)) k2=pick(keys);
     const same=pickN(GROUPS0[k], EASY?2:3), odd=pick(GROUPS0[k2]); const opts=shuffle([...same, odd]);
     return choice('Co sem <b>nepatří</b>?', 'Co sem nepatří?', opts.map(e=>em(e)), opts.indexOf(odd));
   }},
@@ -65,7 +67,9 @@ Object.assign(CATS, {
     return choice('Co bude dál?', 'Co bude dál?', opts.map(e=>em(e)), opts.indexOf(ans), `<div class="many">${seq.map(e=>em(e,38)).join('')}${em('❓',38)}</div>`);
   }},
   animals0: {grade:0, label:'Najdi zvířátko', gen(){
-    const opts=pickN(ANIMALS0, EASY?3:4); const t=opts[ri(0,opts.length-1)];
+    // myška a potkan nikdy spolu (na malém obrázku se pletou)
+    let opts=pickN(ANIMALS0, EASY?3:4); while(opts.some(o=>o[0]==='🐭') && opts.some(o=>o[0]==='🐀')) opts=pickN(ANIMALS0, EASY?3:4);
+    const t=opts[ri(0,opts.length-1)];
     return choice(`Kde je <b>${t[1]}</b>?`, `Kde je ${t[1]}?`, opts.map(o=>em(o[0],52)), opts.indexOf(t));
   }},
 });

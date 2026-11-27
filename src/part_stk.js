@@ -112,9 +112,9 @@ dropSticker=function(p, quiet){
   let pool=ALL_STICKERS.filter(s=>s.rare===rare); const fresh=pool.filter(s=>!f.stk[s.id]); if(fresh.length && Math.random()<0.67) pool=fresh;
   const s=pool[Math.floor(Math.random()*pool.length)];
   const dup=!!f.stk[s.id]; f.stk[s.id]=(f.stk[s.id]||0)+1;
-  let extra=''; if(dup){ p.points+=5; extra='Tuhle už máš – dostáváš +5 ⭐.'; }
+  let extra=''; if(dup){ p.points+=3; extra='Tuhle už máš – dostáváš +3 ⭐.'; }
   const set=STICKER_SETS.find(x=>x.id===s.set);
-  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=100; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` Obrázek „${set.name}“ je složený! +100 ⭐ a zlatá truhla. V albu tě čeká kvíz.`; setTimeout(()=>confetti(70),400); }
+  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=50; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` Obrázek „${set.name}“ je složený! +50 ⭐ a zlatá truhla. V albu tě čeká kvíz.`; setTimeout(()=>confetti(70),400); }
   if(!quiet) stickerPop(s, extra, p);
   return {s, extra};
 };
@@ -147,10 +147,10 @@ albumView=function(){
     const qz=f.quiz[set.id];
     return `<div class="card albset ${done?'done':''}"><h3 style="margin:0 0 8px">${STK_DATA[set.id].icon} ${set.name} <span class="muted" style="font-size:15px">${have}/12 ${done?'✅':''}</span></h3>
       <div class="puzzle" style="--bg:url(${A_}stkset_${set.id}.webp), ${SET_BG[set.id]}">${pieces}</div>
-      ${done?(qz?`<div class="muted" style="margin-top:6px">🧠 Kvíz splněn: ${qz}/3</div>`:`<button class="btn ok small" data-quiz="${set.id}" style="margin-top:8px">🧠 Kvíz o sadě (až +30 ⭐)</button>`):''}</div>`; }).join('');
+      ${done?(qz?`<div class="muted" style="margin-top:6px">🧠 Kvíz splněn: ${qz}/3</div>`:`<button class="btn ok small" data-quiz="${set.id}" style="margin-top:8px">🧠 Kvíz o sadě (až +15 ⭐)</button>`):''}</div>`; }).join('');
   return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>📒 Album nálepek</h1><span class="pill">${stickerCount(p)}/${STK_TOTAL}</span></div>
     <div class="card"><b style="font-size:19px">${rk.name}</b> · přečteno ${rk.n} kartiček${rk.next?` · do hodnosti ${rk.next[1]} zbývá ${rk.next[0]-rk.n}`:' · nejvyšší hodnost!'}
-    <div class="muted">Klikni na nálepku a dozvíš se zajímavost. Každá nálepka odkryje kousek obrázku – složíš celý? Za hotový obrázek ⭐ 100, zlatá truhla a kvíz.</div></div>
+    <div class="muted">Klikni na nálepku a dozvíš se zajímavost. Každá nálepka odkryje kousek obrázku – složíš celý? Za hotový obrázek ⭐ 50, zlatá truhla a kvíz.</div></div>
     <div class="albgrid">${sets}</div>`;
 };
 function quizOpen(setId){
@@ -164,7 +164,7 @@ function quizOpen(setId){
       b.classList.add(good?'right':'wrong'); m.querySelector('#qfb').innerHTML=good?'✅ Správně!':`❌ Správně je: ${q[1]}`;
       setTimeout(()=>{ i++; if(i<3) draw(); else finishQ(); }, good?900:1800); });
   };
-  const finishQ=()=>{ fx(p).quiz[setId]=ok; p.points+=ok*10; save(); if(ok===3) confetti(50);
+  const finishQ=()=>{ fx(p).quiz[setId]=ok; p.points+=ok*5; save(); if(ok===3) confetti(50);
     m.innerHTML=`<div class="card center"><div style="font-size:60px">${ok===3?'🏆':'🧠'}</div><h2>${ok} ze 3 správně</h2><p style="font-size:18px">+${ok*10} ⭐</p><button class="btn gold" id="qok">Hotovo</button></div>`;
     m.querySelector('#qok').onclick=()=>{ m.remove(); render(); }; };
   draw(); document.body.appendChild(m);

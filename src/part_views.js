@@ -138,7 +138,7 @@ function heroView(){
         ${t.done && !xs && SJ.length>1 ? `<div class="center" style="font-size:18px">➕ Dnes splněno! Procvičovat dál:</div><div class="row" style="justify-content:center">${SJ.map(s=>`<button class="btn ok small" data-playsubj="${s}">${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div>` : `<button class="btn ${t.done?'ok':''}" data-act="play" style="font-size:19px;padding:16px">${playLabel}</button>`}
         <div class="sub center">Předměty: ${SJ.map(s=>SUBJECTS[s].icon+' '+SUBJECTS[s].name).join(' · ')}</div>
         <button class="btn red" data-act="map" style="font-size:19px;padding:16px">${next?`${M.mapTitle} – další: ${next.name}`:`${M.mapTitle} (${M.doneShort})`}</button>
-        <div class="sub">Za správný příklad ⭐ 5 bodů (napodruhé 2). Splněný den +20 a <b>truhla</b> s překvapením, všechno správně +20 a <b>zlatá truhla</b>, série 3+ dny +10. Po splnění můžeš počítat další sady (za každou +10, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
+        <div class="sub">Za správný příklad ⭐ 3 body (napodruhé 1). Splněný den +10 a <b>truhla</b> se zkušenostmi a nálepkou, všechno správně +10 a <b>zlatá truhla</b>, série 3+ dny +5. Po splnění můžeš počítat další sady (za každou +5, za všechno správně truhla). Za body si kupuj věci v obchodě – a nezapomeň si je <b>${p.mode==='home'?'dát do pokoje':p.mode==='pet'?'dát zvířátku':'nasadit'}</b>!</div>
         <div>🔥 Série: <b>${streakAlive(p)?p.streak:0}</b> ${plural(streakAlive(p)?p.streak:0,'den','dny','dní')} v řadě</div>
         <div class="sub">🎁 Za ${M.finalName}: <b>${esc(rewardOf(p))}</b></div>
       </div>
@@ -181,8 +181,8 @@ function summaryView(){
     <div class="card center">
       <div style="font-size:64px">${s.correct===s.total?'🏆':s.correct>=s.total*0.75?'🌟':'💪'}</div>
       <h2 style="margin:6px 0">${s.correct} z ${s.total} správně</h2>
-      ${s.practice?`<p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Dokončení sady: ⭐ 15${s.perfect?'<br>Všechno správně: 🎁 truhla':''}</p><h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`:`
-      <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 30${s.perfect?'<br>Všechno správně: ⭐ 30':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 10`:''}</p>
+      ${s.practice?`<p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Dokončení sady: ⭐ 5${s.perfect?'<br>Všechno správně: 🎁 truhla':''}</p><h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`:`
+      <p style="font-size:19px">Za příklady: ⭐ ${s.base}<br>Splnění dne: ⭐ 10${s.perfect?'<br>Všechno správně: ⭐ 10':''}${s.streakBonus?`<br>Série ${p.streak} dní: ⭐ 5`:''}</p>
       <h2 style="color:var(--pri)">Celkem +${s.pts} bodů</h2>`}
       ${p.chests&&p.chests.length?`<div style="max-width:170px;margin:6px auto" class="${'pop'}">${chestSVG(p.chests[0])}</div><button class="btn gold" data-chest="1" style="font-size:20px">🎁 Otevřít ${p.chests[0]==='gold'?'zlatou ':''}truhlu!</button>`:''}
       ${funSummaryHTML(p,s)}
@@ -323,7 +323,7 @@ function heroEditHTML(p){
 function parentView(){
   if(!parentOk) return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>Rodičovská sekce</h1></div>
     <div class="card" style="max-width:380px;margin:0 auto"><div class="field"><label>Zadej PIN</label><input type="password" id="pin" inputmode="numeric" maxlength="8" autocomplete="off"></div>
-    <button class="btn" data-act="pinok">Vstoupit</button><p class="muted" style="font-size:14px">Výchozí PIN je 1234 – po přihlášení si ho změňte.</p></div>`;
+    <button class="btn" data-act="pinok">Vstoupit</button><p class="muted" style="font-size:14px">Výchozí PIN je 1234 – po přihlášení si ho změňte.</p><p style="font-size:15px;margin:6px 0 0"><a href="navod.html" target="_blank">📘 Návod pro rodiče</a></p></div>`;
   const tabs=[['settings','Nastavení'],['heroes','Hrdinové'],['report','📊 Týdenní zpráva'],['history','Historie'],['test','🧪 Testování'],['backup','Záloha'],['wish','💡 Kniha přání']];
   let body='';
   if(parentTab==='settings'){
@@ -347,7 +347,7 @@ function parentView(){
         <div class="row"><input type="email" id="s-repemail" placeholder="vas@email.cz" value="${esc(repCfg().email||'')}" style="flex:2;min-width:200px">
         <select id="s-repday" style="flex:1">${[[6,'každou sobotu večer'],[7,'každou neděli večer'],[5,'každý pátek večer']].map(([v,l])=>`<option value="${v}" ${(+repCfg().day||6)===v?'selected':''}>${l}</option>`).join('')}</select></div>
         ${repCfg().on&&repCfg().email&&HAS_GAS&&FAMILY?'<button class="btn sec small" data-act="reptest" style="margin-top:6px">📨 Poslat zkušební zprávu teď</button>':''}</div>
-      <button class="btn ok" data-act="savesettings">Uložit nastavení</button>`;
+      <div class="row"><button class="btn ok" data-act="savesettings">Uložit nastavení</button><a class="btn sec small" href="navod.html" target="_blank">📘 Návod pro rodiče</a></div>`;
   } else if(parentTab==='heroes'){
     const hs=heroes(); if(!parentHero || !prof(parentHero) || prof(parentHero).deleted) parentHero = hs[0] && hs[0].id;
     body = hs.length ? `<div class="field"><label>Hrdina</label><select id="p-sel">${hs.map(p=>`<option value="${p.id}" ${p.id===parentHero?'selected':''}>${esc(p.name)} (${gs(p.grade)}, ${modeOf(p).icon} ${p.beaten}/${FOE_N})</option>`).join('')}</select></div>${heroEditHTML(prof(parentHero))}` : '<p>Zatím žádní hrdinové.</p>';
@@ -405,11 +405,13 @@ function showChest(){
   const box=m.querySelector('#chbox'); let n=0;
   const iv=setInterval(()=>{ box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); if(++n>=2) clearInterval(iv); },380);
   setTimeout(()=>{
-    const r=openChestFor(p); save();
+    const lv0=level(p); const r=openChestFor(p); r.lvBefore=lv0; save();
     box.innerHTML=chestSVG(kind,true);
-    m.querySelector('#chtxt').innerHTML = r.item
-      ? `<div style="font-size:26px">✨ ${r.item[0]} ✨</div><div class="muted">${r.slot} · ${itemStatText(r.item)}</div><p style="font-size:16px">Najdeš ho v batohu – klikni na něj a nasaď si ho!</p>`
-      : `<div style="font-size:30px">⭐ +${r.points} bodů</div>`;
+    const lvB=r.lvBefore;
+    m.querySelector('#chtxt').innerHTML = `<div style="font-size:28px">💪 +${r.xp} ${plural(r.xp,'zkušenost','zkušenosti','zkušeností')}</div>`
+      + (r.found?`<div class="muted" style="font-size:16px;margin-top:6px">V truhle byl i <b>${esc(r.found.item[0])}</b> – ten už máš, tak se proměnil ve 2 zkušenosti navíc.</div>`:'')
+      + (r.stk&&r.stk.s?`<div style="font-size:44px;margin-top:8px">${r.stk.s.e}</div><div style="font-size:18px">${r.stk.s.rare?'✨ Vzácná nálepka!':'Nálepka do alba!'}</div>${r.stk.extra?`<div class="muted" style="font-size:15px">${r.stk.extra}</div>`:''}`:'')
+      + (lvB && level(p)>lvB?`<p style="font-size:20px">🎉 Nová úroveň ${level(p)}!</p>`:'');
     m.querySelector('#chbtn').innerHTML=`<button class="btn ok">Super!</button>`;
     m.querySelector('#chbtn button').onclick=()=>{ m.remove(); render(); };
     confetti(r.kind==='gold'?50:25);
@@ -498,7 +500,7 @@ function answer(val){
   const card=$('#pcard');
   if(isCorrect(pr,val)){
     const r = t.tries ? 1 : 2; t.res[t.idx]=r;
-    const gain = r===2?5:(t.helpIdx===t.idx?1:2);
+    const gain = r===2?3:1; // od v31 poloviční odměny (dříve 5/2, po vysvětlení 1)
     p.xp=(p.xp||0)+1;
     p.points+=gain; t.pts+=gain; p.totalCorrect++;
     setFb('ok', pick(['Správně! 🎉','Výborně! ⭐','Paráda! 💪','Super! 🚀','Přesně tak! ✨']) + (gain?`  +${gain}`:''));
@@ -527,7 +529,7 @@ function finish(t){
   const lvlBefore = view.lvlStart||0;
   if(view.practice){
     const base=t.pts, perfect=t.res.every(r=>r===2);
-    p.points+=10; t.pts+=10;
+    p.points+=5; t.pts+=5;
     if(perfect){ p.chests=p.chests||[]; p.chests.push('wood'); }
     const k=todayKey(); p.history=p.history||{};
     const h=p.history[k]||{c:0,n:0,pts:0,wrongCats:[]};
@@ -536,12 +538,12 @@ function finish(t){
     logResult(p, {c:correct, n:total, pts:t.pts, wrongCats:[...new Set((t.wrong||[]).map(w=>w.cat))]});
     confetti(perfect?40:20);
     view={name:'summary',pid:p.id,sum:{practice:true,correct,total,wrong,base,pts:t.pts,perfect,lvlUp:level(p)>lvlBefore}}; render(); return; }
-  const base=t.pts; let bonus=20; const perfect=t.res.every(r=>r===2);
-  if(perfect) bonus+=20;
+  const base=t.pts; let bonus=10; const perfect=t.res.every(r=>r===2);
+  if(perfect) bonus+=10;
   const k=todayKey();
   if(p.lastDone && dayDiff(p.lastDone,k)===1) p.streak++; else if(p.lastDone!==k) p.streak=1;
   p.lastDone=k;
-  const streakBonus=p.streak>=3; if(streakBonus) bonus+=10;
+  const streakBonus=p.streak>=3; if(streakBonus) bonus+=5;
   p.points+=bonus; t.pts+=bonus; t.done=true;
   p.chests=p.chests||[]; p.chests.push(perfect?'gold':'wood');
   p.history=p.history||{};

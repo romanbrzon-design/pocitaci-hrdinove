@@ -103,7 +103,7 @@ const PR_TOPICS = {
     [0,2,'Kdo hasí požáry?','hasič',['kuchař','učitel','prodavač'],'🚒'],[0,2,'Kdo učí děti ve škole?','učitel',['zubař','kominík','zedník'],'👩‍🏫'],
     [1,3,'Kdo opravuje auta?','automechanik',['pekař','švadlena','kuchař'],'🔧'],[0,2,'Kdo prodává v obchodě?','prodavač',['pilot','hasič','zubař'],'🛒'],
     [0,2,'Kdo řídí autobus?','řidič',['kuchař','zahradník','lékař'],'🚌'],[0,2,'Kdo se stará o zuby?','zubař',['pekař','zedník','pošťák'],'🦷'],
-    [1,3,'Kdo čistí komíny?','kominík',['kuchař','pilot','zubař'],'🎩'],[1,3,'Kdo staví domy ze zdí?','zedník',['zubař','pošťák','kadeřník'],'🧱'],
+    [1,3,'Kdo čistí komíny?','kominík',['kuchař','pilot','zubař'],'🎩'],[1,3,'Kdo staví zdi z cihel?','zedník',['zubař','pošťák','kadeřník'],'🧱'],
     [1,3,'Kdo nosí dopisy a balíky?','pošťák',['pekař','zubař','hasič'],'✉️'],[0,2,'Kdo vaří v restauraci?','kuchař',['pilot','kominík','zedník'],'👨‍🍳'],
     [1,3,'Kdo vyrábí nábytek ze dřeva?','truhlář',['zubař','pošťák','kuchař'],'🪚'],[1,3,'Kdo léčí zvířata?','veterinář',['zedník','pekař','pilot'],'🐾'],
     [1,3,'Kdo řídí letadlo?','pilot',['kuchař','kominík','zubař'],'✈️'],[1,3,'Kdo stříhá vlasy?','kadeřník',['pekař','zedník','pošťák'],'💇'],

@@ -269,3 +269,7 @@ h3 .muted{color:#fff8e6;opacity:.9;text-shadow:0 1px 0 #5a3415}
 .mcard.pluslock{cursor:pointer;opacity:.85}
 .mcard.pluslock .badge{font-size:20px}
 .plusbtn{white-space:nowrap}
+
+/* v31: rodičovská sekce se na telefonu nevejde do šířky (dlouhé volby v <select>) */
+.grid2>*{min-width:0}
+.card select,.card input[type=text],.card input[type=email]{max-width:100%}

@@ -36,9 +36,9 @@ function dropSticker(p, quiet){
   const s=pool[Math.floor(Math.random()*pool.length)], f=fx(p);
   const dup=!!f.stk[s.id]; f.stk[s.id]=(f.stk[s.id]||0)+1;
   let extra='';
-  if(dup){ p.points+=5; extra=' (už ji máš – +5 ⭐)'; }
+  if(dup){ p.points+=3; extra=' (už ji máš – +3 ⭐)'; }
   const set=STICKER_SETS.find(x=>x.id===s.set);
-  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=100; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` · Celá sada „${set.name}“! +100 ⭐ a zlatá truhla`; confetti(60); }
+  if(!f.setDone[set.id] && set.e.every((_,i)=>f.stk[set.id+i])){ f.setDone[set.id]=1; p.points+=50; p.chests=p.chests||[]; p.chests.push('gold'); extra+=` · Celá sada „${set.name}“! +50 ⭐ a zlatá truhla`; confetti(60); }
   if(!quiet) stickerPop(s, extra);
   return {s, extra};
 }
@@ -53,7 +53,7 @@ function albumView(){
     return `<div class="card albset"><h3 style="margin:0 0 8px">${set.name} <span class="muted" style="font-size:15px">${have}/12 ${f.setDone[set.id]?'✅ hotovo':''}</span></h3>
       <div class="stkgrid">${set.e.map((e,i)=>{ const n=f.stk[set.id+i]; return `<div class="stk ${n?'got':''} ${i>=10?'rare':''}">${n?e:'?'}${n>1?`<small>×${n}</small>`:''}</div>`; }).join('')}</div></div>`; }).join('');
   return `<div class="top"><button class="btn sec small" data-act="hero">← ${esc(p.name)}</button><h1>📒 Album nálepek</h1><span class="pill">${stickerCount(p)}/60</span></div>
-    <p class="muted">Nálepky padají za správné odpovědi, za splněný den a za týdenní výzvy. Zlaté rámečky jsou vzácné. Za celou sadu dostaneš ⭐ 100 a zlatou truhlu!</p>
+    <p class="muted">Nálepky padají za správné odpovědi, za splněný den a za týdenní výzvy. Zlaté rámečky jsou vzácné. Za celou sadu dostaneš ⭐ 50 a zlatou truhlu!</p>
     <div class="albgrid">${sets}</div>`;
 }
 
@@ -128,14 +128,14 @@ function checkChallenges(p){
   if(!p) return; const ws=weekStart(), st=weekStats(p,ws), f=fx(p); const c=f.chal[ws]=f.chal[ws]||{cl:[],all:0};
   for(const k of Object.keys(f.chal)) if(k<addDays(ws,-21)) delete f.chal[k];
   let changed=false;
-  for(const ch of weekChallenges(p,ws)){ if(!c.cl.includes(ch.id) && ch.m(st)>=ch.goal){ c.cl.push(ch.id); p.points+=50; changed=true; toast(`🎯 Výzva splněna: ${ch.text} · +50 ⭐ a nálepka`); setTimeout(()=>dropSticker(p),600); } }
+  for(const ch of weekChallenges(p,ws)){ if(!c.cl.includes(ch.id) && ch.m(st)>=ch.goal){ c.cl.push(ch.id); p.points+=25; changed=true; toast(`🎯 Výzva splněna: ${ch.text} · +25 ⭐ a nálepka`); setTimeout(()=>dropSticker(p),600); } }
   if(!c.all && c.cl.length>=3){ c.all=1; p.chests=p.chests||[]; p.chests.push('gold'); changed=true; setTimeout(()=>{ toast('🏅 Všechny výzvy týdne splněny! Zlatá truhla je tvoje.'); confetti(60); },1500); }
   if(changed) save();
 }
 function challengesHTML(p){
   const ws=weekStart(), st=weekStats(p,ws), c=(fx(p).chal[ws]||{cl:[]});
   const left=6-((new Date().getDay()+6)%7);
-  return `<div class="card"><h3 style="margin:0 0 6px">🎯 Výzvy týdne <span class="muted" style="font-size:14px">· ${left?`ještě ${left} ${plural(left,'den','dny','dní')}`:'poslední den!'} · každá +50 ⭐ a nálepka, všechny = zlatá truhla</span></h3>
+  return `<div class="card"><h3 style="margin:0 0 6px">🎯 Výzvy týdne <span class="muted" style="font-size:14px">· ${left?`ještě ${left} ${plural(left,'den','dny','dní')}`:'poslední den!'} · každá +25 ⭐ a nálepka, všechny = zlatá truhla</span></h3>
     ${weekChallenges(p,ws).map(ch=>{ const v=Math.min(ch.goal, ch.m(st)), done=c.cl.includes(ch.id);
       return `<div class="chal ${done?'done':''}"><div>${done?'✅':'⬜'} ${ch.text}</div><div class="bar"><i style="width:${v/ch.goal*100}%"></i></div><small>${v}/${ch.goal}</small></div>`; }).join('')}</div>`;
 }
@@ -171,7 +171,7 @@ function timedAnswer(val){
 function timedEnd(){
   const p=prof(view.pid), T=view.tm, f=fx(p), d=fxDay(p);
   const rec=T.score>(f.tbestAll||0); if(rec) f.tbestAll=T.score; d.tb=Math.max(d.tb||0,T.score);
-  d.truns=(d.truns||0)+1; const pts=d.truns<=3 ? T.score*3 : 0; p.points+=pts; save(); checkChallenges(p);
+  d.truns=(d.truns||0)+1; const pts=d.truns<=3 ? Math.round(T.score*1.5) : 0; p.points+=pts; save(); checkChallenges(p);
   if(rec && T.score>0) confetti(50);
   view={name:'timedEnd', pid:p.id, res:{score:T.score, wrong:T.wrong, rec, pts, runs:d.truns}}; render();
   if(readOn()) speak(`Konec! Stihl jsi ${T.score} správně.${rec?' To je nový rekord!':''}`);
@@ -180,7 +180,7 @@ function timedEndView(){
   const p=prof(view.pid), r=view.res;
   return `<div class="top"><h1>⏱️ Časovka – konec!</h1></div><div class="card center"><div style="font-size:64px">${r.rec?'🏆':'⏱️'}</div>
     <h2>${r.score} správně${r.wrong?` · ${r.wrong} ${plural(r.wrong,'chyba','chyby','chyb')}`:''}</h2>${r.rec?'<p style="font-size:22px">🎉 Nový rekord!</p>':`<p>Rekord: ${fx(p).tbestAll||0}</p>`}
-    <p style="font-size:18px">${r.pts?`+${r.pts} ⭐ (3 body za každou správnou)`:'Body se dávají za první 3 časovky denně – teď už jen pro radost a rekord.'}</p>
+    <p style="font-size:18px">${r.pts?`+${r.pts} ⭐ (za každé 2 správné 3 body)`:'Body se dávají za první 3 časovky denně – teď už jen pro radost a rekord.'}</p>
     <div class="row" style="justify-content:center"><button class="btn gold" data-act="timed">🔁 Znovu</button><button class="btn sec" data-act="hero">← Zpět</button></div></div>`;
 }
 
@@ -196,7 +196,7 @@ function duelSetupView(){
   return `<div class="top"><button class="btn sec small" data-act="home">← Zpět</button><h1>⚔️ Souboj</h1></div>
     <div class="card center"><p style="font-size:18px">Dva hrdinové se střídají u jednoho počítače. Každý dostane 5 úloh podle své třídy. Vyhrává, kdo má víc správně – při shodě rychlejší.</p>
     <div class="row" style="justify-content:center;align-items:center;gap:14px">${sel('d-a',a)}<b style="font-size:28px">VS</b>${sel('d-b',b)}</div>
-    <p class="muted">Vítěz +30 ⭐, druhý +10 ⭐ (první 3 souboje denně).</p><button class="btn gold" data-act="duel-go" style="font-size:20px">⚔️ Začít souboj</button></div>`;
+    <p class="muted">Vítěz +15 ⭐, druhý +5 ⭐ (první 3 souboje denně).</p><button class="btn gold" data-act="duel-go" style="font-size:20px">⚔️ Začít souboj</button></div>`;
 }
 function duelGo(){
   const a=$('#d-a').value, b=$('#d-b').value; if(a===b){ toast('Vyber dva různé hrdiny'); return; }
@@ -223,7 +223,7 @@ function duelEnd(){
   const D=view.D; const [A,B]=D.ids.map(prof);
   let w = D.score[0]!==D.score[1] ? (D.score[0]>D.score[1]?0:1) : (D.time[0]<=D.time[1]?0:1);
   const award=(p,v)=>{ const d=fxDay(p); d.duels=(d.duels||0)+1; if(d.duels<=3){ p.points+=v; return v; } return 0; };
-  const pw=award([A,B][w],30), pl=award([A,B][1-w],10); const dw=fxDay([A,B][w]); dw.dw=(dw.dw||0)+1;
+  const pw=award([A,B][w],15), pl=award([A,B][1-w],5); const dw=fxDay([A,B][w]); dw.dw=(dw.dw||0)+1;
   save(); [A,B].forEach(checkChallenges); confetti(50);
   view={name:'duelEnd', pid:D.ids[w], R:{D, w, pw, pl}}; render();
   if(readOn()) speak(`Vítězem je ${[A,B][w].name}!`);

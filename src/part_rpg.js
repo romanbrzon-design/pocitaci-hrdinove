@@ -27,7 +27,7 @@ const XP_PER_LEVEL = {short:15, mid:20, long:30};
 const MAX_LEVEL = 20;
 function mult(){ return LEN_MULT[S.settings.length]||0.5; }
 function price(slot,tier,p){ const sl=(p&&slotOf(p,slot))||SLOTMAP[slot]; return Math.max(5, Math.round(sl.items[tier-1][4]*mult()/5)*5); }
-function bounty(mi){ return Math.round(MONSTERS[mi].gold*mult()/5)*5; }
+function bounty(mi){ return Math.round(MONSTERS[mi].gold*mult()/10)*5; } // od v31 poloviční
 function level(p){ return Math.min(MAX_LEVEL, 1+Math.floor((p.xp||0)/(XP_PER_LEVEL[S.settings.length]||20))); }
 function xpInfo(p){ const per=XP_PER_LEVEL[S.settings.length]||20, L=level(p); if(L>=MAX_LEVEL) return {L, cur:per, per, max:true}; return {L, cur:(p.xp||0)-(L-1)*per, per}; }
 function stats(p){
@@ -236,19 +236,19 @@ function chestSVG(kind, open){
   return `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">${open?`<circle cx="100" cy="80" r="70" fill="#fff3a0" opacity=".7"/><path d="M100 10 l6 30 M60 25 l14 26 M140 25 l-14 26 M30 55 l26 14 M170 55 l-26 14" stroke="#ffd84d" stroke-width="5" stroke-linecap="round"/>`:''}<ellipse cx="100" cy="168" rx="80" ry="8" fill="#000" opacity=".1"/><rect x="30" y="78" width="140" height="84" rx="8" fill="${body}" stroke="${band}" stroke-width="4"/><path d="M60 78 V162 M140 78 V162" stroke="${band}" stroke-width="8"/>${open?'':`<rect x="88" y="70" width="24" height="28" rx="4" fill="${lock}" stroke="${band}" stroke-width="3"/><circle cx="100" cy="84" r="4" fill="${band}"/>`}${lid}</svg>`;
 }
 function openChestFor(p){
+  // od v31: truhla dává zkušenosti a nálepku, NE novou výbavu.
+  // Výjimečně „najde“ věc, kterou už dítě má – promění se v zkušenosti navíc.
   if(!p.chests || !p.chests.length) return null;
-  const kind=p.chests.shift();
+  const kind=p.chests.shift(), gold=kind==='gold';
   p.owned=p.owned||{};
-  const cands = slotsOf(p).filter(sl=>(p.owned[sl.id]||0) < sl.items.length);
-  const itemChance = kind==='gold' ? 1 : 0.45;
-  if(cands.length && Math.random()<itemChance){
-    // cheapest next item out of 3 random slots – drops stay useful for the current stage
-    const pool=cands.slice(), sample=[];
-    for(let i=0;i<3&&pool.length;i++) sample.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
-    sample.sort((a,b)=>a.items[p.owned[a.id]||0][4]-b.items[p.owned[b.id]||0][4]);
-    const sl=sample[0], t=(p.owned[sl.id]||0)+1; p.owned[sl.id]=t; p.newItem=sl.id+':'+t;
-    return {kind, item:sl.items[t-1], slot:sl.name};
+  let xp=gold ? 5+Math.floor(Math.random()*4) : 2+Math.floor(Math.random()*3);   // zlatá 5–8, dřevěná 2–4
+  let found=null;
+  const have=slotsOf(p).filter(sl=>(p.owned[sl.id]||0)>0);
+  if(have.length && Math.random()<(gold?0.25:0.12)){
+    const sl=have[Math.floor(Math.random()*have.length)], t=1+Math.floor(Math.random()*(p.owned[sl.id]||1));
+    found={item:sl.items[t-1], slot:sl.name}; xp+=2;
   }
-  const pts=(kind==='gold'?60:20)+Math.floor(Math.random()*5)*10;
-  p.points+=pts; return {kind, points:pts};
+  p.xp=(p.xp||0)+xp;
+  let stk=null; try{ if(typeof dropSticker==='function') stk=dropSticker(p,true); }catch(e){}
+  return {kind, xp, found, stk};
 }
